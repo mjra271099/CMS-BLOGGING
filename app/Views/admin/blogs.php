@@ -35,7 +35,7 @@ $adminBase = url('admin/index.php');
                 <div>
                     <label for="language">Bahasa</label>
                     <select id="language" name="language">
-                        <?php foreach (['id' => 'Indonesia', 'en' => 'English', 'ms' => 'Bahasa Melayu'] as $value => $label): ?>
+                        <?php foreach (\App\Core\Lang::SUPPORTED as $value => $label): ?>
                             <option value="<?= e($value) ?>"<?= (string)($activeBlog['language'] ?? 'id') === $value ? ' selected' : '' ?>><?= e($label) ?></option>
                         <?php endforeach; ?>
                     </select>

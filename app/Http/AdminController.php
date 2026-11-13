@@ -1046,6 +1046,8 @@ final class AdminController
             }
         }
         Settings::setMany($values);
+        // Re-resolve the front-end locale in case "language" changed.
+        \App\Core\Lang::reset();
         Cache::flushGroup('settings');
         Cache::flushGroup('theme');
         log_activity('settings.save', 'Pengaturan situs diperbarui');

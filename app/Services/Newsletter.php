@@ -26,7 +26,7 @@ final class Newsletter
             if ($existing['status'] === 'unsubscribed') {
                 Database::update('newsletter_subscribers', ['status' => 'confirmed'], 'id = ?', [(int)$existing['id']]);
             }
-            return ['status' => 'already', 'message' => 'Email sudah terdaftar.'];
+            return ['status' => 'already', 'message' => 'newsletter_already'];
         }
         Database::insert('newsletter_subscribers', [
             'blog_id' => Context::blogId(),
@@ -34,7 +34,7 @@ final class Newsletter
             'name' => substr(trim($name), 0, 190),
             'status' => 'confirmed',
         ]);
-        return ['status' => 'created', 'message' => 'Terima kasih telah berlangganan.'];
+        return ['status' => 'created', 'message' => 'newsletter_ok'];
     }
 
     public static function unsubscribe(string $email): void

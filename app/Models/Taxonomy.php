@@ -38,6 +38,11 @@ final class Taxonomy
         return Database::fetch('SELECT * FROM categories WHERE slug = ? AND blog_id = ?', [$slug, Context::blogId()]);
     }
 
+    public static function tagBySlug(string $slug): ?array
+    {
+        return Database::fetch('SELECT * FROM tags WHERE slug = ? AND blog_id = ?', [$slug, Context::blogId()]);
+    }
+
     public static function createCategory(string $name, array $extra = []): int
     {
         $name = trim($name);

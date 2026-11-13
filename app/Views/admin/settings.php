@@ -48,7 +48,7 @@ $value = static fn(string $key): string => (string)($settings[$key] ?? ($default
             <div>
                 <label for="language">Bahasa</label>
                 <select id="language" name="language">
-                    <?php foreach (['id' => 'Indonesia', 'en' => 'English (US)', 'ms' => 'Bahasa Melayu'] as $code => $label): ?>
+                    <?php foreach (\App\Core\Lang::SUPPORTED as $code => $label): ?>
                         <option value="<?= e($code) ?>"<?= $value('language') === $code ? ' selected' : '' ?>><?= e($label) ?></option>
                     <?php endforeach; ?>
                 </select>

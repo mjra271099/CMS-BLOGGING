@@ -57,7 +57,7 @@ final class Ui
         $meta = (array)($this->page['meta'] ?? []);
         $siteName = Settings::get('site_name', (string)(Context::blog()['name'] ?? 'Blog'));
         $blog = Context::blog();
-        $lang = Settings::get('language', (string)($blog['language'] ?? 'id'));
+        $lang = \App\Core\Lang::htmlLocale();
         $bodyClass = trim($this->theme->bodyClasses() . ' ' . (string)($this->page['body_class'] ?? ''));
 
         $head = '<!doctype html><html lang="' . e($lang) . '" data-theme="' . e($this->theme->slug()) . '">' . "\n<head>";
@@ -202,7 +202,7 @@ final class Ui
         }
         // The panel carries a copy of the search box so mobile users can search
         // without scrolling back to the header (CSS shows it below 860px only).
-        return '<nav class="site-nav" aria-label="Navigasi utama"><button class="nav-toggle" aria-expanded="false" aria-label="Buka menu">'
+        return '<nav class="site-nav" aria-label="' . e(__('main_navigation')) . '"><button class="nav-toggle" aria-expanded="false" aria-label="' . e(__('open_menu')) . '">'
             . '<span></span><span></span><span></span></button><div class="nav-panel">' . $menu
             . $this->mobileSearch() . '</div></nav>';
     }
@@ -216,7 +216,7 @@ final class Ui
             $tagged = (string)preg_replace('/\bwidget-area\b/', 'widget-area header-search', $search, 1);
             return $this->stripIds($tagged);
         }
-        return $this->searchForm('Cari di blog ini…', 'nav-search');
+        return $this->searchForm(__('search_here'), 'nav-search');
     }
 
     /**
@@ -230,7 +230,7 @@ final class Ui
 
     private function defaultNavigation(): string
     {
-        $items = [['label' => 'Beranda', 'url' => url()]];
+        $items = [['label' => __('home'), 'url' => url()]];
         foreach (\App\Models\Page::all(['status' => 'published']) as $page) {
             $items[] = ['label' => $page['title'], 'url' => page_url($page)];
         }
@@ -249,8 +249,9 @@ final class Ui
         $search = $this->widgetArea('search');
         $isWidget = trim($search) !== '';
         $out = '<div class="header-actions' . ($isWidget ? '' : ' no-mobile-menu') . '">';
+        $out .= $this->languageSwitcher();
         if (!$isWidget) {
-            $out .= $this->searchForm('Cari…', 'header-search');
+            $out .= $this->searchForm(__('search_placeholder'), 'header-search');
         } else {
             // Tag the real widget so CSS can hide it on mobile even if its
             // markup differs from the built-in form.
@@ -260,11 +261,27 @@ final class Ui
         return $out;
     }
 
+    /**
+     * Compact ID/EN switch. The choice is stored in a cookie and honoured by
+     * App\Core\Lang, so it works for guests without touching blog settings.
+     */
+    public function languageSwitcher(): string
+    {
+        $current = \App\Core\Lang::locale();
+        $out = '<div class="lang-switch" role="group" aria-label="' . e(__('switch_language')) . '">';
+        foreach (\App\Core\Lang::SUPPORTED as $code => $label) {
+            $out .= '<a class="lang-option' . ($code === $current ? ' is-active' : '') . '" rel="alternate" hreflang="' . e($code) . '"'
+                . ' href="' . e(url('language/' . $code)) . '" aria-current="' . ($code === $current ? 'true' : 'false') . '">'
+                . e(strtoupper($code)) . '</a>';
+        }
+        return $out . '</div>';
+    }
+
     private function searchForm(string $placeholder, string $extraClass = ''): string
     {
         return '<form class="header-search' . ($extraClass !== '' ? ' ' . e($extraClass) : '') . '" action="' . e(url('search')) . '" method="get" role="search">'
-            . '<input type="search" name="q" placeholder="' . e($placeholder) . '" aria-label="Cari artikel">'
-            . '<button type="submit" aria-label="Cari">⌕</button></form>';
+            . '<input type="search" name="q" placeholder="' . e($placeholder) . '" aria-label="' . e(__('search_articles')) . '">'
+            . '<button type="submit" aria-label="' . e(__('search')) . '">⌕</button></form>';
     }
 
     // ------------------------------------------------------------------
@@ -428,7 +445,7 @@ final class Ui
         $out .= '<time datetime="' . e(Helpers::isoDate((string)$post['published_at'])) . '">'
             . e(Helpers::date((string)$post['published_at'])) . '</time>';
         if ((int)($post['reading_time'] ?? 0) > 0) {
-            $out .= '<span class="meta-dot" aria-hidden="true">·</span><span class="meta-reading">' . (int)$post['reading_time'] . ' menit</span>';
+            $out .= '<span class="meta-dot" aria-hidden="true">·</span><span class="meta-reading">' . e(__('min_read', ['minutes' => max(1, (int)$post['reading_time'])])) . '</span>';
         }
         $out .= '</div></div></article>';
         return $out;
@@ -437,7 +454,7 @@ final class Ui
     public function postGrid(array $posts, string $variant = 'grid'): string
     {
         if ($posts === []) {
-            return $this->emptyState('Belum ada artikel yang dipublikasikan.');
+            return $this->emptyState(__('no_posts'));
         }
         $out = '<div class="post-grid grid-' . e($variant) . '">';
         foreach ($posts as $post) {
@@ -521,7 +538,7 @@ final class Ui
             . '<span class="meta-block"><strong>' . e($author) . '</strong>'
             . '<span><time datetime="' . e(Helpers::isoDate((string)$post['published_at'])) . '">'
             . e(Helpers::date((string)$post['published_at'], 'd F Y')) . '</time>'
-            . ' · ' . max(1, (int)($post['reading_time'] ?? 1)) . ' menit baca</span></span></div>';
+            . ' · ' . e(__('min_read', ['minutes' => max(1, (int)($post['reading_time'] ?? 1))])) . '</span></span></div>';
         $out .= '</header>';
         if ($image !== '') {
             $out .= '<figure class="article-cover"><img src="' . e($image) . '" alt="' . e($post['title']) . '" loading="eager" decoding="async"></figure>';
@@ -530,7 +547,7 @@ final class Ui
         if ($tags) {
             $out .= '<div class="article-tags">';
             foreach ($tags as $tag) {
-                $out .= '<a class="tag" href="' . e(url('search?q=' . rawurlencode((string)$tag['name']))) . '">#' . e($tag['name']) . '</a>';
+                $out .= '<a class="tag" href="' . e(url('tag/' . rawurlencode((string)($tag['slug'] ?? $tag['name'])))) . '">#' . e($tag['name']) . '</a>';
             }
             $out .= '</div>';
         }
@@ -554,9 +571,9 @@ final class Ui
             ['name' => 'LinkedIn', 'href' => 'https://www.linkedin.com/sharing/share-offsite/?url=' . $encodedUrl, 'icon' => 'L'],
             ['name' => 'Pinterest', 'href' => 'https://pinterest.com/pin/create/button/?url=' . $encodedUrl . '&description=' . $encodedTitle, 'icon' => 'P'],
         ];
-        $out = '<div class="share-bar"><span class="share-label">Bagikan</span>';
+        $out = '<div class="share-bar"><span class="share-label">' . e(__('share')) . '</span>';
         foreach ($links as $link) {
-            $out .= '<a href="' . e($link['href']) . '" target="_blank" rel="noopener noreferrer" title="' . e($link['name']) . '" aria-label="Bagikan ke ' . e($link['name']) . '">'
+            $out .= '<a href="' . e($link['href']) . '" target="_blank" rel="noopener noreferrer" title="' . e($link['name']) . '" aria-label="' . e(__('share') . ' → ' . $link['name']) . '">'
                 . '<svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><circle cx="12" cy="12" r="10.5" fill="none" stroke="currentColor"/><text x="12" y="16" text-anchor="middle" font-size="10" font-family="sans-serif" fill="currentColor">'
                 . e($link['icon']) . '</text></svg></a>';
         }
@@ -574,8 +591,8 @@ final class Ui
         $out = '<div class="author-box"><div class="author-avatar">';
         $out .= $avatar !== '' ? '<img src="' . e($avatar) . '" alt="' . e($name) . '">' : e(mb_substr($name, 0, 1));
         $out .= '</div><div class="author-info"><h3>' . e($name) . '</h3>';
-        $out .= '<p>' . e($bio !== '' ? $bio : 'Penulis di ' . Settings::get('site_name') . '.') . '</p>';
-        $out .= '<a href="' . e(Helpers::authorUrl($name)) . '">Lihat semua artikel</a></div></div>';
+        $out .= '<p>' . e($bio !== '' ? $bio : __('author_bio', ['site' => Settings::get('site_name')])) . '</p>';
+        $out .= '<a href="' . e(Helpers::authorUrl($name)) . '">' . e(__('view_all_articles')) . '</a></div></div>';
         return $out;
     }
 

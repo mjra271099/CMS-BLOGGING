@@ -106,6 +106,36 @@ $category = request($base . '/search/label/olahraga');
 check('Label archive returns 200', in_array($category['status'], [200, 404], true), 'status=' . $category['status']);
 $search = request($base . '/search?q=uji');
 check('Search returns 200', $search['status'] === 200, 'status=' . $search['status']);
+$outOfRange = request($base . '/page/9999');
+check('Out-of-range page returns 404', $outOfRange['status'] === 404, 'status=' . $outOfRange['status']);
+
+section('Archive & taxonomy');
+$archive = request($base . '/archive');
+check('Archive index returns 200', $archive['status'] === 200, 'status=' . $archive['status']);
+check('Archive index lists months', str_contains($archive['body'], 'archive-months'));
+$archiveMonth = request($base . '/archive/2026/11');
+check('Archive month returns 200', $archiveMonth['status'] === 200, 'status=' . $archiveMonth['status']);
+$tag = request($base . '/tag/aksesibilitas');
+check('Tag page returns 200', $tag['status'] === 200, 'status=' . $tag['status']);
+$tagMissing = request($base . '/tag/tidak-ada-tag-zztest');
+check('Unknown tag returns 404', $tagMissing['status'] === 404, 'status=' . $tagMissing['status']);
+$labelTag = request($base . '/search/label/aksesibilitas');
+check('Label route falls back to tag', $labelTag['status'] === 200, 'status=' . $labelTag['status']);
+$bareLabel = request($base . '/label/aksesibilitas');
+check('Bare /label/<slug> resolves', in_array($bareLabel['status'], [200, 404], true), 'status=' . $bareLabel['status']);
+
+section('Numeric permalink');
+$numeric = request($base . '/?p=2');
+check('Valid numeric permalink redirects', $numeric['status'] === 301, 'status=' . $numeric['status']);
+check('Numeric permalink targets pretty URL', str_contains($numeric['location'], '.html'), 'location=' . $numeric['location']);
+$numericMissing = request($base . '/?p=999999');
+check('Unknown numeric permalink returns 404', $numericMissing['status'] === 404, 'status=' . $numericMissing['status']);
+
+section('Language switching');
+$lang = request($base . '/language/en');
+check('Language switch redirects', in_array($lang['status'], [301, 302], true), 'status=' . $lang['status']);
+check('Language switch sets cookie', str_contains($lang['headers']['set-cookie'] ?? '', 'site_language=en'), 'cookie=' . ($lang['headers']['set-cookie'] ?? ''));
+check('Language switch redirects home', str_ends_with(rtrim($lang['location'], '/'), '127.0.0.1:8090'), 'location=' . $lang['location']);
 
 section('Legacy shims');
 $legacy = request($base . '/search.php?q=uji');

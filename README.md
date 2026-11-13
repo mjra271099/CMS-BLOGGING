@@ -7,10 +7,11 @@ Aset Blogger asli (`assets/template-source.xml`) tidak diubah; CSS template lama
 ## Fitur
 
 - **Multi-blog & multi-user** — tabel `blogs`, `blog_users`, dan `Context` per-blog; setiap posting, halaman, kategori, tag, komentar, media, widget, dan pengaturan ter-scope `blog_id`. Pengguna bisa punya peran berbeda di tiap blog (`owner`, `admin`, `editor`, `author`, `contributor`).
-- **22 tema bawaan** — tema folder-based dengan layout, CSS, screenshot, dan `functions.php` opsional. Aktifkan, duplikat, ekspor, atau impor ZIP dari Admin → Tema.
+- **23 tema (termasuk AMP Theme) dengan satu bahasa desain** — tema folder-based dengan layout, CSS, screenshot, dan `functions.php` opsional. Palet, radius 5px, tipografi (Inter / Plus Jakarta Sans), spasi, dan gaya komponen berasal dari `assets/front/system.css`, jadi setiap tema identik secara visual dengan AMP Theme; yang berbeda hanya tata letak. Aktifkan, duplikat, ekspor, atau impor ZIP dari Admin → Tema.
 - **Kustomisasi tema** — skema pengaturan per tema (`color`, `select`, `checkbox`, `text`), disimpan per blog di `theme_settings`, dan dipancarkan sebagai CSS variable (`--t-*`) tanpa menimpa file tema.
 - **Widget engine** — 20+ tipe widget dengan visibilitas (per halaman, perangkat, peran), urutan drag-and-drop, duplikasi, serta area widget per tema (`header`, `sidebar`, `footer-1..3`, `before-content`, `ad-top`, dan lainnya).
 - **Page builder** — 18 tipe blok (hero, heading, teks, gambar, galeri, tombol, CTA, kolom, fitur, video, kutipan, pemisah, spacer, HTML, postingan, FAQ, testimoni, newsletter) yang dikembalikan sebagai JSON tervalidasi lalu dirender sebagai HTML tersanitasi. Pratinjau iframe langsung (WYSIWYG) memakai tema aktif, lengkap dengan kontrol latar/jarak/lebar per bagian, tombol lebar perangkat, dan mode pratinjau besar.
+- **Dua bahasa antarmuka** — Bahasa Indonesia dan English untuk seluruh halaman depan (navigasi, arsip, pencarian, artikel, komentar, 404, tanggal/bulan, waktu relatif). Bahasa default diatur di Admin → Pengaturan; pengunjung dapat berganti lewat tombol ID/EN di header (disimpan di cookie `site_language`). Katalog string ada di `app/Lang/id.php` dan `app/Lang/en.php`, dipakai melalui helper global `__()`.
 - **SEO** — meta title/description, canonical, Open Graph/Twitter, Schema.org (`BlogPosting`, `BreadcrumbList`, `WebSite`), sitemap XML, robots.txt, RSS feed, redirect manager, dan audit SEO dengan skor.
 - **Media library** — unggah gambar (JPG/PNG/GIF/WebP) dengan thumbnail otomatis, metadata alt/caption/folder, resize, dan penggantian file.
 - **Dashboard admin baru** — MVC (`AdminController` + `app/Views/admin/*`) menggantikan `admin/index.php` satu-file. Ringkasan, editor dengan autosave, kustomizer live preview, builder, moderasi komentar, pengaturan, backup, dan log aktivitas.
@@ -66,10 +67,11 @@ Tabel `settings` lama diganti nama menjadi `settings_legacy_backup` dan data dip
 ```
 app/
   Core/        Config, Database, Context, Settings, Cache, Auth, Csrf, Theme,
-               ThemeEngine, Widget, Migrator, View, Response, Theme/Ui
+               ThemeEngine, Widget, Migrator, View, Response, Lang, Theme/Ui
   Models/      Post, Page, Taxonomy, Comment, Blog, Menu, Media
   Services/    Seo, Builder, Newsletter, Analytics, Backup
   Http/        FrontController, AdminController, AdminUi
+  Lang/        id.php, en.php — katalog string antarmuka (Indonesia & English)
   Views/admin/ 26 template dashboard
   Http/Theme/Ui.php   kit UI yang dipakai semua tema
 assets/
@@ -95,9 +97,12 @@ Legacy front files (`header.php`, `footer.php`, `sidebar.php`, `post.php`, `page
 | Artikel | `/YYYY/MM/slug.html` |
 | Halaman | `/p/slug.html` |
 | Label/kategori | `/search/label/<slug>` |
-| Tag | `/search/label/<slug>` atau `/tag/<slug>` |
+| Tag | `/tag/<slug>` (`/search/label/<slug>` tetap didukung untuk label & tag) |
 | Pencarian | `/search?q=kata` |
-| Arsip | `/YYYY/MM/` |
+| Arsip indeks | `/archive` (atau `/arsip`) — semua bulan dikelompokkan per tahun |
+| Arsip bulan | `/archive/YYYY/MM` |
+| Permalink numerik (legacy Blogger) | `/?p=<id>` → 301 ke URL artikel |
+| Ganti bahasa | `/language/id`, `/language/en` (menyimpan cookie lalu kembali ke halaman asal) |
 | Sitemap | `/sitemap.xml` |
 | Feed | `/feed.xml`, `/feed/`, `/rss` |
 | Admin | `/admin/index.php?view=…` |
@@ -119,6 +124,18 @@ functions.php  opsional; hook PHP tema
 ```
 
 Semua data diakses lewat kit `App\Theme\Ui`, sehingga tema pihak ketiga tidak pernah menyentuh database secara langsung dan aman dipasang dari ZIP.
+
+## Bahasa
+
+Antarmuka depan mendukung **Bahasa Indonesia** dan **English**. Rantai penentuan bahasa: cookie `site_language` (pilihan pengunjung) → pengaturan `language` blog → default `id`. Tombol ID/EN di header menuju `/language/<kode>`, yang menyimpan cookie lalu mengembalikan pengunjung ke halaman asal.
+
+- Katalog string: `app/Lang/id.php` dan `app/Lang/en.php` (kunci harus sama di kedua berkas).
+- Pemakaian di kode/tema: `e(__('read_more'))`, dengan penggantian placeholder `__('min_read', ['minutes' => 3])`.
+- Bila kunci tidak ada di bahasa aktif, dipakai versi Indonesia, lalu kunci itu sendiri — string baru tidak akan mematahkan halaman.
+- `<html lang>`, `og:locale`, nama bulan, dan waktu relatif ikut bahasa aktif.
+- Dashboard admin tetap berbahasa Indonesia dan tidak terpengaruh cookie pengunjung.
+
+Untuk menambah string: tambahkan pasangan kunci yang sama ke `app/Lang/id.php` dan `app/Lang/en.php`, lalu panggil lewat `__()` pada template/Ui/Widget.
 
 ## Widget
 

@@ -39,7 +39,7 @@ final class Seo
             'type' => $type,
             'robots' => $robots,
             'site_name' => $siteName,
-            'locale' => Settings::get('language', (string)($blog['language'] ?? 'id')) === 'en' ? 'en_US' : 'id_ID',
+            'locale' => \App\Core\Lang::ogLocale(),
             'twitter' => Settings::get('twitter_site', ''),
             'published' => (string)($page['published'] ?? ''),
             'modified' => (string)($page['modified'] ?? ''),

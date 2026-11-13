@@ -60,7 +60,8 @@ final class FrontController
             'page' => $this->page($route['params']),
             'category' => $this->category($route['params']),
             'search' => $this->search(),
-            'tag' => $this->search(),
+            'language' => $this->language($route['params']),
+            'tag' => $this->tag($route['params']),
             'author' => $this->author($route['params']),
             'archive' => $this->archive($route['params']),
             'sitemap' => $this->sitemap(),
@@ -92,6 +93,11 @@ final class FrontController
     private function resolve(string $path): array
     {
         if ($path === '') {
+            // Legacy Blogger numeric permalink: /?p=<id> resolves to a post.
+            $numeric = (int)($_GET['p'] ?? 0);
+            if ($numeric > 0) {
+                return ['name' => 'post', 'params' => ['id' => $numeric]];
+            }
             return ['name' => 'home', 'params' => []];
         }
         if ($path === 'sitemap.xml') {
@@ -106,6 +112,14 @@ final class FrontController
         if ($path === 'search') {
             return ['name' => 'search', 'params' => []];
         }
+        if (preg_match('~^language/([a-z]{2})$~', $path, $match)) {
+            return ['name' => 'language', 'params' => ['code' => $match[1]]];
+        }
+        // Legacy Blogger numeric permalinks on any path: ?p=<id>.
+        $numeric = (int)($_GET['p'] ?? 0);
+        if ($numeric > 0) {
+            return ['name' => 'post', 'params' => ['id' => $numeric]];
+        }
         if (preg_match('~^page/(\d+)$~', $path, $match)) {
             $_GET['page'] = max(1, (int)$match[1]);
             return ['name' => 'home', 'params' => []];
@@ -116,12 +130,17 @@ final class FrontController
         if (preg_match('~^search/label/([^/]+)$~', $path, $match)) {
             return ['name' => 'category', 'params' => ['slug' => urldecode($match[1])]];
         }
+        if (preg_match('~^label/([^/]+)$~', $path, $match)) {
+            return ['name' => 'category', 'params' => ['slug' => urldecode($match[1])]];
+        }
         if (preg_match('~^tag/([^/]+)$~', $path, $match)) {
-            $_GET['q'] = urldecode($match[1]);
-            return ['name' => 'tag', 'params' => []];
+            return ['name' => 'tag', 'params' => ['slug' => urldecode($match[1])]];
         }
         if (preg_match('~^author/([^/]+)$~', $path, $match)) {
             return ['name' => 'author', 'params' => ['slug' => urldecode($match[1])]];
+        }
+        if ($path === 'archive' || $path === 'arsip') {
+            return ['name' => 'archive', 'params' => []];
         }
         if (preg_match('~^archive/(\d{4})/(\d{2})$~', $path, $match)) {
             return ['name' => 'archive', 'params' => ['year' => (int)$match[1], 'month' => (int)$match[2]]];
@@ -205,9 +224,11 @@ final class FrontController
         $total = Post::count(['status' => 'published']);
         $totalPages = (int)ceil(max(1, $total) / $perPage);
         $content = $this->heroArea() . $hero;
-        $content .= '<div class="section-heading"><h2>Artikel Terbaru</h2>'
-            . '<a class="section-link" href="' . e(url('archive')) . '">Arsip lengkap →</a></div>';
+        $content .= '<div class="section-heading"><h2>' . e(__('latest_articles')) . '</h2>'
+            . '<a class="section-link" href="' . e(url('archive')) . '">' . e(__('full_archive')) . ' →</a></div>';
         $content .= (new \App\Theme\Ui(Theme::instance(), []))->postGrid($posts, 'grid');
+        $outOfRange = $this->pageOutOfRange($current, $perPage, $total);
+        if ($outOfRange !== null) { return $outOfRange; }
         $content .= $this->pager($current, $totalPages);
         return $this->renderTheme([
             'route' => 'home',
@@ -233,10 +254,19 @@ final class FrontController
     private function post(array $params): string
     {
         $slug = (string)($params['slug'] ?? '');
+        $id = (int)($params['id'] ?? 0);
         $preview = (string)($_GET['preview'] ?? '') === '1' && Auth::check();
-        $post = Post::findBySlug($slug, null, $preview);
+        $post = $id > 0 ? Post::find($id) : Post::findBySlug($slug, null, $preview);
+        if ($post && !$preview && ($post['status'] !== 'published' || ($post['published_at'] ?? null) > date('Y-m-d H:i:s'))) {
+            $post = null;
+        }
         if (!$post) {
             return $this->notFound();
+        }
+        // Legacy numeric permalinks canonicalise to the pretty URL.
+        if ($id > 0 && !$preview && !headers_sent()) {
+            header('Location: ' . post_url($post), true, 301);
+            return '';
         }
         if ($post['visibility'] === 'password' && !$preview) {
             return $this->passwordGate($post);
@@ -248,12 +278,12 @@ final class FrontController
         $content = $ui->article($post) . $this->commentsSection($post);
         $related = Post::related((int)$post['id'], 3);
         if ($related) {
-            $content .= '<section class="related-section"><h2>Artikel Terkait</h2>';
+            $content .= '<section class="related-section"><h2>' . e(__('related_articles')) . '</h2>';
             $content .= (new \App\Theme\Ui(Theme::instance(), []))->postGrid($related, 'grid');
             $content .= '</section>';
         }
         $categories = Taxonomy::postCategories((int)$post['id']);
-        $breadcrumbs = [['name' => 'Beranda', 'url' => url()]];
+        $breadcrumbs = [['name' => __('home'), 'url' => url()]];
         if ($categories) {
             $breadcrumbs[] = ['name' => $categories[0]['name'], 'url' => category_url($categories[0])];
         }
@@ -323,7 +353,7 @@ final class FrontController
         }
         $content = $this->renderPageBody($page);
         $layout = in_array((string)$page['template'], ['full-width', 'landing', 'builder'], true) ? 'full' : 'standard';
-        $breadcrumbs = [['name' => 'Beranda', 'url' => url()], ['name' => $page['title'], 'url' => page_url($page)]];
+        $breadcrumbs = [['name' => __('home'), 'url' => url()], ['name' => $page['title'], 'url' => page_url($page)]];
         return $this->renderTheme([
             'route' => 'page',
             'slug' => $page['slug'],
@@ -373,6 +403,12 @@ final class FrontController
         $slug = (string)($params['slug'] ?? '');
         $category = Taxonomy::categoryBySlug($slug);
         if (!$category) {
+            // Blogger treats /search/label/<x> as a catch-all for categories
+            // and post labels, so fall back to the tag of the same slug.
+            $tag = Taxonomy::tagBySlug($slug);
+            if ($tag) {
+                return $this->tag(['slug' => $slug]);
+            }
             return $this->notFound();
         }
         $perPage = max(1, min(50, Settings::int('posts_per_page', 9)));
@@ -383,14 +419,16 @@ final class FrontController
              WHERE p.blog_id = ? AND pc.category_id = ? AND p.status = 'published' AND p.published_at <= NOW()",
             [Context::blogId(), (int)$category['id']]
         );
-        $content = '<header class="archive-header"><span class="eyebrow">Kategori</span><h1>' . e($category['name']) . '</h1>';
+        $content = '<header class="archive-header"><span class="eyebrow">' . e(__('category')) . '</span><h1>' . e($category['name']) . '</h1>';
         if (!empty($category['description'])) {
             $content .= '<p>' . e((string)$category['description']) . '</p>';
         }
-        $content .= '<span class="archive-count">' . $total . ' artikel</span></header>';
+        $content .= '<span class="archive-count">' . $total . ' ' . e(__('articles')) . '</span></header>';
         $content .= (new \App\Theme\Ui(Theme::instance(), []))->postGrid($posts, 'grid');
+        $outOfRange = $this->pageOutOfRange($current, $perPage, $total);
+        if ($outOfRange !== null) { return $outOfRange; }
         $content .= $this->pager($current, (int)ceil(max(1, $total) / $perPage));
-        $breadcrumbs = [['name' => 'Beranda', 'url' => url()], ['name' => $category['name'], 'url' => category_url($category)]];
+        $breadcrumbs = [['name' => __('home'), 'url' => url()], ['name' => $category['name'], 'url' => category_url($category)]];
         return $this->renderTheme([
             'route' => 'category',
             'slug' => $category['slug'],
@@ -408,6 +446,68 @@ final class FrontController
         ]);
     }
 
+    private function tag(array $params): string
+    {
+        $slug = trim((string)($params['slug'] ?? ''));
+        if ($slug === '') {
+            return $this->search();
+        }
+        // Tags share the archive shell with categories.
+        $tag = Taxonomy::tagBySlug($slug);
+        if (!$tag) {
+            return $this->notFound();
+        }
+        $perPage = max(1, min(50, Settings::int('posts_per_page', 9)));
+        $current = max(1, (int)($_GET['page'] ?? 1));
+        $filters = ['status' => 'published', 'tag_id' => (int)$tag['id']];
+        $posts = Post::query($filters, $perPage, ($current - 1) * $perPage);
+        $total = Post::count($filters);
+        $label = mb_convert_case((string)$tag['name'], MB_CASE_TITLE, 'UTF-8');
+        $content = '<header class="archive-header"><span class="eyebrow">' . e(__('tag')) . '</span><h1>' . e($label) . '</h1>';
+        if (!empty($tag['description'])) {
+            $content .= '<p>' . e((string)$tag['description']) . '</p>';
+        }
+        $content .= '<span class="archive-count">' . $total . ' ' . e(__('articles')) . '</span></header>';
+        $content .= (new \App\Theme\Ui(Theme::instance(), []))->postGrid($posts, 'grid');
+        $outOfRange = $this->pageOutOfRange($current, $perPage, $total);
+        if ($outOfRange !== null) { return $outOfRange; }
+        $content .= $this->pager($current, (int)ceil(max(1, $total) / $perPage));
+        return $this->renderTheme([
+            'route' => 'tag',
+            'slug' => $slug,
+            'content' => $content,
+            'breadcrumbs' => [['name' => __('home'), 'url' => url()], ['name' => $label, 'url' => url('tag/' . rawurlencode($slug))]],
+            'meta' => Seo::meta([
+                'title' => $label,
+                'description' => __('tag') . ' ' . $label,
+                'canonical' => url('tag/' . rawurlencode($slug)),
+                'robots' => 'index,follow',
+            ]),
+        ]);
+    }
+
+    /**
+     * Persist the visitor language choice and return them to the page they
+     * came from (falling back to the home page).
+     */
+    private function language(array $params): string
+    {
+        $code = \App\Core\Lang::setLocale((string)($params['code'] ?? 'id'));
+        $referer = (string)($_SERVER['HTTP_REFERER'] ?? '');
+        $target = url();
+        if ($referer !== '') {
+            $host = (string)(parse_url($referer, PHP_URL_HOST) ?? '');
+            $self = (string)(parse_url(base_url(), PHP_URL_HOST) ?? '');
+            if ($host !== '' && $host === $self) {
+                $target = $referer;
+            }
+        }
+        if (!headers_sent()) {
+            header('Location: ' . $target, true, 302);
+        }
+        return '';
+    }
+
     private function search(): string
     {
         $term = trim((string)($_GET['q'] ?? ''));
@@ -420,13 +520,15 @@ final class FrontController
             $total = Post::count(['status' => 'published', 'search' => $term]);
         }
         $content = '<div class="search-page"><form class="search-form" action="' . e(url('search')) . '" method="get" role="search">'
-            . '<input type="search" name="q" value="' . e($term) . '" placeholder="Cari artikel, topik, atau kata kunci…" aria-label="Kata kunci" autofocus>'
-            . '<button type="submit">Cari</button></form>';
+            . '<input type="search" name="q" value="' . e($term) . '" placeholder="' . e(__('search_keywords')) . '" aria-label="' . e(__('keywords')) . '" autofocus>'
+            . '<button type="submit">' . e(__('search')) . '</button></form>';
         if ($term === '') {
-            $content .= (new \App\Theme\Ui(Theme::instance(), []))->emptyState('Masukkan kata kunci untuk mulai mencari.');
+            $content .= (new \App\Theme\Ui(Theme::instance(), []))->emptyState(__('enter_keyword'));
         } else {
-            $content .= '<p class="search-summary">' . $total . ' hasil untuk <strong>“' . e($term) . '”</strong></p>';
+            $content .= '<p class="search-summary">' . e(__('results_for', ['total' => $total, 'term' => $term])) . '</p>';
             $content .= (new \App\Theme\Ui(Theme::instance(), []))->postGrid($posts, 'list');
+        $outOfRange = $this->pageOutOfRange($current, $perPage, $total);
+        if ($outOfRange !== null) { return $outOfRange; }
             $content .= $this->pager($current, (int)ceil(max(1, $total) / $perPage));
         }
         $content .= '</div>';
@@ -435,7 +537,7 @@ final class FrontController
             'content' => $content,
             'context' => ['route' => 'search'],
             'meta' => Seo::meta([
-                'title' => $term !== '' ? 'Hasil pencarian: ' . $term : 'Pencarian',
+                'title' => $term !== '' ? __('search_results') . ': ' . $term : __('searching'),
                 'description' => 'Hasil pencarian untuk ' . $term,
                 'canonical' => url('search?q=' . rawurlencode($term)),
                 'robots' => 'noindex,follow',
@@ -454,7 +556,7 @@ final class FrontController
         $author = null;
         foreach ($authors as $candidate) {
             $name = (string)($candidate['display_name'] ?: $candidate['username']);
-            if (App\Core\Slug::make($name) === $slug) {
+            if (\App\Core\Slug::make($name) === $slug) {
                 $author = $candidate;
                 break;
             }
@@ -468,12 +570,14 @@ final class FrontController
         $total = Post::count(['status' => 'published', 'author_id' => (int)$author['id']]);
         $name = (string)($author['display_name'] ?: $author['username']);
         $content = '<header class="archive-header author-header"><div class="author-avatar">' . e(mb_substr($name, 0, 1)) . '</div>'
-            . '<span class="eyebrow">Penulis</span><h1>' . e($name) . '</h1>'
-            . '<p>' . e((string)($author['bio'] ?: 'Penulis di ' . Settings::get('site_name') . '.')) . '</p>'
-            . '<span class="archive-count">' . $total . ' artikel</span></header>';
+            . '<span class="eyebrow">' . e(__('author')) . '</span><h1>' . e($name) . '</h1>'
+            . '<p>' . e((string)($author['bio'] ?: __('author_bio', ['site' => Settings::get('site_name')]))) . '</p>'
+            . '<span class="archive-count">' . $total . ' ' . e(__('articles')) . '</span></header>';
         $content .= (new \App\Theme\Ui(Theme::instance(), []))->postGrid($posts, 'grid');
+        $outOfRange = $this->pageOutOfRange($current, $perPage, $total);
+        if ($outOfRange !== null) { return $outOfRange; }
         $content .= $this->pager($current, (int)ceil(max(1, $total) / $perPage));
-        $breadcrumbs = [['name' => 'Beranda', 'url' => url()], ['name' => $name, 'url' => Helpers::authorUrl($name)]];
+        $breadcrumbs = [['name' => __('home'), 'url' => url()], ['name' => $name, 'url' => Helpers::authorUrl($name)]];
         return $this->renderTheme([
             'route' => 'author',
             'slug' => $slug,
@@ -496,22 +600,81 @@ final class FrontController
         $month = (int)($params['month'] ?? 0);
         $perPage = max(1, min(50, Settings::int('posts_per_page', 9)));
         $current = max(1, (int)($_GET['page'] ?? 1));
+        if ($year <= 0 || $month < 1 || $month > 12) {
+            return $this->archiveIndex($current, $perPage);
+        }
         $filters = ['status' => 'published'];
         $monthKey = sprintf('%04d-%02d', $year, $month);
         $posts = Post::query($filters + ['month' => $monthKey], $perPage, ($current - 1) * $perPage);
         $total = Post::count($filters + ['month' => $monthKey]);
-        $label = date('F Y', mktime(0, 0, 0, $month, 1, $year));
-        $content = '<header class="archive-header"><span class="eyebrow">Arsip</span><h1>' . e($label) . '</h1>'
-            . '<span class="archive-count">' . $total . ' artikel</span></header>';
+        $label = \App\Core\Helpers::date(date('Y-m-d H:i:s', mktime(0, 0, 0, $month, 1, $year)), 'F Y');
+        $content = '<header class="archive-header"><span class="eyebrow">' . e(__('archive')) . '</span><h1>' . e($label) . '</h1>'
+            . '<span class="archive-count">' . $total . ' ' . e(__('articles')) . '</span></header>';
         $content .= (new \App\Theme\Ui(Theme::instance(), []))->postGrid($posts, 'grid');
+        $outOfRange = $this->pageOutOfRange($current, $perPage, $total);
+        if ($outOfRange !== null) { return $outOfRange; }
         $content .= $this->pager($current, (int)ceil(max(1, $total) / $perPage));
         return $this->renderTheme([
             'route' => 'archive',
             'content' => $content,
             'meta' => Seo::meta([
-                'title' => 'Arsip ' . $label,
-                'description' => 'Artikel dalam arsip ' . $label,
+                'title' => __('archive') . ' ' . $label,
+                'description' => __('archive') . ' ' . $label,
                 'canonical' => url('archive/' . $year . '/' . str_pad((string)$month, 2, '0', STR_PAD_LEFT)),
+                'robots' => 'index,follow',
+            ]),
+        ]);
+    }
+
+    /**
+     * Month-by-month archive index (/archive). Lists every month that has
+     * published posts, newest first, plus the latest posts below it.
+     */
+    private function archiveIndex(int $current, int $perPage): string
+    {
+        $rows = Database::fetchAll(
+            "SELECT DATE_FORMAT(published_at, '%Y-%m') AS ym, COUNT(*) AS total
+             FROM posts WHERE blog_id = ? AND status = 'published' AND published_at IS NOT NULL
+             GROUP BY ym ORDER BY ym DESC",
+            [Context::blogId()]
+        );
+        $groups = [];
+        foreach ($rows as $row) {
+            $ym = (string)$row['ym'];
+            [$y, $m] = array_map('intval', explode('-', $ym) + [0, 0]);
+            $groups[$y][] = ['month' => $m, 'total' => (int)$row['total'], 'url' => url('archive/' . $y . '/' . str_pad((string)$m, 2, '0', STR_PAD_LEFT))];
+        }
+        $content = '<header class="archive-header"><span class="eyebrow">' . e(__('archive')) . '</span><h1>' . e(__('all_articles')) . '</h1>'
+            . '<span class="archive-count">' . (int)Post::count(['status' => 'published']) . ' ' . e(__('articles')) . '</span></header>';
+        if ($groups === []) {
+            $content .= (new \App\Theme\Ui(Theme::instance(), []))->emptyState(__('no_posts'));
+        } else {
+            $content .= '<div class="archive-months">';
+            foreach ($groups as $y => $months) {
+                $content .= '<section class="archive-year"><h2>' . (int)$y . '</h2><ul class="archive-month-list">';
+                foreach ($months as $entry) {
+                    $label = \App\Core\Helpers::date(date('Y-m-d H:i:s', mktime(0, 0, 0, $entry['month'], 1, (int)$y)), 'F');
+                    $content .= '<li><a href="' . e($entry['url']) . '">' . e($label) . '</a>'
+                        . '<span class="pill">' . (int)$entry['total'] . '</span></li>';
+                }
+                $content .= '</ul></section>';
+            }
+            $content .= '</div>';
+            $posts = Post::query(['status' => 'published'], $perPage, ($current - 1) * $perPage);
+            $total = Post::count(['status' => 'published']);
+            $content .= '<div class="section-heading"><h2>' . e(__('latest_articles')) . '</h2></div>';
+            $content .= (new \App\Theme\Ui(Theme::instance(), []))->postGrid($posts, 'grid');
+        $outOfRange = $this->pageOutOfRange($current, $perPage, $total);
+        if ($outOfRange !== null) { return $outOfRange; }
+            $content .= $this->pager($current, (int)ceil(max(1, $total) / $perPage));
+        }
+        return $this->renderTheme([
+            'route' => 'archive',
+            'content' => $content,
+            'meta' => Seo::meta([
+                'title' => __('archive') . ' — ' . Settings::get('site_name'),
+                'description' => __('archive') . ' ' . Settings::get('site_name'),
+                'canonical' => url('archive'),
                 'robots' => 'index,follow',
             ]),
         ]);
@@ -546,21 +709,26 @@ final class FrontController
 
     private function newsletter(): string
     {
-        $message = '';
+        $code = '';
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             try {
                 \App\Core\Csrf::verify();
                 $result = Newsletter::subscribe((string)$_POST['email'], (string)($_POST['name'] ?? ''));
-                $message = $result['message'];
+                $code = (string)$result['message'];
             } catch (\Throwable $e) {
-                $message = $e->getMessage();
+                $code = 'newsletter_error';
             }
         }
         if (!headers_sent()) {
             $back = $_SERVER['HTTP_REFERER'] ?? url();
             $safe = str_starts_with($back, base_url()) ? $back : url();
-            header('Location: ' . $safe . (str_contains($safe, '?') ? '&' : '?') . 'newsletter=' . rawurlencode($message));
-            http_response_code(303);
+            // Strip any old status, keep other query params intact.
+            $parts = parse_url($safe);
+            parse_str((string)($parts['query'] ?? ''), $query);
+            $query['newsletter'] = $code;
+            $target = ($parts['scheme'] ?? '') !== '' ? ($parts['scheme'] . '://' . ($parts['host'] ?? '')) : '';
+            $basePath = (string)($parts['path'] ?? '/');
+            header('Location: ' . ($target !== '' ? $target : '') . $basePath . ($query !== [] ? '?' . http_build_query($query) : '') . (isset($parts['fragment']) ? '#' . $parts['fragment'] : ''), true, 303);
         }
         return '';
     }
@@ -581,17 +749,20 @@ final class FrontController
                     'body' => (string)($_POST['body'] ?? ''),
                     'parent_id' => (int)($_POST['parent_id'] ?? 0),
                 ]);
-                $notice = 'Komentar terkirim dan menunggu moderasi.';
+                $moderated = (bool)Settings::get('comment_moderation', '1');
+                $notice = $moderated ? __('comment_pending') : __('comment_thanks');
+                // Refresh the list so an auto-approved comment shows at once.
+                $comments = Comment::forPost((int)$post['id'], Settings::int('comments_per_page', 100));
             } catch (\Throwable $e) {
                 $error = $e->getMessage();
             }
         }
-        $out = '<section class="comments" id="comments"><h2>Komentar (' . count($comments) . ')</h2>';
+        $out = '<section class="comments" id="comments"><h2>' . e(__('comments')) . ' (' . count($comments) . ')</h2>';
         if ($notice !== '') {
             $out .= '<p class="comment-notice">' . e($notice) . '</p>';
         }
         if (!$comments) {
-            $out .= '<p class="comment-empty">Belum ada komentar. Jadilah yang pertama.</p>';
+            $out .= '<p class="comment-empty">' . e(__('no_comments')) . '</p>';
         } else {
             $out .= '<div class="comment-list">';
             foreach ($comments as $comment) {
@@ -604,14 +775,14 @@ final class FrontController
         }
         if ($open) {
             $out .= '<form class="comment-form" method="post" action="' . e(post_url($post)) . '#comments">' . \App\Core\Csrf::field()
-                . '<h3>Tinggalkan komentar</h3>'
+                . '<h3>' . e(__('leave_comment')) . '</h3>'
                 . ($error !== '' ? '<p class="form-error">' . e($error) . '</p>' : '')
-                . '<div class="form-row"><input name="author" placeholder="Nama" required maxlength="120">'
-                . '<input name="email" type="email" placeholder="Email" required maxlength="190"></div>'
-                . '<textarea name="body" rows="5" placeholder="Tulis komentar…" required maxlength="8000"></textarea>'
-                . '<button type="submit" name="comment_submit" value="1">Kirim komentar</button></form>';
+                . '<div class="form-row"><input name="author" placeholder="' . e(__('comment_name')) . '" required maxlength="120">'
+                . '<input name="email" type="email" placeholder="' . e(__('comment_email')) . '" required maxlength="190"></div>'
+                . '<textarea name="body" rows="5" placeholder="' . e(__('comment_body')) . '…" required maxlength="8000"></textarea>'
+                . '<button type="submit" name="comment_submit" value="1">' . e(__('post_comment')) . '</button></form>';
         } else {
-            $out .= '<p class="comment-closed">Komentar ditutup untuk artikel ini.</p>';
+            $out .= '<p class="comment-closed">' . e(__('comment_closed')) . '</p>';
         }
         return $out . '</section>';
     }
@@ -621,22 +792,37 @@ final class FrontController
         return (new \App\Theme\Ui(Theme::instance(), []))->pagination($current, $total);
     }
 
+    /**
+     * Returns a 404 body when the requested page is past the last one, so
+     * /page/999 and ?page=999 never render an empty listing with status 200.
+     *
+     * @return string|null null when the page is in range or unpaginated
+     */
+    private function pageOutOfRange(int $current, int $perPage, int $total): ?string
+    {
+        if ($total <= 0) {
+            return null;
+        }
+        $totalPages = (int)ceil($total / max(1, $perPage));
+        return $current > $totalPages ? $this->notFound() : null;
+    }
+
     private function notFound(): string
     {
         if (!headers_sent()) {
             http_response_code(404);
         }
-        $content = '<div class="error-page"><span class="error-code">404</span><h1>Halaman tidak ditemukan</h1>'
-            . '<p>URL mungkin salah, atau konten telah dipindahkan.</p>'
+        $content = '<div class="error-page"><span class="error-code">404</span><h1>' . e(__('not_found_title')) . '</h1>'
+            . '<p>' . e(__('not_found_text')) . '</p>'
             . '<form class="error-search" action="' . e(url('search')) . '" method="get">'
-            . '<input type="search" name="q" placeholder="Cari di blog ini…" aria-label="Cari">'
-            . '<button type="submit">Cari</button></form>'
-            . '<a class="btn btn-primary" href="' . e(url()) . '">Kembali ke beranda</a></div>';
+            . '<input type="search" name="q" placeholder="' . e(__('not_found_search')) . '" aria-label="' . e(__('search')) . '">'
+            . '<button type="submit">' . e(__('search')) . '</button></form>'
+            . '<a class="btn btn-primary" href="' . e(url()) . '">' . e(__('back_to_home')) . '</a></div>';
         return $this->renderTheme([
             'route' => 'not-found',
             'content' => $content,
             'meta' => Seo::meta([
-                'title' => 'Halaman tidak ditemukan',
+                'title' => __('not_found_title'),
                 'robots' => 'noindex,nofollow',
                 'canonical' => url(),
             ]),
@@ -645,8 +831,8 @@ final class FrontController
 
     private function maintenance(): string
     {
-        $content = '<div class="error-page"><span class="error-code">503</span><h1>Blog sedang dalam pemeliharaan</h1>'
-            . '<p>Kami akan segera kembali. Terima kasih atas kesabaran Anda.</p></div>';
+        $content = '<div class="error-page"><span class="error-code">503</span><h1>' . e(__('maintenance_title')) . '</h1>'
+            . '<p>' . e(__('maintenance_text')) . '</p></div>';
         return $this->renderTheme([
             'route' => 'not-found',
             'content' => $content,

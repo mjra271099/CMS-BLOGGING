@@ -584,10 +584,19 @@ final class Widget
 
     private static function renderNewsletter(array $config): string
     {
-        return '<div class="widget-content newsletter"><form method="post" action="' . e(url('newsletter')) . '" class="newsletter-form">'
+        // The /newsletter handler redirects back with ?newsletter=<key>; show
+        // the matching message above the form so the visitor gets feedback.
+        $notice = (string)($_GET['newsletter'] ?? '');
+        $allowed = ['newsletter_ok' => 'ok', 'newsletter_already' => 'info', 'newsletter_error' => 'error'];
+        $banner = '';
+        if ($notice !== '' && isset($allowed[$notice])) {
+            $banner = '<p class="newsletter-notice ' . $allowed[$notice] . '">' . e(__($notice)) . '</p>';
+        }
+        return '<div class="widget-content newsletter">' . $banner
+            . '<form method="post" action="' . e(url('newsletter')) . '" class="newsletter-form">'
             . Csrf::field()
-            . '<input type="email" name="email" placeholder="Email Anda" required autocomplete="email">'
-            . '<button type="submit">' . e((string)($config['button'] ?? 'Berlangganan')) . '</button>'
+            . '<input type="email" name="email" placeholder="' . e(__('email_address')) . '" required autocomplete="email">'
+            . '<button type="submit">' . e((string)($config['button'] ?? __('subscribe'))) . '</button>'
             . '<small>' . e((string)($config['note'] ?? '')) . '</small></form></div>';
     }
 
@@ -714,7 +723,7 @@ final class Widget
     {
         $limit = max(3, min(60, (int)($config['limit'] ?? 20)));
         $tags = Database::fetchAll(
-            "SELECT t.name, COUNT(pt.post_id) AS total FROM tags t
+            "SELECT t.name, t.slug, COUNT(pt.post_id) AS total FROM tags t
              JOIN post_tags pt ON pt.tag_id = t.id JOIN posts p ON p.id = pt.post_id AND p.status = 'published'
              WHERE t.blog_id = ? GROUP BY t.id ORDER BY total DESC LIMIT {$limit}",
             [Context::blogId()]
@@ -725,7 +734,7 @@ final class Widget
         $output = '<div class="widget-content tag-cloud">';
         foreach ($tags as $tag) {
             $size = min(1.6, 0.9 + ((int)$tag['total'] / 10));
-            $output .= '<a href="' . e(url('search?q=' . rawurlencode((string)$tag['name']))) . '" style="font-size:' . number_format($size, 2, '.', '') . 'em">' . e($tag['name']) . '</a>';
+            $output .= '<a href="' . e(url('tag/' . rawurlencode((string)($tag['slug'] ?? $tag['name'])))) . '" style="font-size:' . number_format($size, 2, '.', '') . 'em">' . e($tag['name']) . '</a>';
         }
         return $output . '</div>';
     }
@@ -736,9 +745,9 @@ final class Widget
         $comments = (int)Database::value("SELECT COUNT(*) FROM comments WHERE blog_id = ? AND status = 'approved'", [Context::blogId()]);
         $categories = (int)Database::value('SELECT COUNT(*) FROM categories WHERE blog_id = ?', [Context::blogId()]);
         return '<div class="widget-content stat-grid">'
-            . '<div><strong>' . $posts . '</strong><span>Artikel</span></div>'
-            . '<div><strong>' . $categories . '</strong><span>Kategori</span></div>'
-            . '<div><strong>' . $comments . '</strong><span>Komentar</span></div></div>';
+            . '<div><strong>' . $posts . '</strong><span>' . e(__('articles')) . '</span></div>'
+            . '<div><strong>' . $categories . '</strong><span>' . e(__('categories')) . '</span></div>'
+            . '<div><strong>' . $comments . '</strong><span>' . e(__('comments')) . '</span></div></div>';
     }
 
     private static function renderTicker(array $config, string $content): string

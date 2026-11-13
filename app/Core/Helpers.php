@@ -55,7 +55,28 @@ final class Helpers
     public static function date(string $datetime, string $format = 'd M Y'): string
     {
         $timestamp = self::timestamp($datetime);
-        return $timestamp > 0 ? date($format, $timestamp) : '';
+        if ($timestamp <= 0) {
+            return '';
+        }
+        $formatted = date($format, $timestamp);
+        // Localise month names for the two supported front-end languages.
+        $locale = \App\Core\Lang::locale();
+        if ($locale !== 'en') {
+            $months = \App\Core\Lang::catalog($locale)['months'] ?? [];
+            $short = \App\Core\Lang::catalog($locale)['months_short'] ?? [];
+            if ($months !== []) {
+                $long = [];
+                $shortMap = [];
+                for ($i = 1; $i <= 12; $i++) {
+                    $long[date('F', mktime(0, 0, 0, $i, 1))] = (string)($months[$i - 1] ?? '');
+                    $shortMap[date('M', mktime(0, 0, 0, $i, 1))] = (string)($short[$i - 1] ?? '');
+                }
+                $formatted = strtr($formatted, $long);
+                // Only swap abbreviations as whole words (d M Y, etc.).
+                $formatted = preg_replace_callback('/\b(' . implode('|', array_map('preg_quote', array_keys($shortMap))) . ')\b/', static fn(array $m): string => $shortMap[$m[1]], $formatted) ?? $formatted;
+            }
+        }
+        return $formatted;
     }
 
     public static function isoDate(string $datetime): string
@@ -72,23 +93,23 @@ final class Helpers
         }
         $diff = time() - $timestamp;
         if ($diff < 60) {
-            return 'baru saja';
+            return __('just_now');
         }
         $units = [
-            31536000 => 'tahun',
-            2592000 => 'bulan',
-            604800 => 'minggu',
-            86400 => 'hari',
-            3600 => 'jam',
-            60 => 'menit',
+            31536000 => 'year_short',
+            2592000 => 'month_short',
+            604800 => 'week_short',
+            86400 => 'day_short',
+            3600 => 'hour_short',
+            60 => 'minute_short',
         ];
-        foreach ($units as $seconds => $label) {
+        foreach ($units as $seconds => $key) {
             $value = (int)floor($diff / $seconds);
             if ($value > 0) {
-                return $value . ' ' . $label . ' lalu';
+                return __('ago', ['value' => $value, 'unit' => __($key)]);
             }
         }
-        return 'baru saja';
+        return __('just_now');
     }
 
     public static function safeHref(string $href): string

@@ -284,6 +284,18 @@ if (!function_exists('reading_time')) {
     }
 }
 
+if (!function_exists('__')) {
+    /**
+     * Translate a front-end string (see app/Core/Lang.php).
+     *
+     * @param array<string, string|int> $replace
+     */
+    function __(string $key, array $replace = []): string
+    {
+        return \App\Core\Lang::get($key, $replace);
+    }
+}
+
 if (!function_exists('str_limit')) {
     function str_limit(?string $value, int $max): string
     {
