@@ -71,6 +71,12 @@ button, input, select, textarea { font: inherit; }
 button { cursor: pointer; }
 img { max-width: 100%; }
 
+/* The `hidden` attribute must always win. Form controls below set
+   `display: block`, and author styles outrank the UA `[hidden]` rule, which
+   previously left JS-hidden textareas (the editor's raw HTML fallback and the
+   builder document) visible and stacked under the live UI. */
+[hidden] { display: none !important; }
+
 /* ==========================================================
    3. LOGIN PAGE
 ========================================================== */
