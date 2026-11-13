@@ -1127,6 +1127,13 @@ textarea:focus-visible {
     --admin-sidebar-collapsed: 76px;
     --admin-header-height: 64px;
 
+    /* Content measure: the admin stops stretching once it reaches this width
+       and centres instead, so ultra-wide monitors do not produce 2000px-wide
+       tables, inputs and text lines. The top bar uses the same measure, so its
+       controls stay aligned with the content column. */
+    --admin-content-max: 1720px;
+    --admin-pad-x: clamp(14px, 2vw, 30px);
+
     color-scheme: light;
 }
 
@@ -1433,7 +1440,9 @@ h1, h2, h3, h4, h5, h6 {
 .top {
     gap: var(--sp-3);
     min-height: var(--admin-header-height);
-    padding: 0 clamp(14px, 2vw, 28px);
+    /* Align the top-bar controls with the content column: on ultra-wide screens
+       the extra space is split evenly on both sides of the same measure. */
+    padding-inline: max(var(--admin-pad-x), calc((100% - var(--admin-content-max)) / 2 + var(--admin-pad-x)));
     background: color-mix(in srgb, var(--admin-surface) 90%, transparent);
     border-bottom: 1px solid var(--admin-border);
     box-shadow: var(--admin-shadow-sm);
@@ -1579,12 +1588,12 @@ h1, h2, h3, h4, h5, h6 {
 .user-menu-panel .danger-text { color: var(--admin-danger); }
 .user-menu-sep { height: 1px; margin: 4px 6px; background: var(--admin-border-light); }
 
-/* --- 39. CONTENT AREA (FULL WIDTH) ------------------------------ */
+/* --- 39. CONTENT AREA (FULL WIDTH, MEASURED ON ULTRA-WIDE) ------ */
 .main {
     width: 100%;
-    max-width: none;
-    margin: 0;
-    padding: var(--sp-6) clamp(14px, 2vw, 30px) var(--sp-8);
+    max-width: var(--admin-content-max);
+    margin-inline: auto;
+    padding: var(--sp-6) var(--admin-pad-x) var(--sp-8);
 }
 
 .breadcrumb {
@@ -1691,6 +1700,30 @@ h1, h2, h3, h4, h5, h6 {
 }
 .quick-action .qa-icon { display: inline-flex; color: var(--admin-text-muted); }
 .quick-action:hover .qa-icon { color: var(--admin-primary); }
+
+/* Quick actions inside the dashboard card form an even grid of equal chips at
+   every width instead of a flex row that wraps into uneven heights. */
+.card .quick-actions {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: var(--sp-3);
+}
+.card .quick-action {
+    flex: initial;
+    width: 100%;
+    min-width: 0;
+    min-height: 44px;
+    align-items: center;
+}
+@media (max-width: 1200px) {
+    .card .quick-actions { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+@media (max-width: 900px) {
+    .card .quick-actions { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 520px) {
+    .card .quick-actions { grid-template-columns: minmax(0, 1fr); }
+}
 
 /* --- 41. FORMS --------------------------------------------------- */
 label {
@@ -2022,6 +2055,12 @@ body.sidebar-collapsed .sidebar-user { justify-content: center; padding: 7px 0; 
 .sidebar-collapsed-toggle .sidebar-toggle { display: inline-flex; }
 
 /* --- 52. RESPONSIVE --------------------------------------------- */
+@media (max-width: 1240px) {
+    /* Four KPI cards stay on one row only while each card keeps a comfortable
+       width; below that the row becomes 2x2 instead of four cramped cards. */
+    .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
 @media (max-width: 1100px) {
     :root { --admin-sidebar-width: 228px; }
     .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -2066,7 +2105,7 @@ body.sidebar-collapsed .sidebar-user { justify-content: center; padding: 7px 0; 
 
 @media (max-width: 820px) {
     .top-search { display: none; }
-    .top { padding: 0 12px; }
+    .top { padding: 0 var(--sp-4); }
     .main { padding: var(--sp-5) var(--sp-4) var(--sp-7); }
     .dashboard-cols { grid-template-columns: 1fr; }
     .dashboard-grid { grid-template-columns: minmax(0, 1fr); }
@@ -2074,6 +2113,7 @@ body.sidebar-collapsed .sidebar-user { justify-content: center; padding: 7px 0; 
 
 @media (max-width: 640px) {
     :root { --admin-header-height: 58px; }
+    .top { padding: 0 var(--sp-3); }
     .user-menu .user-name { display: none; }
     .user-menu > summary { padding: 3px; }
     .top-actions { gap: 2px; }

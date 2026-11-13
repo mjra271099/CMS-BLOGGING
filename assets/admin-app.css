@@ -457,7 +457,7 @@ input.slug-input { min-height: 34px; padding: 5px 9px; font-size: 12px; }
 .widget-item .drag-handle { color: #94a3b8; font-size: 14px; letter-spacing: -2px; user-select: none; }
 .widget-main { flex: 1; min-width: 0; }
 .widget-main strong { display: block; font-size: 12.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.widget-main .muted { display: block; margin-top: 2px; font-size: 10.5px; }
+.widget-main .muted { display: block; margin-top: 2px; font-size: 10.5px; overflow-wrap: anywhere; }
 .widget-tools { display: flex; flex-wrap: wrap; gap: 4px; }
 .widget-tools form { display: inline; margin: 0; }
 .widget-tools button { min-height: 27px; padding: 3px 8px; font-size: 10.5px; }
