@@ -1,0 +1,195 @@
+[
+  {
+    "id": "Header1",
+    "type": "Header",
+    "title": "videy link lokal indo update (Header)",
+    "section": "header",
+    "section_class": "header",
+    "visible": true,
+    "locked": false,
+    "settings": {
+      "displayUrl": "",
+      "displayHeight": "0",
+      "sectionWidth": "-1",
+      "useImage": "false",
+      "shrinkToFit": "false",
+      "imagePlacement": "BEHIND",
+      "displayWidth": "0"
+    }
+  },
+  {
+    "id": "PageList1",
+    "type": "PageList",
+    "title": "Menu",
+    "section": "menu",
+    "section_class": "menu-section",
+    "visible": true,
+    "locked": false,
+    "settings": {
+      "pageListJson": "{\"home\":{\"href\":\"http://videylinklokalonly.blogspot.com/\",\"position\":0,\"title\":\"Beranda\"}}",
+      "homeTitle": "Beranda"
+    }
+  },
+  {
+    "id": "LinkList3",
+    "type": "LinkList",
+    "title": "Menu Tautan Kustom",
+    "section": "menu",
+    "section_class": "menu-section",
+    "visible": true,
+    "locked": false,
+    "settings": {}
+  },
+  {
+    "id": "BlogSearch1",
+    "type": "BlogSearch",
+    "title": "Search",
+    "section": "search",
+    "section_class": "search",
+    "visible": true,
+    "locked": false,
+    "settings": {}
+  },
+  {
+    "id": "HTML2",
+    "type": "HTML",
+    "title": "",
+    "section": "top-banner",
+    "section_class": "top-banner",
+    "visible": true,
+    "locked": false,
+    "settings": {
+      "content": "<style>\n      .vdey-marquee-wrap {\n        position: relative;\n        overflow: hidden;\n        margin: 10px 0;\n        padding: 10px 0;\n        border: 1px solid #e2e8f0;\n        border-radius: 1px;\n        background: #f8fafc;\n        font-family: system-ui, -apple-system, \"Segoe UI\", sans-serif;\n      }\n\n      .vdey-marquee-wrap::before,\n      .vdey-marquee-wrap::after {\n        position: absolute;\n        z-index: 1;\n        top: 0;\n        bottom: 0;\n        width: 28px;\n        content: \"\";\n        pointer-events: none;\n      }\n\n      .vdey-marquee-wrap::before {\n        left: 0;\n        background: linear-gradient(to right, #f8fafc, transparent);\n      }\n\n      .vdey-marquee-wrap::after {\n        right: 0;\n        background: linear-gradient(to left, #f8fafc, transparent);\n      }\n\n      .vdey-marquee-track,\n      .vdey-marquee-group {\n        display: flex;\n        align-items: center;\n        width: max-content;\n      }\n\n      .vdey-marquee-track {\n        animation: vdey-scroll 34s linear infinite;\n        will-change: transform;\n      }\n\n      .vdey-marquee-group {\n        gap: 10px;\n        padding: 0 5px;\n      }\n\n      .vdey-marquee-wrap:hover .vdey-marquee-track,\n      .vdey-marquee-wrap:focus-within .vdey-marquee-track {\n        animation-play-state: paused;\n      }\n\n      .vdey-marquee-track a {\n        display: inline-flex;\n        align-items: center;\n        gap: 8px;\n        padding: 9px 14px;\n        border: 1px solid #e2e8f0;\n        border-radius: 9px;\n        background: #fff;\n        box-shadow: 0 1px 3px rgb(15 23 42 / 5%);\n        color: #334155;\n        font-size: 13px;\n        font-weight: 600;\n        line-height: 1.2;\n        text-decoration: none;\n        white-space: nowrap;\n        transition: border-color 160ms ease, color 160ms ease, box-shadow 160ms ease;\n      }\n\n      .vdey-marquee-track a:hover,\n      .vdey-marquee-track a:focus-visible {\n        border-color: #93c5fd;\n        color: #1d4ed8;\n        box-shadow: 0 2px 8px rgb(37 99 235 / 10%);\n        outline: none;\n      }\n\n      .vdey-marquee-play {\n        color: #3b82f6;\n        font-size: 10px;\n      }\n\n      @keyframes vdey-scroll {\n        from { transform: translateX(0); }\n        to { transform: translateX(-50%); }\n      }\n\n      @media (max-width: 480px) {\n        .vdey-marquee-track { animation-duration: 27s; }\n        .vdey-marquee-track a { padding: 8px 11px; font-size: 12px; }\n      }\n\n      @media (prefers-reduced-motion: reduce) {\n        .vdey-marquee-wrap { overflow-x: auto; }\n        .vdey-marquee-track { animation: none; }\n      }\n    </style>\n<div class=\"vdey-marquee-wrap\" role=\"region\" aria-label=\"Topik populer V-DEY\">\n      <div class=\"vdey-marquee-track\">\n        <div class=\"vdey-marquee-group\">\n          <a href=\"https://v-dey.com\" target=\"_blank\" rel=\"noopener noreferrer\"><span class=\"vdey-marquee-play\" aria-hidden=\"true\">▶</span>Viral Terbaru</a>\n          <a href=\"https://v-dey.com\" target=\"_blank\" rel=\"noopener noreferrer\"><span class=\"vdey-marquee-play\" aria-hidden=\"true\">▶</span>Ketahuan</a>\n          <a href=\"https://v-dey.com\" target=\"_blank\" rel=\"noopener noreferrer\"><span class=\"vdey-marquee-play\" aria-hidden=\"true\">▶</span>Digrebek</a>\n          <a href=\"https://v-dey.com\" target=\"_blank\" rel=\"noopener noreferrer\"><span class=\"vdey-marquee-play\" aria-hidden=\"true\">▶</span>Drama Mantan</a>\n          <a href=\"https://v-dey.com\" target=\"_blank\" rel=\"noopener noreferrer\"><span class=\"vdey-marquee-play\" aria-hidden=\"true\">▶</span>VC &amp; OmeTV</a>\n          <a href=\"https://v-dey.com\" target=\"_blank\" rel=\"noopener noreferrer\"><span class=\"vdey-marquee-play\" aria-hidden=\"true\">▶</span>Jepang</a>\n          <a href=\"https://v-dey.com\" target=\"_blank\" rel=\"noopener noreferrer\"><span class=\"vdey-marquee-play\" aria-hidden=\"true\">▶</span>JAV</a>\n          <a href=\"https://v-dey.com\" target=\"_blank\" rel=\"noopener noreferrer\"><span class=\"vdey-marquee-play\" aria-hidden=\"true\">▶</span>Momen Terekam</a>\n          <a href=\"https://v-dey.com\" target=\"_blank\" rel=\"noopener noreferrer\"><span class=\"vdey-marquee-play\" aria-hidden=\"true\">▶</span>Trending</a>\n        </div>\n        <div class=\"vdey-marquee-group\" aria-hidden=\"true\">\n          <a href=\"https://v-dey.com\" target=\"_blank\" rel=\"noopener noreferrer\"><span class=\"vdey-marquee-play\">▶</span>Viral Terbaru</a>\n          <a href=\"https://v-dey.com\" target=\"_blank\" rel=\"noopener noreferrer\"><span class=\"vdey-marquee-play\">▶</span>Ketahuan</a>\n          <a href=\"https://v-dey.com\" target=\"_blank\" rel=\"noopener noreferrer\"><span class=\"vdey-marquee-play\">▶</span>Digrebek</a>\n          <a href=\"https://v-dey.com\" target=\"_blank\" rel=\"noopener noreferrer\"><span class=\"vdey-marquee-play\">▶</span>Drama Mantan</a>\n          <a href=\"https://v-dey.com\" target=\"_blank\" rel=\"noopener noreferrer\"><span class=\"vdey-marquee-play\">▶</span>VC &amp; OmeTV</a>\n          <a href=\"https://v-dey.com\" target=\"_blank\" rel=\"noopener noreferrer\"><span class=\"vdey-marquee-play\">▶</span>Jepang</a>\n          <a href=\"https://v-dey.com\" target=\"_blank\" rel=\"noopener noreferrer\"><span class=\"vdey-marquee-play\">▶</span>JAV</a>\n          <a href=\"https://v-dey.com\" target=\"_blank\" rel=\"noopener noreferrer\"><span class=\"vdey-marquee-play\">▶</span>Momen Terekam</a>\n          <a href=\"https://v-dey.com\" target=\"_blank\" rel=\"noopener noreferrer\"><span class=\"vdey-marquee-play\">▶</span>Trending</a>\n        </div>\n      </div>\n    </div>"
+    }
+  },
+  {
+    "id": "FeaturedPost1",
+    "type": "FeaturedPost",
+    "title": "Artikel Unggulan",
+    "section": "featured",
+    "section_class": "featured-section",
+    "visible": true,
+    "locked": false,
+    "settings": {
+      "showSnippet": "true",
+      "showPostTitle": "true",
+      "postId": "0",
+      "showFirstImage": "true",
+      "useMostRecentPost": "true"
+    }
+  },
+  {
+    "id": "Blog1",
+    "type": "Blog",
+    "title": "Postingan Blog",
+    "section": "main",
+    "section_class": "main",
+    "visible": true,
+    "locked": true,
+    "settings": {
+      "showDateHeader": "true",
+      "showShareButtons": "false",
+      "authorLabel": "By",
+      "showCommentLink": "true",
+      "showAuthor": "true",
+      "style.unittype": "TextAndImage",
+      "reactionsLabel": "",
+      "showAuthorProfile": "false",
+      "style.layout": "1x1",
+      "showLabels": "true",
+      "showLocation": "false",
+      "showTimestamp": "true",
+      "postsPerAd": "1",
+      "showBacklinks": "false",
+      "showInlineAds": "false",
+      "showReactions": "false"
+    }
+  },
+  {
+    "id": "HTML1",
+    "type": "HTML",
+    "title": "",
+    "section": "middle-content",
+    "section_class": "middle-content",
+    "visible": true,
+    "locked": false,
+    "settings": {
+      "content": "<style>\n      .vdey-marquee-wrap {\n        position: relative;\n        overflow: hidden;\n        margin: 10px 0;\n        padding: 10px 0;\n        border: 1px solid #e2e8f0;\n        border-radius: 1px;\n        background: #f8fafc;\n        font-family: system-ui, -apple-system, \"Segoe UI\", sans-serif;\n      }\n\n      .vdey-marquee-wrap::before,\n      .vdey-marquee-wrap::after {\n        position: absolute;\n        z-index: 1;\n        top: 0;\n        bottom: 0;\n        width: 28px;\n        content: \"\";\n        pointer-events: none;\n      }\n\n      .vdey-marquee-wrap::before {\n        left: 0;\n        background: linear-gradient(to right, #f8fafc, transparent);\n      }\n\n      .vdey-marquee-wrap::after {\n        right: 0;\n        background: linear-gradient(to left, #f8fafc, transparent);\n      }\n\n      .vdey-marquee-track,\n      .vdey-marquee-group {\n        display: flex;\n        align-items: center;\n        width: max-content;\n      }\n\n      .vdey-marquee-track {\n        animation: vdey-scroll 34s linear infinite;\n        will-change: transform;\n      }\n\n      .vdey-marquee-group {\n        gap: 10px;\n        padding: 0 5px;\n      }\n\n      .vdey-marquee-wrap:hover .vdey-marquee-track,\n      .vdey-marquee-wrap:focus-within .vdey-marquee-track {\n        animation-play-state: paused;\n      }\n\n      .vdey-marquee-track a {\n        display: inline-flex;\n        align-items: center;\n        gap: 8px;\n        padding: 9px 14px;\n        border: 1px solid #e2e8f0;\n        border-radius: 9px;\n        background: #fff;\n        box-shadow: 0 1px 3px rgb(15 23 42 / 5%);\n        color: #334155;\n        font-size: 13px;\n        font-weight: 600;\n        line-height: 1.2;\n        text-decoration: none;\n        white-space: nowrap;\n        transition: border-color 160ms ease, color 160ms ease, box-shadow 160ms ease;\n      }\n\n      .vdey-marquee-track a:hover,\n      .vdey-marquee-track a:focus-visible {\n        border-color: #93c5fd;\n        color: #1d4ed8;\n        box-shadow: 0 2px 8px rgb(37 99 235 / 10%);\n        outline: none;\n      }\n\n      .vdey-marquee-play {\n        color: #3b82f6;\n        font-size: 10px;\n      }\n\n      @keyframes vdey-scroll {\n        from { transform: translateX(0); }\n        to { transform: translateX(-50%); }\n      }\n\n      @media (max-width: 480px) {\n        .vdey-marquee-track { animation-duration: 27s; }\n        .vdey-marquee-track a { padding: 8px 11px; font-size: 12px; }\n      }\n\n      @media (prefers-reduced-motion: reduce) {\n        .vdey-marquee-wrap { overflow-x: auto; }\n        .vdey-marquee-track { animation: none; }\n      }\n    </style>\n<div class=\"vdey-marquee-wrap\" role=\"region\" aria-label=\"Topik populer V-DEY\">\n      <div class=\"vdey-marquee-track\">\n        <div class=\"vdey-marquee-group\">\n          <a href=\"https://v-dey.com\" target=\"_blank\" rel=\"noopener noreferrer\"><span class=\"vdey-marquee-play\" aria-hidden=\"true\">▶</span>Viral Terbaru</a>\n          <a href=\"https://v-dey.com\" target=\"_blank\" rel=\"noopener noreferrer\"><span class=\"vdey-marquee-play\" aria-hidden=\"true\">▶</span>Ketahuan</a>\n          <a href=\"https://v-dey.com\" target=\"_blank\" rel=\"noopener noreferrer\"><span class=\"vdey-marquee-play\" aria-hidden=\"true\">▶</span>Digrebek</a>\n          <a href=\"https://v-dey.com\" target=\"_blank\" rel=\"noopener noreferrer\"><span class=\"vdey-marquee-play\" aria-hidden=\"true\">▶</span>Drama Mantan</a>\n          <a href=\"https://v-dey.com\" target=\"_blank\" rel=\"noopener noreferrer\"><span class=\"vdey-marquee-play\" aria-hidden=\"true\">▶</span>VC &amp; OmeTV</a>\n          <a href=\"https://v-dey.com\" target=\"_blank\" rel=\"noopener noreferrer\"><span class=\"vdey-marquee-play\" aria-hidden=\"true\">▶</span>Jepang</a>\n          <a href=\"https://v-dey.com\" target=\"_blank\" rel=\"noopener noreferrer\"><span class=\"vdey-marquee-play\" aria-hidden=\"true\">▶</span>JAV</a>\n          <a href=\"https://v-dey.com\" target=\"_blank\" rel=\"noopener noreferrer\"><span class=\"vdey-marquee-play\" aria-hidden=\"true\">▶</span>Momen Terekam</a>\n          <a href=\"https://v-dey.com\" target=\"_blank\" rel=\"noopener noreferrer\"><span class=\"vdey-marquee-play\" aria-hidden=\"true\">▶</span>Trending</a>\n        </div>\n        <div class=\"vdey-marquee-group\" aria-hidden=\"true\">\n          <a href=\"https://v-dey.com\" target=\"_blank\" rel=\"noopener noreferrer\"><span class=\"vdey-marquee-play\">▶</span>Viral Terbaru</a>\n          <a href=\"https://v-dey.com\" target=\"_blank\" rel=\"noopener noreferrer\"><span class=\"vdey-marquee-play\">▶</span>Ketahuan</a>\n          <a href=\"https://v-dey.com\" target=\"_blank\" rel=\"noopener noreferrer\"><span class=\"vdey-marquee-play\">▶</span>Digrebek</a>\n          <a href=\"https://v-dey.com\" target=\"_blank\" rel=\"noopener noreferrer\"><span class=\"vdey-marquee-play\">▶</span>Drama Mantan</a>\n          <a href=\"https://v-dey.com\" target=\"_blank\" rel=\"noopener noreferrer\"><span class=\"vdey-marquee-play\">▶</span>VC &amp; OmeTV</a>\n          <a href=\"https://v-dey.com\" target=\"_blank\" rel=\"noopener noreferrer\"><span class=\"vdey-marquee-play\">▶</span>Jepang</a>\n          <a href=\"https://v-dey.com\" target=\"_blank\" rel=\"noopener noreferrer\"><span class=\"vdey-marquee-play\">▶</span>JAV</a>\n          <a href=\"https://v-dey.com\" target=\"_blank\" rel=\"noopener noreferrer\"><span class=\"vdey-marquee-play\">▶</span>Momen Terekam</a>\n          <a href=\"https://v-dey.com\" target=\"_blank\" rel=\"noopener noreferrer\"><span class=\"vdey-marquee-play\">▶</span>Trending</a>\n        </div>\n      </div>\n    </div>"
+    }
+  },
+  {
+    "id": "Label1",
+    "type": "Label",
+    "title": "Labels",
+    "section": "middle-content",
+    "section_class": "middle-content",
+    "visible": true,
+    "locked": false,
+    "settings": {
+      "sorting": "ALPHA",
+      "display": "LIST",
+      "selectedLabelsList": "",
+      "showType": "ALL",
+      "showFreqNumbers": "false"
+    }
+  },
+  {
+    "id": "PopularPosts1",
+    "type": "PopularPosts",
+    "title": "Popular Posts",
+    "section": "sidebar",
+    "section_class": "sidebar",
+    "visible": true,
+    "locked": false,
+    "settings": {
+      "numItemsToShow": "6",
+      "showThumbnails": "true",
+      "showSnippets": "false",
+      "timeRange": "ALL_TIME"
+    }
+  },
+  {
+    "id": "Text1",
+    "type": "Text",
+    "title": "Tentang Kami",
+    "section": "footer-about",
+    "section_class": "footer-col",
+    "visible": true,
+    "locked": false,
+    "settings": {
+      "content": "V-Dey adalah tempat kumpulan video viral, trending, dan pilihan yang menarik untuk ditonton. Temukan berbagai koleksi video Videy terbaru dengan akses mudah, cepat, dan praktis. Update konten menarik setiap hari!"
+    }
+  },
+  {
+    "id": "Text2",
+    "type": "Text",
+    "title": "",
+    "section": "footer-links",
+    "section_class": "footer-col",
+    "visible": true,
+    "locked": false,
+    "settings": {
+      "content": "Hak cipta © 2026 V-dey.com"
+    }
+  },
+  {
+    "id": "LinkList1",
+    "type": "LinkList",
+    "title": "Tautan",
+    "section": "footer-links",
+    "section_class": "footer-col",
+    "visible": true,
+    "locked": false,
+    "settings": {}
+  },
+  {
+    "id": "LinkList2",
+    "type": "LinkList",
+    "title": "Media Sosial",
+    "section": "footer-social",
+    "section_class": "footer-col",
+    "visible": true,
+    "locked": false,
+    "settings": {}
+  }
+]

@@ -1,0 +1,775 @@
+/* ==========================================================
+   CMS ADAPTER CSS
+   Design System: Consistent, Responsive & Maintainable
+   ========================================================== */
+
+/* ----------------------------------------------------------
+   1. DESIGN TOKENS
+   ---------------------------------------------------------- */
+
+:root {
+  /* Color Scheme */
+  --cms-primary: #1a5fd0;
+  --cms-primary-hover: #1552b8;
+  --cms-primary-soft: #eef5ff;
+
+  --cms-secondary: #22a6b3;
+  --cms-success: #25d366;
+  --cms-social: #3b5998;
+
+  --cms-text: #222;
+  --cms-text-secondary: #667085;
+  --cms-text-muted: #888;
+  --cms-heading: #172033;
+
+  --cms-background: #fff;
+  --cms-surface: #f8faff;
+  --cms-surface-secondary: #e9eef5;
+
+  --cms-border: #d5dbe5;
+  --cms-border-light: #e8edf5;
+  --cms-border-soft: rgba(0, 0, 0, .08);
+
+  /* Typography */
+  --cms-font-family: inherit;
+  --cms-font-size-xs: 12px;
+  --cms-font-size-sm: 13px;
+  --cms-font-size-md: 14px;
+  --cms-font-size-base: 15px;
+  --cms-font-size-lg: 18px;
+  --cms-font-size-xl: 21px;
+
+  --cms-font-weight-normal: 400;
+  --cms-font-weight-medium: 500;
+  --cms-font-weight-semibold: 600;
+  --cms-font-weight-bold: 700;
+
+  --cms-line-height-tight: 1.35;
+  --cms-line-height-normal: 1.45;
+  --cms-line-height-relaxed: 1.6;
+
+  /* Spacing Scale */
+  --cms-space-1: 4px;
+  --cms-space-2: 6px;
+  --cms-space-3: 8px;
+  --cms-space-4: 10px;
+  --cms-space-5: 12px;
+  --cms-space-6: 14px;
+  --cms-space-7: 16px;
+  --cms-space-8: 18px;
+  --cms-space-9: 20px;
+  --cms-space-10: 24px;
+  --cms-space-11: 30px;
+  --cms-space-12: 36px;
+
+  /* Border Radius */
+  --cms-radius-sm: 4px;
+  --cms-radius-md: 5px;
+  --cms-radius-lg: 8px;
+  --cms-radius-pill: 99em;
+
+  /* Border */
+  --cms-border-width: 1px;
+
+  /* Shadows */
+  --cms-shadow-sm: 0 2px 6px rgba(31, 45, 61, .08);
+  --cms-shadow-md: 0 6px 16px rgba(31, 45, 61, .14);
+  --cms-shadow-lg: 0 10px 10px -10px rgba(0, 0, 0, .15);
+
+  /* Layout */
+  --cms-content-width: 768px;
+  --cms-page-gutter: 20px;
+
+  /* Component Dimensions */
+  --cms-header-height: 72px;
+  --cms-logo-size: 32px;
+  --cms-carousel-width: 280px;
+  --cms-carousel-height: 180px;
+  --cms-input-height: 42px;
+
+  /* Transitions */
+  --cms-transition-fast: .2s ease;
+}
+
+
+/* ----------------------------------------------------------
+   2. IMAGE & THUMBNAIL
+   ---------------------------------------------------------- */
+
+.first-thumb img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+#header img#logo {
+  width: var(--cms-logo-size);
+  height: var(--cms-logo-size);
+  float: left;
+  margin: 0 var(--cms-space-5) 0 0;
+  display: inline-block;
+  object-fit: contain;
+}
+
+.first-thumb .popular-fallback {
+  display: block;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, #4285f4, #7158d5);
+}
+
+
+/* ----------------------------------------------------------
+   3. POPULAR POSTS CAROUSEL
+   ---------------------------------------------------------- */
+
+.popular-carousel {
+  display: flex;
+  width: 100%;
+  overflow-x: auto;
+  overscroll-behavior-inline: contain;
+  scroll-snap-type: x mandatory;
+}
+
+.popular-carousel > a {
+  display: block;
+  flex: 0 0 var(--cms-carousel-width);
+  width: var(--cms-carousel-width);
+  height: var(--cms-carousel-height);
+  margin: 0 var(--cms-space-3);
+  position: relative;
+  scroll-snap-align: start;
+  border-radius: var(--cms-radius-sm);
+  overflow: hidden;
+  background: var(--cms-surface-secondary);
+  box-shadow: var(--cms-shadow-md);
+  color: #fff;
+}
+
+.popular-carousel > a > img,
+.popular-carousel > a > .popular-fallback {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.popular-carousel > a > .popular-title {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  width: 100%;
+  padding: var(--cms-space-12) var(--cms-space-6) var(--cms-space-6);
+  background: linear-gradient(
+    180deg,
+    rgba(13, 25, 43, 0),
+    rgba(13, 25, 43, .88)
+  );
+  color: #fff;
+  text-align: left;
+  font-size: var(--cms-font-size-base);
+  font-weight: var(--cms-font-weight-bold);
+  line-height: 1.4;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+}
+
+.popular-carousel > a > .popular-title p {
+  margin-top: var(--cms-space-1);
+  color: rgba(255, 255, 255, .86);
+  font-size: var(--cms-font-size-xs);
+  font-weight: var(--cms-font-weight-normal);
+  line-height: 1.45;
+}
+
+
+/* ----------------------------------------------------------
+   4. SOCIAL SHARE BUTTONS
+   ---------------------------------------------------------- */
+
+.share-but a {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 76px;
+  margin: 0 var(--cms-space-1);
+  padding: var(--cms-space-3) var(--cms-space-6);
+  border-radius: var(--cms-radius-pill);
+  background: var(--cms-social);
+  color: #fff;
+  font-size: var(--cms-font-size-sm);
+}
+
+.share-but a:nth-of-type(2) {
+  background: var(--cms-success);
+}
+
+
+/* ----------------------------------------------------------
+   5. COMMENT BUTTON
+   ---------------------------------------------------------- */
+
+.comment-submit {
+  border: 0;
+  border-radius: var(--cms-radius-md);
+  background: var(--cms-primary);
+  color: #fff;
+  padding: var(--cms-space-4) var(--cms-space-6);
+  cursor: pointer;
+}
+
+
+/* ----------------------------------------------------------
+   6. POST LABELS
+   ---------------------------------------------------------- */
+
+.post-labels .label-tag {
+  display: inline-block;
+  background: var(--cms-secondary);
+  color: #fff;
+  font-size: var(--cms-font-size-xs);
+  padding: var(--cms-space-1) var(--cms-space-3);
+  border-radius: var(--cms-radius-md);
+  margin: 0 var(--cms-space-1) 0 0;
+}
+
+
+/* ----------------------------------------------------------
+   7. WYSIWYG EDITOR
+   ---------------------------------------------------------- */
+
+.wysiwyg {
+  min-height: 360px;
+  padding: var(--cms-space-4);
+  border: var(--cms-border-width) solid #cbd2dc;
+  border-radius: var(--cms-radius-sm);
+  background: var(--cms-background);
+  overflow: auto;
+}
+
+.editor-toolbar {
+  display: flex;
+  gap: var(--cms-space-2);
+  flex-wrap: wrap;
+  margin: var(--cms-space-3) 0;
+}
+
+.editor-toolbar button {
+  min-width: 34px;
+  padding: var(--cms-space-2) var(--cms-space-4);
+}
+
+
+/* ----------------------------------------------------------
+   8. SHARED CONTENT WIDTH
+   Keep the original Blogger column width shared by the
+   header and page content.
+   ---------------------------------------------------------- */
+
+.header-batas,
+.amz-wrapper,
+.container {
+  width: calc(100% - 40px);
+  max-width: var(--cms-content-width);
+}
+
+.header-batas {
+  text-align: left;
+}
+
+
+/* ----------------------------------------------------------
+   9. HEADER LAYOUT
+   ---------------------------------------------------------- */
+
+.header-inner-wrap {
+  display: block;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--cms-space-8);
+  min-height: var(--cms-header-height);
+}
+
+#header {
+  float: none;
+  flex: 1 1 auto;
+  min-width: 0;
+  margin: var(--cms-space-8) 0;
+}
+
+#header-inner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  min-width: 0;
+}
+
+#header .titlewrapper {
+  float: none;
+  display: flex;
+  align-items: center;
+  min-width: 0;
+}
+
+#header .descriptionwrapper {
+  flex: 0 0 100%;
+  clear: none;
+}
+
+
+/* ----------------------------------------------------------
+   10. SOCIAL ICONS
+   ---------------------------------------------------------- */
+
+.social-iconic {
+  float: none;
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: var(--cms-space-1);
+  margin: 0;
+  overflow: visible;
+  justify-content: start;
+}
+
+.social-iconic a {
+  float: none;
+  margin: 0;
+}
+
+
+/* ----------------------------------------------------------
+   11. NAVIGATION
+   ---------------------------------------------------------- */
+
+#navigation,
+.main-nav {
+  width: 100%;
+  min-width: 0;
+}
+
+#navigation .menu {
+  float: none;
+  display: flex;
+  width: 100%;
+  align-items: stretch;
+  justify-content: center;
+}
+
+#navigation .menu li {
+  display: block;
+}
+
+
+/* ----------------------------------------------------------
+   12. POST CONTENT
+   ---------------------------------------------------------- */
+
+.post {
+  min-width: 0;
+}
+
+.first-thumb {
+  flex: none;
+}
+
+.first-thumb img,
+.first-thumb a {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.post-body {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.post-body video,
+.post-body iframe {
+  max-width: 100%;
+}
+
+.post-body table {
+  display: block;
+  max-width: 100%;
+  overflow-x: auto;
+}
+
+
+/* ----------------------------------------------------------
+   13. POPULAR CAROUSEL LAYOUT
+   ---------------------------------------------------------- */
+
+.popular-carousel {
+  align-items: stretch;
+  gap: 0;
+}
+
+.popular-carousel > a {
+  flex: 0 0 var(--cms-carousel-width);
+  max-width: calc(100% - 12px);
+  height: var(--cms-carousel-height);
+  margin: 0 var(--cms-space-2);
+}
+
+.popular-carousel > a > img {
+  object-fit: cover;
+}
+
+
+/* ----------------------------------------------------------
+   14. DISQUS COMMENTS
+   ---------------------------------------------------------- */
+
+#disqus_comments {
+  width: 100%;
+  min-width: 0;
+  padding: var(--cms-space-9);
+}
+
+#disqus_comments #comments > h2 {
+  margin: 0 0 var(--cms-space-8);
+  font-size: var(--cms-font-size-xl);
+  line-height: var(--cms-line-height-tight);
+}
+
+#disqus_comments .comment-empty {
+  margin: 0 0 var(--cms-space-8);
+  padding: var(--cms-space-5) var(--cms-space-6);
+  border: var(--cms-border-width) solid var(--cms-border-light);
+  border-radius: var(--cms-radius-md);
+  background: var(--cms-surface);
+  color: var(--cms-text-secondary);
+}
+
+#disqus_comments .comment-notice {
+  margin: 0 0 var(--cms-space-8);
+  border: var(--cms-border-width) solid #d6e5ff;
+  background: var(--cms-primary-soft);
+  color: #2457a7;
+  text-align: left;
+}
+
+#disqus_comments article.comment-item {
+  margin: 0 0 var(--cms-space-5);
+  border: var(--cms-border-width) solid var(--cms-border-soft);
+  border-radius: var(--cms-radius-md);
+}
+
+#disqus_comments article.comment-item .post-inner {
+  padding: var(--cms-space-6);
+}
+
+#disqus_comments article.comment-item small {
+  margin-left: var(--cms-space-1);
+  color: var(--cms-text-muted);
+  font-size: var(--cms-font-size-xs);
+}
+
+#disqus_comments article.comment-item p {
+  margin: var(--cms-space-4) 0 0;
+  line-height: var(--cms-line-height-relaxed);
+  overflow-wrap: anywhere;
+}
+
+
+/* ----------------------------------------------------------
+   15. DISQUS COMMENT FORM
+   ---------------------------------------------------------- */
+
+#disqus_comments form.post {
+  margin: var(--cms-space-8) 0 0;
+  overflow: visible;
+  border: var(--cms-border-width) solid var(--cms-border-soft);
+  border-radius: var(--cms-radius-md);
+}
+
+#disqus_comments form.post:hover {
+  box-shadow: var(--cms-shadow-lg);
+}
+
+#disqus_comments form.post .post-inner {
+  padding: var(--cms-space-8);
+}
+
+#disqus_comments form.post h3 {
+  margin: 0 0 var(--cms-space-6);
+  font-size: var(--cms-font-size-lg);
+}
+
+#disqus_comments form.post label {
+  display: block;
+  margin: 0 0 var(--cms-space-6);
+  color: #333;
+  font-size: var(--cms-font-size-md);
+  font-weight: var(--cms-font-weight-semibold);
+}
+
+#disqus_comments form.post input:not([type=hidden]),
+#disqus_comments form.post textarea {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  margin: var(--cms-space-1) 0 0;
+  padding: var(--cms-space-4) var(--cms-space-5);
+  border: var(--cms-border-width) solid var(--cms-border);
+  border-radius: var(--cms-radius-md);
+  background: var(--cms-background);
+  color: var(--cms-text);
+  font: inherit;
+  line-height: var(--cms-line-height-normal);
+}
+
+#disqus_comments form.post input:not([type=hidden]) {
+  height: var(--cms-input-height);
+}
+
+#disqus_comments form.post textarea {
+  min-height: 130px;
+  resize: vertical;
+}
+
+#disqus_comments form.post input:focus,
+#disqus_comments form.post textarea:focus {
+  border-color: #4285f4;
+  outline: 0;
+  box-shadow: 0 0 0 3px rgba(66, 133, 244, .16);
+}
+
+
+/* ----------------------------------------------------------
+   16. DISQUS SUBMIT BUTTON
+   ---------------------------------------------------------- */
+
+#disqus_comments .comment-submit {
+  min-height: var(--cms-input-height);
+  padding: var(--cms-space-4) var(--cms-space-8);
+  background: var(--cms-primary);
+  font: inherit;
+  font-weight: var(--cms-font-weight-semibold);
+  transition: background-color var(--cms-transition-fast),
+              transform var(--cms-transition-fast);
+}
+
+#disqus_comments .comment-submit:hover {
+  background: var(--cms-primary-hover);
+}
+
+#disqus_comments .comment-submit:active {
+  transform: translateY(1px);
+}
+
+#disqus_comments .comment-submit:focus-visible {
+  outline: 3px solid rgba(66, 133, 244, .35);
+  outline-offset: 2px;
+}
+
+
+/* ----------------------------------------------------------
+   17. FOOTER
+   ---------------------------------------------------------- */
+
+.footer-cols {
+  width: 100%;
+  min-width: 0;
+}
+
+.footer-col {
+  overflow-wrap: anywhere;
+}
+
+
+/* ----------------------------------------------------------
+   18. TABLET RESPONSIVE
+   ---------------------------------------------------------- */
+
+@media (max-width: 768px) {
+
+  .header-atas {
+    padding: var(--cms-space-8) var(--cms-space-7);
+  }
+
+  .header-batas,
+  .amz-wrapper,
+  .container {
+    width: 100%;
+  }
+
+  .header-inner-wrap {
+    flex-wrap: nowrap;
+    gap: var(--cms-space-5);
+  }
+
+  #header {
+    width: auto;
+    flex-basis: 0;
+    margin: var(--cms-space-5) 0;
+  }
+
+  #header-inner {
+    justify-content: flex-start;
+  }
+
+  #header .titlewrapper {
+    width: 100%;
+    justify-content: start;
+    padding:0.5rem;
+  }
+
+  #header .descriptionwrapper {
+    padding: var(--cms-space-10);
+    text-align: center;
+  }
+
+  #header .description {
+    text-align: left;
+  }
+
+  .social-iconic {
+    width: auto;
+    justify-content: start;
+    margin: 0;
+    padding:0.5rem;
+  }
+
+  .social-iconic > a {
+    margin: 0;
+  }
+
+  .main-nav {
+    overflow: visible;
+  }
+
+  #navigation .menu {
+    justify-content: center;
+  }
+
+  .popular-carousel > a {
+    flex-basis: min(280px, 78vw);
+    height: var(--cms-carousel-height);
+  }
+
+  .footer-cols {
+    width: 100%;
+  }
+
+}
+
+
+/* ----------------------------------------------------------
+   19. MOBILE RESPONSIVE
+   ---------------------------------------------------------- */
+
+@media (max-width: 640px) {
+
+  .header-atas {
+    padding: var(--cms-space-7) var(--cms-space-5);
+  }
+
+  .header-inner-wrap {
+    gap: var(--cms-space-3);
+    min-height: 56px;
+  }
+
+  #header {
+    margin: var(--cms-space-3) 0;
+  }
+
+  #header h1,
+  #header h2 {
+    font-size: 22px;
+  }
+
+  #header svg#logo,
+  #header img#logo {
+    width: 30px;
+    height: 30px;
+    flex-basis: 30px;
+    margin-right: var(--cms-space-3);
+  }
+
+  #header .descriptionwrapper {
+    padding: var(--cms-space-10);
+  }
+
+  .social-iconic {
+    gap: var(--cms-space-1);
+  }
+
+  .social-iconic svg {
+    width: 32px;
+    height: 32px;
+    padding: var(--cms-space-1);
+  }
+
+  .amz-wrapper,
+  .container {
+    width: 100%;
+  }
+
+  .popular-carousel > a {
+    flex-basis: min(280px, 78vw);
+    height: 170px;
+    margin: 0 var(--cms-space-2);
+  }
+
+  #disqus_comments {
+    padding: var(--cms-space-7) var(--cms-space-5);
+  }
+
+  #disqus_comments form.post .post-inner {
+    padding: var(--cms-space-6) var(--cms-space-5);
+  }
+
+  #disqus_comments .comment-submit {
+    width: 100%;
+  }
+
+}
+
+
+/* ----------------------------------------------------------
+   20. SMALL MOBILE RESPONSIVE
+   ---------------------------------------------------------- */
+
+@media (max-width: 380px) {
+
+  .header-inner-wrap {
+    gap: var(--cms-space-2);
+  }
+
+  #header .titlewrapper {
+    flex-wrap: nowrap;
+  }
+
+  #header h1,
+  #header h2 {
+    min-width: 0;
+    max-width: 100%;
+    font-size: 17px;
+    letter-spacing: .2px;
+    overflow-wrap: anywhere;
+  }
+
+  .social-iconic {
+    gap: 3px;
+  }
+
+  .social-iconic svg {
+    width: 29px;
+    height: 29px;
+    padding: var(--cms-space-1);
+  }
+
+  #header svg#logo,
+  #header img#logo {
+    width: 30px;
+    height: 30px;
+    flex-basis: 30px;
+    margin-right: var(--cms-space-2);
+  }
+
+}
