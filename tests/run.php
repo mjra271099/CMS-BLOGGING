@@ -198,6 +198,25 @@ try {
     check('Builder renders heading text', str_contains($rendered, 'Judul Uji'));
     check('Builder renders feature item', str_contains($rendered, 'Fitur'));
 
+    $previewDoc = json_decode(Builder::normalize((string)json_encode([
+        'version' => 1,
+        'sections' => [[
+            'id' => 's1',
+            'settings' => ['background' => '#fde68a', 'padding' => 'lg', 'width' => 'wide', 'class' => 'sorotan'],
+            'blocks' => [['id' => 'b1', 'type' => 'text', 'settings' => ['text' => 'Pratinjau Uji', 'align' => 'left']]],
+        ]],
+    ])), true);
+    $sectionSettings = (array)($previewDoc['sections'][0]['settings'] ?? []);
+    check('Builder keeps a section background', ($sectionSettings['background'] ?? '') === '#fde68a');
+    check('Builder keeps section padding/width', ($sectionSettings['padding'] ?? '') === 'lg' && ($sectionSettings['width'] ?? '') === 'wide');
+
+    $preview = Builder::previewDocument((string)json_encode($previewDoc), 'Judul Pratinjau');
+    check('Builder preview is a full HTML document', str_contains($preview, '<!doctype html') && str_contains($preview, '</html>'));
+    check('Builder preview loads the shared design system', str_contains($preview, 'assets/front/system.css'));
+    check('Builder preview renders block content', str_contains($preview, 'Pratinjau Uji'));
+    check('Builder preview shows the page title', str_contains($preview, 'Judul Pratinjau'));
+    check('Builder preview applies the section background', str_contains($preview, 'background:#fde68a'));
+
     section('SEO');
     $meta = Seo::meta(['title' => 'Judul SEO', 'description' => str_repeat('deskripsi ', 40)]);
     check('Seo::meta builds a title', (string)$meta['title'] !== '');

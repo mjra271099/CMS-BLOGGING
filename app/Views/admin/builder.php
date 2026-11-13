@@ -9,7 +9,7 @@ declare(strict_types=1);
  * @var array $pages
  * @var array $document
  * @var array $blockTypes
- * @var string $rendered
+ * @var string $previewDocument
  */
 
 use App\Http\AdminUi;
@@ -18,7 +18,7 @@ $page = $page ?? null;
 $pages = $pages ?? [];
 $document = $document ?? ['version' => 1, 'sections' => []];
 $blockTypes = $blockTypes ?? [];
-$rendered = $rendered ?? '';
+$previewDocument = $previewDocument ?? '';
 $adminBase = url('admin/index.php');
 $docJson = json_encode($document, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT) ?: '{"version":1,"sections":[]}';
 $sections = (array)($document['sections'] ?? []);
@@ -43,7 +43,8 @@ $sections = (array)($document['sections'] ?? []);
     </div>
 </div>
 
-<form method="post" action="<?= e($adminBase . '?view=builder' . ($page ? '&page=' . (int)$page['id'] : '')) ?>" id="builder-form">
+<form method="post" action="<?= e($adminBase . '?view=builder' . ($page ? '&page=' . (int)$page['id'] : '')) ?>" id="builder-form"
+      data-builder-theme="<?= e(\App\Core\Theme::instance()->slug()) ?>">
     <input type="hidden" name="action" value="builder.save">
     <input type="hidden" name="page_id" value="<?= (int)($page['id'] ?? 0) ?>">
     <?= \App\Core\Csrf::field() ?>
@@ -79,14 +80,50 @@ $sections = (array)($document['sections'] ?? []);
                     </div>
                 <?php endif; ?>
                 <?php foreach ($sections as $sectionIndex => $section): ?>
-                    <section class="builder-section-edit" data-section-index="<?= (int)$sectionIndex ?>">
+                    <?php
+                    $sectionSettings = (array)($section['settings'] ?? []);
+                    $sectionBackground = (string)($sectionSettings['background'] ?? '');
+                    $sectionPadding = (string)($sectionSettings['padding'] ?? 'md');
+                    $sectionWidth = (string)($sectionSettings['width'] ?? 'normal');
+                    $sectionClass = (string)($sectionSettings['class'] ?? '');
+                    ?>
+                    <section class="builder-section-edit" data-section-index="<?= (int)$sectionIndex ?>"
+                             data-section-id="<?= e((string)($section['id'] ?? '')) ?>">
                         <div class="builder-section-head">
                             <strong>Bagian <?= (int)$sectionIndex + 1 ?></strong>
                             <button type="button" class="secondary small" data-remove-section>Hapus bagian</button>
                         </div>
+                        <div class="builder-section-settings">
+                            <label>Latar bagian
+                                <span class="section-color">
+                                    <input type="color" data-section-color="background"
+                                           value="<?= e($sectionBackground !== '' ? (str_starts_with($sectionBackground, '#') ? $sectionBackground : '#' . $sectionBackground) : '#ffffff') ?>">
+                                    <input type="text" data-section-setting="background"
+                                           value="<?= e($sectionBackground) ?>" placeholder="(bawaan)">
+                                </span>
+                            </label>
+                            <label>Jarak isi
+                                <select data-section-setting="padding">
+                                    <?php foreach (['none' => 'Rapat', 'sm' => 'Kecil', 'md' => 'Sedang', 'lg' => 'Besar'] as $value => $label): ?>
+                                        <option value="<?= e($value) ?>"<?= $sectionPadding === $value ? ' selected' : '' ?>><?= e($label) ?></option>
+                                    <?php endforeach; ?>
+                                </select>
+                            </label>
+                            <label>Lebar isi
+                                <select data-section-setting="width">
+                                    <?php foreach (['normal' => 'Normal', 'wide' => 'Lebar', 'full' => 'Penuh', 'narrow' => 'Sempit'] as $value => $label): ?>
+                                        <option value="<?= e($value) ?>"<?= $sectionWidth === $value ? ' selected' : '' ?>><?= e($label) ?></option>
+                                    <?php endforeach; ?>
+                                </select>
+                            </label>
+                            <label>Kelas CSS
+                                <input type="text" data-section-setting="class" value="<?= e($sectionClass) ?>" placeholder="mis. sorotan">
+                            </label>
+                        </div>
                         <div class="builder-blocks" data-section-blocks>
                             <?php foreach ((array)($section['blocks'] ?? []) as $blockIndex => $block): ?>
-                                <div class="builder-block-edit" data-block-index="<?= (int)$blockIndex ?>" data-block-type="<?= e((string)($block['type'] ?? '')) ?>">
+                                <div class="builder-block-edit" data-block-index="<?= (int)$blockIndex ?>" data-block-type="<?= e((string)($block['type'] ?? '')) ?>"
+                                     data-block-id="<?= e((string)($block['id'] ?? '')) ?>">
                                     <div class="block-head">
                                         <span class="pill info"><?= e((string)($block['type'] ?? '')) ?></span>
                                         <div class="admin-actions">
@@ -132,11 +169,42 @@ $sections = (array)($document['sections'] ?? []);
         </div>
 
         <aside class="builder-preview">
-            <h2>Pratinjau</h2>
-            <div class="builder-preview-frame" data-builder-preview>
-                <?= $rendered !== '' ? $rendered : '<p class="muted">Pratinjau akan tampil setelah blok ditambahkan.</p>' ?>
+            <div class="builder-preview-head">
+                <h2>Pratinjau</h2>
+                <div class="admin-actions">
+                    <button type="button" class="secondary small" data-preview-width="390" title="Tampilan ponsel">Mobile</button>
+                    <button type="button" class="secondary small" data-preview-width="820" title="Tampilan tablet">Tablet</button>
+                    <button type="button" class="secondary small" data-preview-width="100%" title="Tampilan desktop">Desktop</button>
+                </div>
             </div>
-            <button type="button" class="secondary small" data-builder-refresh>Segarkan pratinjau</button>
+            <div class="builder-preview-stage">
+                <iframe class="builder-preview-frame" data-builder-preview title="Pratinjau halaman"
+                        srcdoc="<?= e($previewDocument) ?>"></iframe>
+            </div>
+            <div class="builder-preview-foot">
+                <button type="button" class="secondary small" data-builder-refresh>Segarkan pratinjau</button>
+                <button type="button" class="secondary small" data-preview-expand>Perbesar</button>
+                <span class="muted" data-builder-preview-state aria-live="polite"></span>
+            </div>
+            <p class="help">Pratinjau memakai tema aktif (<strong><?= e(\App\Core\Theme::instance()->name()) ?></strong>). Perubahan bidang langsung tercermin di sini.</p>
         </aside>
     </div>
 </form>
+
+<div class="preview-modal" data-preview-modal hidden>
+    <div class="preview-modal-inner">
+        <div class="preview-modal-head">
+            <h2>Pratinjau halaman</h2>
+            <div class="admin-actions">
+                <button type="button" class="secondary small" data-modal-width="390">Mobile</button>
+                <button type="button" class="secondary small" data-modal-width="820">Tablet</button>
+                <button type="button" class="secondary small" data-modal-width="100%">Desktop</button>
+                <button type="button" class="danger small" data-preview-close>Tutup</button>
+            </div>
+        </div>
+        <div class="preview-modal-stage">
+            <iframe class="preview-modal-frame" data-preview-modal-frame title="Pratinjau halaman besar"></iframe>
+        </div>
+        <p class="help">Tekan Esc untuk menutup. Perubahan pada formulir tetap tercermin selama pratinjau terbuka.</p>
+    </div>
+</div>

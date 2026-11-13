@@ -357,6 +357,8 @@
         const note = card ? $('.area-head .muted', card) : null;
         if (note) note.textContent = 'Urutan disimpan ✓';
         setTimeout(() => { if (note) note.textContent = `${sectionId} · ${rows.length} widget`; }, 2500);
+        const preview = $('[data-preview-frame]');
+        if (preview && preview.contentWindow) preview.contentWindow.location.reload();
       } catch (error) {
         // Reload to show the persisted order if saving failed.
         window.location.reload();
@@ -447,6 +449,20 @@
         previewFrame.style.margin = button.dataset.previewWidth === '100%' ? '0' : '0 auto';
       });
     });
+
+    // Tata Letak screen: choose which front-end route to preview.
+    const targetSelect = $('[data-preview-target]');
+    if (targetSelect) {
+      targetSelect.addEventListener('change', () => {
+        previewFrame.src = targetSelect.value;
+        const open = $('[data-preview-open]');
+        if (open) open.href = targetSelect.value;
+      });
+    }
+    $('[data-preview-refresh]')?.addEventListener('click', () => {
+      if (previewFrame.contentWindow) previewFrame.contentWindow.location.reload();
+      else previewFrame.src = previewFrame.src;
+    });
     // Sync color picker with its hex field
     $$('.color-field').forEach((wrap) => {
       const picker = $('input[type="color"]', wrap);
@@ -508,19 +524,118 @@
         });
         document_.sections.push({
           id: sectionNode.dataset.sectionId || Math.random().toString(16).slice(2, 10),
-          settings: { background: '', padding: 'md', width: 'normal', class: '' },
+          settings: sectionSettings(sectionNode),
           blocks
         });
       });
       sync('Perubahan belum disimpan.');
-      renderPreview();
+      refreshPreview();
     };
 
-    const renderPreview = () => {
-      const frame = $('[data-builder-preview]');
-      if (!frame) return;
-      frame.innerHTML = `<p class="muted">${document_.sections.reduce((total, item) => total + (item.blocks || []).length, 0)} blok siap disimpan.</p>`;
+    function sectionSettings(sectionNode) {
+      const settings = { background: '', padding: 'md', width: 'normal', class: '' };
+      $$('[data-section-setting]', sectionNode).forEach((field) => {
+        settings[field.dataset.sectionSetting] = field.value;
+      });
+      return settings;
+    }
+
+    const previewFrame = $('[data-builder-preview]', builderForm);
+    const previewState = $('[data-builder-preview-state]', builderForm);
+    const previewModal = $('[data-preview-modal]');
+    const previewModalFrame = $('[data-preview-modal-frame]');
+    let previewHtml = previewFrame ? (previewFrame.getAttribute('srcdoc') || '') : '';
+    let previewToken = 0;
+
+    const applyPreviewHtml = (html) => {
+      previewHtml = html;
+      if (previewFrame) previewFrame.srcdoc = html;
+      if (previewModal && !previewModal.hidden && previewModalFrame) previewModalFrame.srcdoc = html;
     };
+
+    const refreshPreview = debounce(async () => {
+      if (!previewFrame) return;
+      const token = ++previewToken;
+      if (previewState) previewState.textContent = 'Memperbarui…';
+      try {
+        const themeSlug = builderForm.dataset.builderTheme || '';
+        const previewQuery = themeSlug ? '&theme_preview=' + encodeURIComponent(themeSlug) : '';
+        const response = await fetch(`${adminRoot()}?ajax=builder.preview${previewQuery}`, {
+          method: 'POST',
+          body: new URLSearchParams({
+            csrf: csrfToken(),
+            title: ($('#builder-title', builderForm) || {}).value || '',
+            document: JSON.stringify(document_)
+          }),
+          headers: { 'X-Requested-With': 'XMLHttpRequest', 'X-CSRF-Token': csrfToken() },
+          credentials: 'same-origin'
+        });
+        const data = await response.json();
+        if (token !== previewToken) return;
+        if (!data.ok || typeof data.html !== 'string') throw new Error(data.error || 'gagal');
+        applyPreviewHtml(data.html);
+        if (previewState) previewState.textContent = 'Pratinjau terbaru.';
+      } catch (error) {
+        if (token === previewToken && previewState) previewState.textContent = 'Pratinjau gagal dimuat.';
+      }
+    }, 400);
+
+    // Large preview overlay: same document, more room to judge the design.
+    const openPreviewModal = () => {
+      if (!previewModal || !previewModalFrame) return;
+      previewModal.hidden = false;
+      document.body.classList.add('modal-open');
+      previewModalFrame.srcdoc = previewHtml;
+    };
+    const closePreviewModal = () => {
+      if (!previewModal) return;
+      previewModal.hidden = true;
+      document.body.classList.remove('modal-open');
+      if (previewModalFrame) previewModalFrame.srcdoc = '';
+    };
+
+    $$('[data-preview-expand]', builderForm).forEach((button) => button.addEventListener('click', openPreviewModal));
+    $('[data-preview-close]')?.addEventListener('click', closePreviewModal);
+    previewModal?.addEventListener('click', (event) => {
+      if (event.target === previewModal) closePreviewModal();
+    });
+    document.addEventListener('keydown', (event) => {
+      if (event.key === 'Escape' && previewModal && !previewModal.hidden) closePreviewModal();
+    });
+    $$('[data-modal-width]').forEach((button) => {
+      button.addEventListener('click', () => {
+        if (!previewModalFrame) return;
+        const width = button.dataset.modalWidth;
+        previewModalFrame.style.width = width === '100%' ? '100%' : width + 'px';
+        previewModalFrame.style.margin = width === '100%' ? '0' : '0 auto';
+      });
+    });
+
+    // Colour picker mirrors its hex field (and vice versa) for section
+    // backgrounds. Bound per section so dynamically added sections work too.
+    const bindSectionColor = (root) => {
+      $$('[data-section-color]', root).forEach((picker) => {
+        if (picker.dataset.colorBound === '1') return;
+        picker.dataset.colorBound = '1';
+        const text = picker.parentElement?.querySelector('[data-section-setting]');
+        if (!text) return;
+        picker.addEventListener('input', () => { text.value = picker.value; });
+        text.addEventListener('input', () => {
+          if (/^#[0-9a-f]{3,8}$/i.test(text.value)) picker.value = text.value.slice(0, 7);
+        });
+      });
+    };
+    bindSectionColor(builderForm);
+
+    // Device width presets (mirrors the customizer preview controls).
+    $$('[data-preview-width]', builderForm).forEach((button) => {
+      button.addEventListener('click', () => {
+        if (!previewFrame) return;
+        const width = button.dataset.previewWidth;
+        previewFrame.style.width = width === '100%' ? '100%' : width + 'px';
+        previewFrame.style.margin = width === '100%' ? '0' : '0 auto';
+      });
+    });
 
     const fieldTemplate = (blockType, settings) => {
       const fields = {
@@ -579,6 +694,32 @@
       collectFromDom();
     };
 
+    const sectionSettingsMarkup = (settings = {}) => {
+      const background = settings.background || '';
+      const padding = settings.padding || 'md';
+      const width = settings.width || 'normal';
+      const cssClass = settings.class || '';
+      const option = (value, label, current) => `<option value="${value}"${current === value ? ' selected' : ''}>${label}</option>`;
+      return `
+        <div class="builder-section-settings">
+          <label>Latar bagian
+            <span class="section-color">
+              <input type="color" data-section-color="background" value="${/^#?[0-9a-f]{6}$/i.test(background) ? (background.startsWith('#') ? background : '#' + background) : '#ffffff'}">
+              <input type="text" data-section-setting="background" value="${background}" placeholder="(bawaan)">
+            </span>
+          </label>
+          <label>Jarak isi
+            <select data-section-setting="padding">${option('none', 'Rapat', padding)}${option('sm', 'Kecil', padding)}${option('md', 'Sedang', padding)}${option('lg', 'Besar', padding)}</select>
+          </label>
+          <label>Lebar isi
+            <select data-section-setting="width">${option('normal', 'Normal', width)}${option('wide', 'Lebar', width)}${option('full', 'Penuh', width)}${option('narrow', 'Sempit', width)}</select>
+          </label>
+          <label>Kelas CSS
+            <input type="text" data-section-setting="class" value="${cssClass}" placeholder="mis. sorotan">
+          </label>
+        </div>`;
+    };
+
     const appendSection = () => {
       const sectionNode = document.createElement('section');
       sectionNode.className = 'builder-section-edit';
@@ -588,9 +729,11 @@
           <strong>Bagian Baru</strong>
           <button type="button" class="secondary small" data-remove-section>Hapus bagian</button>
         </div>
+        ${sectionSettingsMarkup()}
         <div class="builder-blocks" data-section-blocks></div>
         <button type="button" class="secondary small" data-add-section-block>+ Blok</button>`;
       sectionsWrap.appendChild(sectionNode);
+      bindSectionColor(sectionNode);
       collectFromDom();
     };
 
@@ -648,9 +791,12 @@
         return;
       }
       if (event.target.closest('[data-builder-refresh]')) {
-        renderPreview();
+        refreshPreview();
       }
     });
+
+    // The page title feeds the preview header while a new page is being built.
+    $('#builder-title', builderForm)?.addEventListener('input', refreshPreview);
 
     builderForm.addEventListener('submit', collectFromDom);
 

@@ -128,6 +128,6 @@ $dirty = $themeSlug !== $activeSlug;
                 <button type="button" class="secondary small" data-preview-width="100%">Desktop</button>
             </div>
         </div>
-        <iframe src="<?= e($previewUrl) ?>" title="Pratinjau tema" data-preview-frame loading="lazy"></iframe>
+        <iframe src="<?= e($previewUrl) ?>" title="Pratinjau tema" data-preview-frame></iframe>
     </div>
 </div>

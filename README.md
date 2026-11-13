@@ -10,7 +10,7 @@ Aset Blogger asli (`assets/template-source.xml`) tidak diubah; CSS template lama
 - **22 tema bawaan** — tema folder-based dengan layout, CSS, screenshot, dan `functions.php` opsional. Aktifkan, duplikat, ekspor, atau impor ZIP dari Admin → Tema.
 - **Kustomisasi tema** — skema pengaturan per tema (`color`, `select`, `checkbox`, `text`), disimpan per blog di `theme_settings`, dan dipancarkan sebagai CSS variable (`--t-*`) tanpa menimpa file tema.
 - **Widget engine** — 20+ tipe widget dengan visibilitas (per halaman, perangkat, peran), urutan drag-and-drop, duplikasi, serta area widget per tema (`header`, `sidebar`, `footer-1..3`, `before-content`, `ad-top`, dan lainnya).
-- **Page builder** — 18 tipe blok (hero, heading, teks, gambar, galeri, tombol, CTA, kolom, fitur, video, kutipan, pemisah, spacer, HTML, postingan, FAQ, testimoni, newsletter) yang dikembalikan sebagai JSON tervalidasi lalu dirender sebagai HTML tersanitasi.
+- **Page builder** — 18 tipe blok (hero, heading, teks, gambar, galeri, tombol, CTA, kolom, fitur, video, kutipan, pemisah, spacer, HTML, postingan, FAQ, testimoni, newsletter) yang dikembalikan sebagai JSON tervalidasi lalu dirender sebagai HTML tersanitasi. Pratinjau iframe langsung (WYSIWYG) memakai tema aktif, lengkap dengan kontrol latar/jarak/lebar per bagian, tombol lebar perangkat, dan mode pratinjau besar.
 - **SEO** — meta title/description, canonical, Open Graph/Twitter, Schema.org (`BlogPosting`, `BreadcrumbList`, `WebSite`), sitemap XML, robots.txt, RSS feed, redirect manager, dan audit SEO dengan skor.
 - **Media library** — unggah gambar (JPG/PNG/GIF/WebP) dengan thumbnail otomatis, metadata alt/caption/folder, resize, dan penggantian file.
 - **Dashboard admin baru** — MVC (`AdminController` + `app/Views/admin/*`) menggantikan `admin/index.php` satu-file. Ringkasan, editor dengan autosave, kustomizer live preview, builder, moderasi komentar, pengaturan, backup, dan log aktivitas.
@@ -122,7 +122,7 @@ Semua data diakses lewat kit `App\Theme\Ui`, sehingga tema pihak ketiga tidak pe
 
 ## Widget
 
-Widget disimpan di tabel `widgets` dan dikelompokkan lewat `section_id`. Visibilitas mendukung kombinasi halaman, perangkat (desktop/mobile/tablet), dan peran pengguna. Urutan dan area diatur dari Admin → Tata Letak (drag-and-drop); ada pula endpoint `?ajax=widget.reorder`.
+Widget disimpan di tabel `widgets` dan dikelompokkan lewat `section_id`. Visibilitas mendukung kombinasi halaman, perangkat (desktop/mobile/tablet), dan peran pengguna. Urutan dan area diatur dari Admin → Tata Letak (drag-and-drop); ada pula endpoint `?ajax=widget.reorder`. Halaman Tata Letak menyertakan pratinjau situs langsung (iframe) dengan pilihan rute — beranda, artikel, halaman, dan arsip — serta tombol lebar perangkat, sehingga penempatan widget langsung terlihat pada tema aktif.
 
 ## Aset admin
 

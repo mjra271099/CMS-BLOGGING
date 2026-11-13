@@ -8,6 +8,7 @@ use App\Core\Database;
 use App\Core\Html;
 use App\Core\Logger;
 use App\Core\Settings;
+use App\Core\Theme;
 
 /**
  * Page builder: JSON block document → sanitized HTML.
@@ -380,6 +381,60 @@ final class Builder
             . '<form method="post" action="' . e(url('newsletter')) . '">' . \App\Core\Csrf::field()
             . '<input type="email" name="email" placeholder="Email" required><button class="btn btn-primary" type="submit">'
             . Html::sanitize((string)($s['button'] ?? 'Kirim')) . '</button></form></div>';
+    }
+
+    /**
+     * Build a standalone HTML document for the builder preview iframe.
+     *
+     * It mirrors the front-end stylesheet order (base → system → theme →
+     * webfont → customizer) and the page wrapper used by FrontController so
+     * the canvas looks exactly like the published page, including dark themes.
+     * Interactive elements are neutralised so the pane behaves as a canvas.
+     */
+    public static function previewDocument(?string $json, string $title = ''): string
+    {
+        $theme = Theme::instance();
+        $normalized = self::normalize((string)$json);
+        $body = self::render($normalized);
+        $lang = Settings::get('language', 'id');
+
+        $head = '<!doctype html><html lang="' . e($lang) . '" data-theme="' . e($theme->slug()) . '">';
+        $head .= '<head><meta charset="utf-8">';
+        $head .= '<meta name="viewport" content="width=device-width,initial-scale=1">';
+        $head .= '<link rel="stylesheet" href="' . e(url('assets/front/base.css')) . '">';
+        $system = (defined('CMS_ROOT') ? CMS_ROOT : dirname(__DIR__, 2)) . '/assets/front/system.css';
+        $head .= '<link rel="stylesheet" href="' . e(url('assets/front/system.css')) . '?v=' . (is_file($system) ? (int)filemtime($system) : 1) . '">';
+        $css = $theme->asset('style.css');
+        if ($css !== '') {
+            $head .= '<link rel="stylesheet" href="' . e($css) . '">';
+        }
+        $font = $theme->setting('font_pair');
+        if ($font !== '' && str_starts_with($font, 'https://')) {
+            $head .= '<link rel="stylesheet" href="' . e($font) . '">';
+        }
+        $custom = $theme->customizerCss();
+        if (trim($custom) !== '') {
+            $head .= '<style id="theme-customizer">' . $custom . '</style>';
+        }
+        // Canvas tweaks: the pane is a preview, not a navigable page.
+        $head .= '<style id="builder-preview-base">body{margin:0}.builder-preview-empty{margin:0;padding:28px;color:#64748b;text-align:center;font:14px/1.6 system-ui,sans-serif}</style>';
+        $head .= '</head><body class="' . e($theme->bodyClasses()) . '">';
+
+        $inner = '<article class="single-page page-builder">';
+        $heading = trim($title);
+        if ($heading !== '') {
+            $inner .= '<header class="page-header"><h1>' . e($heading) . '</h1></header>';
+        }
+        $inner .= '<div class="article-body prose">';
+        $inner .= $body !== ''
+            ? $body
+            : '<p class="builder-preview-empty">Tambahkan blok dari panel kiri untuk melihat pratinjau halaman di sini.</p>';
+        $inner .= '</div></article>';
+
+        $head .= '<main id="main" class="site-main shell">' . $inner . '</main>';
+        $head .= '<script id="builder-preview-guard">document.addEventListener("click",function(e){var a=e.target.closest("a");if(a){e.preventDefault();}},true);document.addEventListener("submit",function(e){e.preventDefault();},true);</script>';
+        $head .= '</body></html>';
+        return $head;
     }
 
     /**

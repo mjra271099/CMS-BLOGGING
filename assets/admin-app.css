@@ -480,6 +480,41 @@ input.slug-input { min-height: 34px; padding: 5px 9px; font-size: 12px; }
 .widget-empty { list-style: none; padding: 14px; color: var(--admin-text-muted); font-size: 12px; text-align: center; }
 .saving-indicator { color: var(--admin-primary); font-size: 11px; }
 
+.layout-preview {
+    margin-bottom: 20px;
+    background: var(--admin-surface);
+    border: 1px solid var(--admin-border);
+    border-radius: var(--admin-radius);
+    box-shadow: var(--admin-shadow);
+    overflow: hidden;
+}
+.layout-preview > summary {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 10px;
+    padding: 13px 16px;
+    cursor: pointer;
+    list-style: none;
+}
+.layout-preview > summary::-webkit-details-marker { display: none; }
+.layout-preview > summary::after { content: "▾"; margin-left: auto; color: var(--admin-text-muted); }
+.layout-preview[open] > summary { border-bottom: 1px solid var(--admin-border); }
+.layout-preview[open] > summary::after { content: "▴"; }
+.layout-preview-title { font-weight: 700; font-size: 13px; }
+.layout-preview-body { padding: 0 16px 16px; }
+.preview-target { display: flex; align-items: center; gap: 8px; font-size: 12px; }
+.preview-target select { min-height: 32px; }
+.layout-preview-stage { display: flex; justify-content: center; margin-top: 12px; }
+.layout-preview-stage iframe {
+    display: block;
+    width: 100%;
+    height: 460px;
+    background: #fff;
+    border: 1px solid var(--admin-border);
+    border-radius: var(--admin-radius-sm);
+}
+
 /* 11. MENUS
 ========================================================== */
 .menu-item-list { list-style: none; margin: 0; padding: 0; }
@@ -528,7 +563,7 @@ input.slug-input { min-height: 34px; padding: 5px 9px; font-size: 12px; }
 ========================================================== */
 .builder-shell {
     display: grid;
-    grid-template-columns: 210px minmax(0, 1fr) 330px;
+    grid-template-columns: 210px minmax(0, 1fr) minmax(320px, 440px);
     gap: 18px;
     align-items: start;
 }
@@ -589,16 +624,83 @@ input.slug-input { min-height: 34px; padding: 5px 9px; font-size: 12px; }
     border-radius: var(--admin-radius);
     box-shadow: var(--admin-shadow);
 }
-.builder-preview h2 { margin: 0 0 10px; font-size: 13px; }
+.builder-preview-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 10px; }
+.builder-preview-head h2 { margin: 0; font-size: 13px; }
+.builder-preview-head .admin-actions { gap: 4px; }
+.builder-preview-head button { min-height: 26px; padding: 3px 7px; font-size: 10.5px; }
+.builder-preview-stage { display: flex; justify-content: center; overflow-x: auto; }
 .builder-preview-frame {
-    max-height: calc(100vh - 260px);
-    overflow: auto;
-    padding: 12px;
+    display: block;
+    width: 100%;
+    height: calc(100vh - 300px);
+    min-height: 460px;
     background: #fff;
     border: 1px solid var(--admin-border);
     border-radius: var(--admin-radius-sm);
-    font-size: 12px;
 }
+.builder-preview-foot { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-top: 10px; }
+.builder-preview-foot .muted { font-size: 11px; }
+.builder-section-settings {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 4px 12px;
+    padding: 10px 12px;
+    margin-bottom: 10px;
+    background: var(--admin-surface-hover);
+    border: 1px dashed var(--admin-border);
+    border-radius: var(--admin-radius-sm);
+}
+.builder-section-settings label {
+    display: block;
+    margin: 4px 0 3px;
+    font-size: 10.5px;
+    text-transform: uppercase;
+    letter-spacing: .4px;
+    color: var(--admin-text-muted);
+}
+.builder-section-settings input, .builder-section-settings select { min-height: 32px; font-size: 11.5px; }
+.section-color { display: flex; align-items: center; gap: 8px; }
+.section-color input[type="color"] { flex: 0 0 auto; width: 38px; height: 32px; padding: 2px; cursor: pointer; }
+.section-color input[type="text"] { flex: 1; min-width: 0; }
+
+/* Builder: large preview overlay */
+.preview-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 420;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 22px;
+    background: rgba(15, 23, 42, .6);
+    backdrop-filter: blur(3px);
+}
+.preview-modal[hidden] { display: none; }
+.preview-modal-inner {
+    display: flex;
+    flex-direction: column;
+    width: min(1180px, 100%);
+    max-height: 92vh;
+    padding: 16px 18px 18px;
+    background: var(--admin-surface);
+    border-radius: var(--admin-radius-lg, var(--admin-radius));
+    box-shadow: var(--admin-shadow-lg, var(--admin-shadow));
+}
+.preview-modal-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 12px; }
+.preview-modal-head h2 { margin: 0; font-size: 15px; }
+.preview-modal-head .admin-actions { gap: 6px; }
+.preview-modal-stage { flex: 1; min-height: 0; display: flex; justify-content: center; overflow: auto; }
+.preview-modal-frame {
+    display: block;
+    width: 100%;
+    height: 100%;
+    min-height: 60vh;
+    background: #fff;
+    border: 1px solid var(--admin-border);
+    border-radius: var(--admin-radius-sm);
+}
+body.modal-open { overflow: hidden; }
+html[data-theme="dark"] .preview-modal { background: rgba(0, 0, 0, .66); }
 
 /* 14. LOG TAIL
 ========================================================== */
@@ -619,9 +721,9 @@ input.slug-input { min-height: 34px; padding: 5px 9px; font-size: 12px; }
 
 /* 15. RESPONSIVE
 ========================================================== */
-@media (max-width: 1200px) {
-    .builder-shell { grid-template-columns: 180px minmax(0, 1fr); }
-    .builder-preview { display: none; }
+@media (max-width: 1400px) {
+    .builder-shell { grid-template-columns: 200px minmax(0, 1fr); }
+    .builder-preview { grid-column: 1 / -1; position: static; }
     .customizer-shell { grid-template-columns: minmax(0, 380px) minmax(0, 1fr); }
 }
 

@@ -74,6 +74,7 @@ check('Home has one <main>', substr_count(strtolower($home['body']), '<main') ==
 check('Home has canonical link', str_contains($home['body'], 'rel="canonical"'));
 check('Home has RSS alternate', str_contains($home['body'], 'application/rss+xml'));
 check('Home loads base.css', str_contains($home['body'], 'assets/front/base.css'));
+check('Home loads shared system.css', str_contains($home['body'], 'assets/front/system.css'));
 
 section('SEO endpoints');
 $sitemap = request($base . '/sitemap.xml');
@@ -128,6 +129,8 @@ check('Admin login page returns 200', $login['status'] === 200, 'status=' . $log
 check('Login page has CSRF field', str_contains($login['body'], 'name="csrf"'));
 $dashboard = request($base . '/admin/index.php?view=dashboard');
 check('Dashboard requires login', in_array($dashboard['status'], [301, 302], true), 'status=' . $dashboard['status']);
+$builderPreview = request($base . '/admin/index.php?ajax=builder.preview');
+check('Builder preview requires login', $builderPreview['status'] === 401, 'status=' . $builderPreview['status']);
 
 echo "\n" . str_repeat('-', 56) . "\n";
 echo sprintf("%d passed, %d failed\n", $passed, $failed);

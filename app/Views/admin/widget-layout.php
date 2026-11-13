@@ -17,6 +17,8 @@ $sections = $sections ?? [];
 $types = $types ?? Widget::types();
 $themeAreas = $themeAreas ?? [];
 $editId = (int)($editId ?? 0);
+$previewTargets = $previewTargets ?? ['home' => ['label' => 'Beranda', 'url' => url()]];
+$firstTarget = reset($previewTargets) ?: ['label' => 'Beranda', 'url' => url()];
 $adminBase = url('admin/index.php');
 $editingWidget = $editId > 0 ? Widget::find($editId) : null;
 $editingType = $editingWidget ? (string)$editingWidget['type'] : 'Text';
@@ -31,6 +33,38 @@ $editingFields = (array)($types[$editingType]['fields'] ?? []);
 <div class="notice">
     Seret kartu widget untuk mengubah urutan. Perubahan urutan disimpan otomatis.
 </div>
+
+<details class="layout-preview" open>
+    <summary>
+        <span class="layout-preview-title">Pratinjau situs</span>
+        <span class="muted">Lihat hasil tata letak &amp; widget pada tema aktif</span>
+    </summary>
+    <div class="layout-preview-body">
+        <div class="preview-bar">
+            <label class="preview-target">
+                <span>Halaman</span>
+                <select data-preview-target>
+                    <?php foreach ($previewTargets as $key => $target): ?>
+                        <option value="<?= e((string)$target['url']) ?>"<?= $key === array_key_first($previewTargets) ? ' selected' : '' ?>>
+                            <?= e((string)$target['label']) ?>
+                        </option>
+                    <?php endforeach; ?>
+                </select>
+            </label>
+            <div class="admin-actions">
+                <button type="button" class="secondary small" data-preview-width="390">Mobile</button>
+                <button type="button" class="secondary small" data-preview-width="820">Tablet</button>
+                <button type="button" class="secondary small" data-preview-width="100%">Desktop</button>
+                <button type="button" class="secondary small" data-preview-refresh>Segarkan</button>
+                <a class="btn secondary small" href="<?= e((string)$firstTarget['url']) ?>" data-preview-open target="_blank" rel="noopener">Buka tab baru</a>
+            </div>
+        </div>
+        <div class="layout-preview-stage">
+            <iframe src="<?= e((string)$firstTarget['url']) ?>" data-preview-frame title="Pratinjau tema"></iframe>
+        </div>
+        <p class="help">Pratinjau memuat halaman asli memakai tema aktif. Setelah menyimpan widget, segarkan pratinjau untuk melihat hasilnya.</p>
+    </div>
+</details>
 
 <div class="layout-shell">
     <div class="layout-areas" id="widget-areas">

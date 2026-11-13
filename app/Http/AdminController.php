@@ -675,12 +675,30 @@ final class AdminController
             $sections[(string)$widget['section_id']]['widgets'][] = $widget;
         }
         $active = Theme::instance();
+
+        // Sample routes admins can preview so widget visibility rules
+        // (beranda/artikel/halaman/arsip) can be checked without leaving admin.
+        $targets = ['home' => ['label' => 'Beranda', 'url' => url()]];
+        $latest = Post::query(['status' => 'published'], 1);
+        if ($latest) {
+            $targets['post'] = ['label' => 'Artikel terbaru', 'url' => post_url($latest[0])];
+        }
+        $pages = Page::all(['status' => 'published']);
+        if ($pages) {
+            $targets['page'] = ['label' => 'Halaman: ' . (string)$pages[0]['title'], 'url' => page_url($pages[0])];
+        }
+        $categories = Taxonomy::categories(1);
+        if ($categories) {
+            $targets['archive'] = ['label' => 'Arsip: ' . (string)$categories[0]['name'], 'url' => category_url($categories[0])];
+        }
+
         return [
             'title' => 'Tata Letak',
             'sections' => $sections,
             'types' => Widget::types(),
             'themeAreas' => $active->areas(),
             'editId' => (int)($_GET['edit'] ?? 0),
+            'previewTargets' => $targets,
         ];
     }
 
@@ -805,7 +823,10 @@ final class AdminController
             'pages' => Page::all(['status' => 'all']),
             'document' => Builder::decode($page ? (string)($page['content_json'] ?? '') : null),
             'blockTypes' => Builder::blockTypes(),
-            'rendered' => $page ? Builder::render((string)($page['content_json'] ?? '')) : '',
+            'previewDocument' => Builder::previewDocument(
+                $page ? (string)($page['content_json'] ?? '') : null,
+                $page ? (string)$page['title'] : ''
+            ),
         ];
     }
 
@@ -1097,6 +1118,7 @@ final class AdminController
                 'post.autosave' => $this->ajaxAutosave(),
                 'media.list' => $this->ajaxMediaList(),
                 'media.upload' => $this->ajaxMediaUpload($user),
+                'builder.preview' => $this->ajaxBuilderPreview(),
                 'seo.audit' => \App\Core\Response::json(['ok' => true, 'audit' => Seo::audit()]),
                 'search.posts' => $this->ajaxSearchPosts(),
                 'slug.check' => $this->ajaxSlugCheck(),
@@ -1184,6 +1206,17 @@ final class AdminController
                 'url' => Media::publicUrl($media, false),
                 'thumb' => url((string)($media['thumb_path'] ?: $media['file_path'])),
             ],
+        ]);
+    }
+
+    private function ajaxBuilderPreview(): string
+    {
+        Auth::requirePermission('builder.manage');
+        $json = (string)($_POST['document'] ?? '');
+        $title = trim((string)($_POST['title'] ?? ''));
+        return \App\Core\Response::json([
+            'ok' => true,
+            'html' => Builder::previewDocument($json, $title),
         ]);
     }
 
