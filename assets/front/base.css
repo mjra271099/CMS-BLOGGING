@@ -345,6 +345,16 @@ table { border-collapse: collapse; width: 100%; }
 .widget-area[data-area="ad-top"] { margin-bottom: clamp(18px, 2.4vw, 28px); }
 .widget-area[data-area="after-content"] { margin-top: clamp(18px, 2.4vw, 28px); }
 .content-column > .widget-area:not(:first-child) { margin-top: clamp(18px, 2.4vw, 28px); }
+
+/* ---------- Section rhythm ---------- */
+/* Main content blocks are siblings inside the content column: the article,
+   comments, related posts, and any extra section a route appends. The
+   related-posts section shipped without vertical spacing, so it touched the
+   comments right above it. Give every block after the first a consistent
+   gutter. Sibling margins collapse, so this never doubles with a block's own
+   margin (the comments' 28px stays 28px on desktop). */
+.content-inner > * + *,
+.content-column.full > * + * { margin-top: clamp(18px, 2.4vw, 28px); }
 .widget {
   background: var(--t-surface); border: 1px solid var(--t-border);
   border-radius: var(--t-radius); padding: clamp(16px, 2vw, 22px);
