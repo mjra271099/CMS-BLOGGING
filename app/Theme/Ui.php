@@ -200,8 +200,22 @@ final class Ui
         if (trim($menu) === '') {
             $menu = $this->defaultNavigation();
         }
+        // The panel carries a copy of the search box so mobile users can search
+        // without scrolling back to the header (CSS shows it below 860px only).
         return '<nav class="site-nav" aria-label="Navigasi utama"><button class="nav-toggle" aria-expanded="false" aria-label="Buka menu">'
-            . '<span></span><span></span><span></span></button><div class="nav-panel">' . $menu . '</div></nav>';
+            . '<span></span><span></span><span></span></button><div class="nav-panel">' . $menu
+            . $this->mobileSearch() . '</div></nav>';
+    }
+
+    private function mobileSearch(): string
+    {
+        $search = $this->widgetArea('search');
+        if (trim($search) !== '') {
+            return $search;
+        }
+        return '<form class="header-search nav-search" action="' . e(url('search')) . '" method="get" role="search">'
+            . '<input type="search" name="q" placeholder="Cari di blog ini…" aria-label="Cari artikel">'
+            . '<button type="submit" aria-label="Cari">⌕</button></form>';
     }
 
     private function defaultNavigation(): string

@@ -14,14 +14,22 @@
   const navToggle = doc.querySelector('.nav-toggle');
   const navPanel = doc.querySelector('.nav-panel');
   if (navToggle && navPanel) {
+    // CSS owns the open state through `.nav-open` (see base.css); it is also
+    // applied to <body> so the page behind the dropdown can be locked.
+    const isOpen = () => navPanel.classList.contains('is-open');
     const setOpen = (open) => {
       navPanel.classList.toggle('is-open', open);
+      navPanel.classList.toggle('nav-open', open);
       navToggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+      navToggle.setAttribute('aria-label', open ? 'Tutup menu' : 'Buka menu');
       doc.body.classList.toggle('nav-open', open);
     };
-    navToggle.addEventListener('click', () => setOpen(!navPanel.classList.contains('is-open')));
+    navToggle.addEventListener('click', (event) => {
+      event.stopPropagation();
+      setOpen(!isOpen());
+    });
     doc.addEventListener('keydown', (event) => {
-      if (event.key === 'Escape' && navPanel.classList.contains('is-open')) {
+      if (event.key === 'Escape' && isOpen()) {
         setOpen(false);
         navToggle.focus();
       }
@@ -31,6 +39,15 @@
         setOpen(false);
       }
     });
+    // Tapping outside the dropdown closes it (mobile only).
+    doc.addEventListener('click', (event) => {
+      if (!isOpen() || !window.matchMedia('(max-width: 860px)').matches) return;
+      if (navPanel.contains(event.target) || navToggle.contains(event.target)) return;
+      setOpen(false);
+    });
+    window.addEventListener('resize', () => {
+      if (isOpen() && window.innerWidth > 860) setOpen(false);
+    }, { passive: true });
   }
 
   // ---------------------------------------------------------------

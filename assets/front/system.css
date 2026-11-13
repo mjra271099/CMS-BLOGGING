@@ -898,6 +898,11 @@ a { text-underline-offset: 3px; }
   .post-card.card-cover { min-height: 270px; }
   .share-bar a { width: 33px; height: 33px; }
   .footer-bottom { flex-direction: column; align-items: flex-start; }
+  /* 404 / maintenance / protected: keep everything inside the viewport. */
+  .error-page, .protected-post { padding: 34px 18px; }
+  .error-page h1 { font-size: clamp(1.35rem, 6vw, 1.8rem); }
+  .error-search { flex-direction: column; align-items: stretch; }
+  .error-search input, .error-search button { width: 100%; }
 }
 
 @media (max-width: 420px) {
