@@ -160,14 +160,18 @@ table { border-collapse: collapse; width: 100%; }
 /* Language switcher (ID/EN) -------------------------------------- */
 .lang-switch {
   display: inline-flex; align-items: center; gap: 2px; padding: 2px;
-  border: 1px solid var(--t-border); border-radius: 999px; background: var(--t-bg);
+  border: 1px solid var(--t-border); border-radius: 999px;
+  background: color-mix(in srgb, var(--t-primary) 8%, var(--t-surface));
 }
 .lang-option {
   min-width: 30px; padding: .28rem .5rem; border-radius: 999px; text-align: center;
-  font-size: .72rem; font-weight: 700; letter-spacing: .04em; color: var(--t-muted);
+  font-size: .72rem; font-weight: 700; letter-spacing: .04em;
+  color: var(--t-muted); background: transparent; border: 1px solid transparent;
 }
 .lang-option:hover { color: var(--t-primary); }
-.lang-option.is-active { background: var(--t-primary); color: #fff; }
+.lang-option.is-active {
+  background: var(--t-primary); color: #fff; border-color: var(--t-primary);
+}
 /* The panel copy only exists for the mobile dropdown. */
 .lang-switch-mobile { display: none; }
 
@@ -620,9 +624,12 @@ table { border-collapse: collapse; width: 100%; }
   }
   .nav-panel .lang-switch-mobile .lang-option {
     flex: 1; min-width: 0; padding: .6rem .8rem; font-size: .84rem;
-    border: 1px solid var(--t-border); background: var(--t-bg);
+    border: 1px solid var(--t-border); background: var(--t-bg); color: var(--t-muted);
   }
-  .nav-panel .lang-switch-mobile .lang-option.is-active { border-color: var(--t-primary); }
+  .nav-panel .lang-switch-mobile .lang-option.is-active {
+    background: var(--t-primary); border-color: var(--t-primary); color: #fff;
+    box-shadow: 0 2px 8px color-mix(in srgb, var(--t-primary) 28%, transparent);
+  }
   .nav-panel .header-search,
   .nav-panel .search-widget { display: none; }
   .nav-panel.is-open .header-search,
