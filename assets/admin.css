@@ -225,48 +225,10 @@ body:has(.login) {
 
 /* ==========================================================
    6. SIDEBAR NAVIGATION
+   Styling now lives in the v3 layer under `.sidebar-nav`. The old
+   bare `nav` selectors were removed: they also matched the new
+   `<nav class="breadcrumb">` and made it a 100vh-tall column.
 ========================================================== */
-nav {
-    position: sticky;
-    top: var(--admin-header-height);
-    align-self: start;
-
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-
-    min-height: calc(100vh - var(--admin-header-height));
-    padding: 20px 14px;
-
-    background: var(--admin-surface);
-    border-right: 1px solid var(--admin-border);
-}
-
-nav a {
-    display: flex;
-    align-items: center;
-    gap: 11px;
-
-    min-height: 42px;
-    padding: 9px 13px;
-
-    color: #475569;
-    font-size: 13px;
-    font-weight: 550;
-
-    border-radius: var(--admin-radius-sm);
-    transition:
-        background var(--admin-transition),
-        color var(--admin-transition),
-        transform var(--admin-transition);
-}
-nav a:hover { color: var(--admin-primary); background: var(--admin-surface-hover); }
-nav a.active {
-    color: var(--admin-primary);
-    background: var(--admin-primary-soft);
-    font-weight: 700;
-}
-nav a:active { transform: scale(.985); }
 
 .nav-section {
     margin: 14px 4px 4px;
@@ -288,19 +250,7 @@ nav a:active { transform: scale(.985); }
     font-size: 15px;
     opacity: .8;
 }
-nav a.active .nav-icon { opacity: 1; }
-
-nav a .badge {
-    margin-left: auto;
-    padding: 1px 8px;
-    background: var(--admin-warning-soft);
-    color: #92400e;
-    border-radius: var(--admin-radius-sm);
-    font-size: 10.5px;
-    font-weight: 750;
-    line-height: 1.6;
-}
-nav a.active .badge { background: var(--admin-primary); color: #fff; }
+/* Sidebar badge + icon state now live in the v3 layer. */
 
 /* ==========================================================
    7. MAIN CONTENT
@@ -1013,28 +963,8 @@ textarea:focus-visible {
 
     .layout { grid-template-columns: minmax(0, 1fr); }
 
-    nav {
-        position: sticky;
-        top: var(--admin-header-height);
-        z-index: 50;
-        flex-direction: row;
-        gap: 5px;
-        min-height: auto;
-        padding: 9px 12px;
-        overflow-x: auto;
-        overflow-y: hidden;
-        border-right: 0;
-        border-bottom: 1px solid var(--admin-border);
-        scrollbar-width: thin;
-    }
-    nav a {
-        flex: 0 0 auto;
-        min-height: 37px;
-        padding: 8px 12px;
-        font-size: 12px;
-        white-space: nowrap;
-    }
-    .nav-section { display: none; }
+    /* The sidebar nav is styled by the v3 layer; the legacy horizontal
+       `nav` rules no longer apply to it. */
 
     .main { padding: 20px 14px; }
     .main > h1,
@@ -1395,6 +1325,8 @@ h1, h2, h3, h4, h5, h6 {
 .sidebar-nav {
     position: static;
     top: auto;
+    align-self: stretch;
+    width: 100%;
     flex: 1 1 auto;
     min-height: 0;
     display: flex;
@@ -1418,6 +1350,8 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .sidebar-nav a {
+    display: flex;
+    align-items: center;
     min-height: 40px;
     padding: 8px var(--sp-3);
     gap: 11px;
@@ -1425,7 +1359,12 @@ h1, h2, h3, h4, h5, h6 {
     font-size: 13px;
     font-weight: 500;
     border-radius: var(--admin-radius);
+    transition:
+        background var(--admin-transition),
+        color var(--admin-transition),
+        transform var(--admin-transition);
 }
+.sidebar-nav a:active { transform: scale(.985); }
 .sidebar-nav a:hover {
     color: var(--admin-text);
     background: var(--admin-surface-hover);
@@ -1446,7 +1385,18 @@ h1, h2, h3, h4, h5, h6 {
 }
 .sidebar-nav a { position: relative; }
 .sidebar-nav .nav-icon { opacity: .9; }
-.sidebar-nav a .badge { border-radius: var(--admin-radius-sm); }
+.sidebar-nav a.active .nav-icon { opacity: 1; }
+.sidebar-nav a .badge {
+    margin-left: auto;
+    padding: 1px 8px;
+    background: var(--admin-warning-soft);
+    color: #92400e;
+    border-radius: var(--admin-radius-sm);
+    font-size: 10.5px;
+    font-weight: 700;
+    line-height: 1.6;
+}
+.sidebar-nav a.active .badge { background: var(--admin-primary); color: #fff; }
 
 .sidebar-foot {
     flex-shrink: 0;
@@ -1707,7 +1657,9 @@ h1, h2, h3, h4, h5, h6 {
 .stat-value { font-size: 24px; font-weight: 700; letter-spacing: -.04em; }
 .stat-label { font-size: 12.5px; font-weight: 500; color: var(--admin-text-secondary); }
 
-.dashboard-cols { gap: var(--sp-4); }
+/* Cards keep their natural height instead of stretching to the tallest
+   neighbour, which used to leave big empty areas inside the dashboard. */
+.dashboard-cols { gap: var(--sp-4); align-items: start; }
 
 .quick-action {
     padding: 11px 14px;

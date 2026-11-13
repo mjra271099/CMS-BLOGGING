@@ -76,7 +76,14 @@ if (!function_exists('asset_url')) {
     function asset_url(string $path): string
     {
         $cdn = Settings::get('cdn_url');
-        return $cdn !== '' ? rtrim($cdn, '/') . '/' . ltrim($path, '/') : url($path);
+        if ($cdn !== '') {
+            return rtrim($cdn, '/') . '/' . ltrim($path, '/');
+        }
+        // Root-relative so CSS/JS never break when the site URL changes scheme
+        // or host (http -> https, new domain) or when the app lives in a
+        // subfolder. Absolute URLs stay reserved for canonical/SEO output.
+        $prefix = rtrim((string)(parse_url(base_url(), PHP_URL_PATH) ?? ''), '/');
+        return $prefix . '/' . ltrim($path, '/');
     }
 }
 
