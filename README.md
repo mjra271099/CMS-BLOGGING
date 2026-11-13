@@ -127,7 +127,7 @@ Semua data diakses lewat kit `App\Theme\Ui`, sehingga tema pihak ketiga tidak pe
 
 ## Bahasa
 
-Antarmuka depan mendukung **Bahasa Indonesia** dan **English**. Rantai penentuan bahasa: cookie `site_language` (pilihan pengunjung) → pengaturan `language` blog → default `id`. Tombol ID/EN di header menuju `/language/<kode>`, yang menyimpan cookie lalu mengembalikan pengunjung ke halaman asal.
+Antarmuka depan mendukung **Bahasa Indonesia** dan **English**. Rantai penentuan bahasa: cookie `site_language` (pilihan pengunjung) → pengaturan `language` blog → default `id`. Tombol ID/EN menuju `/language/<kode>`, yang menyimpan cookie lalu mengembalikan pengunjung ke halaman asal. Di desktop tombol tampil di header; di bawah 860px tombol pindah ke dalam dropdown menu (lebar penuh) bersama kotak pencarian.
 
 - Katalog string: `app/Lang/id.php` dan `app/Lang/en.php` (kunci harus sama di kedua berkas).
 - Pemakaian di kode/tema: `e(__('read_more'))`, dengan penggantian placeholder `__('min_read', ['minutes' => 3])`.

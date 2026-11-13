@@ -108,5 +108,7 @@ return [
     'newsletter_already' => 'Email sudah terdaftar.',
     'newsletter_error' => 'Langganan gagal. Periksa email lalu coba lagi.',
     'newsletter_thanks' => 'Terima kasih!',
+    'back_to_top' => 'Kembali ke atas',
+    'scroll_top' => 'Ke atas',
     'switch_language' => 'Ganti bahasa',
 ];

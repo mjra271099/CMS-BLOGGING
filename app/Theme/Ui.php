@@ -152,12 +152,29 @@ final class Ui
         $html .= '<div class="footer-bottom"><p>' . e($footerText) . '</p>';
         $html .= '<p class="footer-links">' . $this->widgetArea('footer-bottom') . '</p></div>';
         $html .= '</div></footer>';
+        $html .= $this->scrollTopButton();
         if (Settings::get('footer_code') !== '') {
             $html .= Settings::get('footer_code');
         }
         $html .= '<script src="' . e(url('assets/front/app.js')) . '" defer></script>';
         $html .= '</body></html>';
         return $html;
+    }
+
+    /**
+     * Floating "back to top" button, rendered on single articles only. It is
+     * hidden until the reader scrolls; app.js toggles .is-visible and handles
+     * the smooth scroll (falling back to an anchor without JS).
+     */
+    private function scrollTopButton(): string
+    {
+        if ($this->route() !== 'post') {
+            return '';
+        }
+        return '<button type="button" class="scroll-top" data-scroll-top aria-label="' . e(__('back_to_top')) . '" title="' . e(__('back_to_top')) . '">'
+            . '<svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">'
+            . '<path d="M12 19V5"/><path d="m5 12 7-7 7 7"/></svg>'
+            . '<span class="scroll-top-label">' . e(__('scroll_top')) . '</span></button>';
     }
 
     public function announcement(): string
@@ -200,11 +217,12 @@ final class Ui
         if (trim($menu) === '') {
             $menu = $this->defaultNavigation();
         }
-        // The panel carries a copy of the search box so mobile users can search
-        // without scrolling back to the header (CSS shows it below 860px only).
+        // The panel carries copies of the search box and the language switch so
+        // mobile users reach them from the dropdown; CSS shows each copy only
+        // below 860px, keeping a single visible control at any width.
         return '<nav class="site-nav" aria-label="' . e(__('main_navigation')) . '"><button class="nav-toggle" aria-expanded="false" aria-label="' . e(__('open_menu')) . '">'
             . '<span></span><span></span><span></span></button><div class="nav-panel">' . $menu
-            . $this->mobileSearch() . '</div></nav>';
+            . $this->mobileSearch() . $this->languageSwitcher('lang-switch-mobile') . '</div></nav>';
     }
 
     private function mobileSearch(): string
@@ -264,12 +282,16 @@ final class Ui
     /**
      * Compact ID/EN switch. The choice is stored in a cookie and honoured by
      * App\Core\Lang, so it works for guests without touching blog settings.
+     *
+     * @param string $extraClass "lang-switch-mobile" marks the copy rendered
+     *                           inside the mobile dropdown.
      */
-    public function languageSwitcher(): string
+    public function languageSwitcher(string $extraClass = ''): string
     {
         $current = \App\Core\Lang::locale();
-        $out = '<div class="lang-switch" role="group" aria-label="' . e(__('switch_language')) . '">';
-        foreach (\App\Core\Lang::SUPPORTED as $code => $label) {
+        $label = $extraClass === 'lang-switch-mobile' ? __('language') : __('switch_language');
+        $out = '<div class="lang-switch' . ($extraClass !== '' ? ' ' . e($extraClass) : '') . '" role="group" aria-label="' . e($label) . '">';
+        foreach (\App\Core\Lang::SUPPORTED as $code => $optionLabel) {
             $out .= '<a class="lang-option' . ($code === $current ? ' is-active' : '') . '" rel="alternate" hreflang="' . e($code) . '"'
                 . ' href="' . e(url('language/' . $code)) . '" aria-current="' . ($code === $current ? 'true' : 'false') . '">'
                 . e(strtoupper($code)) . '</a>';

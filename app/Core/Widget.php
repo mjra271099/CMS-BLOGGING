@@ -593,7 +593,8 @@ final class Widget
             $banner = '<p class="newsletter-notice ' . $allowed[$notice] . '">' . e(__($notice)) . '</p>';
         }
         return '<div class="widget-content newsletter">' . $banner
-            . '<form method="post" action="' . e(url('newsletter')) . '" class="newsletter-form">'
+            . '<form method="post" action="' . e(url('newsletter')) . '" class="newsletter-form" data-ajax'
+            . ' data-ok="' . e(__('newsletter_ok')) . '" data-error="' . e(__('newsletter_error')) . '">'
             . Csrf::field()
             . '<input type="email" name="email" placeholder="' . e(__('email_address')) . '" required autocomplete="email">'
             . '<button type="submit">' . e((string)($config['button'] ?? __('subscribe'))) . '</button>'

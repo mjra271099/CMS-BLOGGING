@@ -95,15 +95,28 @@
   }
 
   // ---------------------------------------------------------------
-  // Back-to-top button
+  // Back-to-top button (single article uses .scroll-top; legacy themes .to-top)
   // ---------------------------------------------------------------
-  const toTop = doc.querySelector('.to-top');
-  if (toTop) {
-    const sync = () => toTop.classList.toggle('is-visible', window.scrollY > 600);
+  doc.querySelectorAll('.scroll-top, .to-top').forEach((toTop) => {
+    const threshold = toTop.classList.contains('scroll-top') ? 400 : 600;
+    const sync = () => {
+      const visible = window.scrollY > threshold;
+      toTop.classList.toggle('is-visible', visible);
+      toTop.hidden = !visible;
+    };
     window.addEventListener('scroll', sync, { passive: true });
-    toTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
+    toTop.addEventListener('click', () => {
+      const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      window.scrollTo({ top: 0, behavior: reduce ? 'auto' : 'smooth' });
+      // Move focus back to the top of the document for keyboard users.
+      const skip = doc.getElementById('main');
+      if (skip) {
+        skip.setAttribute('tabindex', '-1');
+        skip.focus({ preventScroll: true });
+      }
+    });
     sync();
-  }
+  });
 
   // ---------------------------------------------------------------
   // Newsletter forms: inline feedback without leaving the page
@@ -123,7 +136,9 @@
         });
         const note = form.querySelector('.newsletter-feedback') || doc.createElement('small');
         note.className = 'newsletter-feedback';
-        note.textContent = response.ok ? 'Terima kasih, email terdaftar.' : 'Gagal mendaftar, coba lagi.';
+        note.textContent = response.ok
+          ? (form.dataset.ok || '')
+          : (form.dataset.error || '');
         form.appendChild(note);
         if (response.ok) {
           form.reset();

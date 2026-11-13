@@ -107,5 +107,7 @@ return [
     'newsletter_already' => 'This email is already subscribed.',
     'newsletter_error' => 'Subscription failed. Check the email and try again.',
     'newsletter_thanks' => 'Thank you!',
+    'back_to_top' => 'Back to top',
+    'scroll_top' => 'Top',
     'switch_language' => 'Switch language',
 ];
