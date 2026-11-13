@@ -60,6 +60,13 @@ final class Ui
         $lang = \App\Core\Lang::htmlLocale();
         $bodyClass = trim($this->theme->bodyClasses() . ' ' . (string)($this->page['body_class'] ?? ''));
 
+        // Cache-bust shared front assets by file mtime so a CSS/JS change is
+        // picked up immediately instead of being served from a stale cache.
+        $assetVersion = static function (string $name): int {
+            $path = (defined('CMS_ROOT') ? CMS_ROOT : dirname(__DIR__, 2)) . '/assets/front/' . $name;
+            return is_file($path) ? (int)filemtime($path) : 1;
+        };
+
         $head = '<!doctype html><html lang="' . e($lang) . '" data-theme="' . e($this->theme->slug()) . '">' . "\n<head>";
         $head .= '<meta charset="utf-8">';
         $head .= '<meta name="viewport" content="width=device-width,initial-scale=1">';
@@ -107,10 +114,8 @@ final class Ui
 
         // Theme stylesheets: base (primitives) → system (shared professional
         // design language) → theme (tokens + layout) → customizer (inline).
-        $head .= '<link rel="stylesheet" href="' . e(url('assets/front/base.css')) . '">';
-        $system = (defined('CMS_ROOT') ? CMS_ROOT : dirname(__DIR__, 2)) . '/assets/front/system.css';
-        $systemVersion = is_file($system) ? (int)filemtime($system) : 1;
-        $head .= '<link rel="stylesheet" href="' . e(url('assets/front/system.css')) . '?v=' . $systemVersion . '">';
+        $head .= '<link rel="stylesheet" href="' . e(url('assets/front/base.css')) . '?v=' . $assetVersion('base.css') . '">';
+        $head .= '<link rel="stylesheet" href="' . e(url('assets/front/system.css')) . '?v=' . $assetVersion('system.css') . '">';
         $css = $this->theme->asset('style.css');
         if ($css !== '') {
             $head .= '<link rel="stylesheet" href="' . e($css) . '">';
