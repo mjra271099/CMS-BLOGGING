@@ -1,36 +1,18 @@
-/* Frame — theme identity for the photography niche.
-   Design tokens are also overridable live from the customizer. */
+/* Frame — tata letak.
+   Gaya visual (warna, radius, tipografi, bayangan) berasal dari
+   assets/front/system.css dan token di theme.json, jadi tampilannya seragam
+   dengan tema lain. Berkas ini hanya mengatur tata letak. */
 
+/* Tema gelap: pertahankan permukaan gelap. Nilai ini dimuat setelah
+   system.css sehingga menang atas token terang bawaan, tetapi varian warna
+   lain (primary, aksen, teks, garis) tetap diwarisi dari theme.json. */
 :root {
-  --t-primary: #f5f5f5;
-  --t-primary-dark: #d4d4d4;
-  --t-accent: #fbbf24;
-  --t-bg: #0a0a0a;
-  --t-surface: #141414;
-  --t-text: #f5f5f5;
-  --t-muted: #a3a3a3;
-  --t-border: #262626;
-  --t-radius: 4px;
-  --t-radius-sm: max(2px, calc(var(--t-radius) - 6px));
-  --t-font: "Inter", system-ui, sans-serif;
-  --t-font-head: "Bebas Neue", "Inter", sans-serif;
-  --t-base-size: 16px;
-  --t-width: 1400px;
-  --t-space: 18px;
-  --t-header-bg: #141414;
-  --t-header-fg: #f5f5f5;
-  --t-footer-bg: #d4d4d4;
-  --t-footer-fg: #0b1020;
-  --t-body-bg: #0a0a0a;
+  color-scheme: dark;
+  --t-body-bg: #0a0f1a;
+  --t-header-bg: #0d1524;
+  --t-header-fg: #e8eefb;
+  --t-footer-bg: #070b14;
+  --t-footer-fg: #9fb0c7;
+  --t-shadow: 0 1px 2px rgba(0, 0, 0, .3), 0 12px 28px -22px rgba(0, 0, 0, .8);
+  --t-shadow-lg: 0 20px 44px -26px rgba(0, 0, 0, .9);
 }
-
-body { background: var(--t-body-bg); }
-.site-header { background: #0a0a0a; border-bottom: 1px solid var(--t-border); }
-.brand-name { font-family: var(--t-font-head); letter-spacing: .16em; text-transform: uppercase; font-size: 1.3rem; }
-.menu-list > li > a { text-transform: uppercase; font-size: .72rem; letter-spacing: .16em; color: var(--t-text); }
-.card-gallery { background: transparent; border: 0; border-radius: 0; box-shadow: none; overflow: visible; }
-.card-gallery .card-media { aspect-ratio: 1 / 1; border-radius: 4px; }
-.card-gallery .card-body { padding: 14px 0 0; }
-.card-gallery .card-title { font-family: var(--t-font-head); font-size: 1.4rem; letter-spacing: .02em; }
-.grid-grid { grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 10px; }
-.article-cover { border-radius: 4px; }

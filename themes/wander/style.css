@@ -1,37 +1,4 @@
-/* Wander — theme identity for the travel niche.
-   Design tokens are also overridable live from the customizer. */
-
-:root {
-  --t-primary: #0369a1;
-  --t-primary-dark: #075985;
-  --t-accent: #f59e0b;
-  --t-bg: #f7fafc;
-  --t-surface: #ffffff;
-  --t-text: #0f2a3d;
-  --t-muted: #5b7285;
-  --t-border: #dbe6ee;
-  --t-radius: 16px;
-  --t-radius-sm: max(2px, calc(var(--t-radius) - 6px));
-  --t-font: "Karla", system-ui, sans-serif;
-  --t-font-head: "Playfair Display", Georgia, serif;
-  --t-base-size: 17px;
-  --t-width: 1240px;
-  --t-space: 28px;
-  --t-header-bg: #ffffff;
-  --t-header-fg: #0f2a3d;
-  --t-footer-bg: #075985;
-  --t-footer-fg: #ffffff;
-  --t-body-bg: #f7fafc;
-}
-
-.site-header.header-transparent { background: transparent; color: #fff; border: 0; margin-bottom: -88px; position: relative; z-index: 20; }
-.site-header.header-transparent .brand-name, .site-header.header-transparent .menu-list > li > a { color: #fff; text-shadow: 0 1px 12px rgba(0, 0, 0, .45); }
-.site-header.header-transparent .brand-tagline { color: rgba(255, 255, 255, .8); }
-.immersive-hero .hero-area { padding: 0; }
-.immersive-hero .widget-area { display: grid; gap: 0; }
-.post-card.card-overlay { position: relative; border: 0; border-radius: 16px; overflow: hidden; min-height: 300px; }
-.post-card.card-overlay .card-media { position: absolute; inset: 0; aspect-ratio: auto; }
-.post-card.card-overlay .card-media::after { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(3, 20, 32, 0) 30%, rgba(3, 20, 32, .82)); }
-.post-card.card-overlay .card-body { position: relative; z-index: 2; margin-top: auto; color: #fff; }
-.post-card.card-overlay .card-title, .post-card.card-overlay .card-meta, .post-card.card-overlay .card-excerpt { color: #fff; }
-.post-card.card-overlay .card-excerpt { opacity: .82; }
+/* Wander — tata letak.
+   Gaya visual (warna, radius, tipografi, bayangan) berasal dari
+   assets/front/system.css dan token di theme.json, jadi tampilannya seragam
+   dengan tema lain. Berkas ini hanya mengatur tata letak. */

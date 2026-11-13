@@ -1,37 +1,6 @@
-/* Granite — theme identity for the business niche.
-   Design tokens are also overridable live from the customizer. */
+/* Granite — tata letak.
+   Gaya visual (warna, radius, tipografi, bayangan) berasal dari
+   assets/front/system.css dan token di theme.json, jadi tampilannya seragam
+   dengan tema lain. Berkas ini hanya mengatur tata letak. */
 
-:root {
-  --t-primary: #334155;
-  --t-primary-dark: #1e293b;
-  --t-accent: #f59e0b;
-  --t-bg: #ffffff;
-  --t-surface: #f8fafc;
-  --t-text: #0f172a;
-  --t-muted: #64748b;
-  --t-border: #e2e8f0;
-  --t-radius: 0px;
-  --t-radius-sm: max(2px, calc(var(--t-radius) - 6px));
-  --t-font: "Roboto", system-ui, sans-serif;
-  --t-font-head: "Roboto Condensed", "Roboto", sans-serif;
-  --t-base-size: 16px;
-  --t-width: 1180px;
-  --t-space: 30px;
-  --t-header-bg: #f8fafc;
-  --t-header-fg: #0f172a;
-  --t-footer-bg: #1e293b;
-  --t-footer-fg: #ffffff;
-  --t-body-bg: #ffffff;
-}
-
-body { background: var(--t-body-bg); }
-.brand-name { font-family: var(--t-font-head); text-transform: uppercase; letter-spacing: .12em; font-size: 1.15rem; }
-.brand-mark { display: none; }
-.site-header { border-bottom: 3px solid var(--t-primary); }
-.card-block { border: 0; border-radius: 0; box-shadow: none; border-top: 2px solid var(--t-text); }
-.card-block .card-media { display: none; }
-.card-block .card-body { padding: 20px 0; }
-.card-block .card-title { font-family: var(--t-font-head); text-transform: uppercase; letter-spacing: .02em; }
-.post-grid { gap: 0; }
-.post-grid > * { border-bottom: 1px solid var(--t-border); }
 .narrow-column { max-width: 860px; margin-inline: auto; }

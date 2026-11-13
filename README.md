@@ -73,7 +73,9 @@ app/
   Views/admin/ 26 template dashboard
   Http/Theme/Ui.php   kit UI yang dipakai semua tema
 assets/
-  front/base.css, front/app.js     desain sistem front-end
+  front/base.css                   primitif front-end (reset, token, komponen dasar)
+  front/system.css                 sistem desain bersama semua tema (gaya "AMP")
+  front/app.js                     skrip front-end
   admin.css, admin-app.css/js      dashboard
   admin-editor.css                 lapisan tampilan editor kaya (Tiptap)
 themes/<slug>/   theme.json, layout.php, style.css, screenshot.svg, functions.php
@@ -109,7 +111,9 @@ theme.json     metadata: slug, name, version, author, category, supports,
                layouts, dan skema settings untuk kustomizer
 layout.php     struktur halaman; memanggil method kit UI ($ui->head(), $ui->header(),
                $ui->content()/contentInner(), $ui->sidebar(), $ui->footer(), dll.)
-style.css      identitas visual (CSS variable --t-* dari kustomizer)
+style.css      tata letak khusus tema. Gaya visual (warna, radius, tipografi,
+               bayangan) berasal dari assets/front/system.css + token
+               --t-* yang dihasilkan theme.json, jadi semua tema seragam.
 screenshot.svg pratinjau di galeri tema
 functions.php  opsional; hook PHP tema
 ```

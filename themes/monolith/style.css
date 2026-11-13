@@ -1,42 +1,7 @@
-/* Monolith — theme identity for the minimalist niche.
-   Design tokens are also overridable live from the customizer. */
+/* Monolith — tata letak.
+   Gaya visual (warna, radius, tipografi, bayangan) berasal dari
+   assets/front/system.css dan token di theme.json, jadi tampilannya seragam
+   dengan tema lain. Berkas ini hanya mengatur tata letak. */
 
-:root {
-  --t-primary: #111827;
-  --t-primary-dark: #000000;
-  --t-accent: #6b7280;
-  --t-bg: #ffffff;
-  --t-surface: #ffffff;
-  --t-text: #111827;
-  --t-muted: #6b7280;
-  --t-border: #e5e7eb;
-  --t-radius: 0px;
-  --t-radius-sm: max(2px, calc(var(--t-radius) - 6px));
-  --t-font: "Neue Haas Grotesk", "Helvetica Neue", Arial, sans-serif;
-  --t-font-head: "Neue Haas Grotesk", "Helvetica Neue", Arial, sans-serif;
-  --t-base-size: 17px;
-  --t-width: 1000px;
-  --t-space: 32px;
-  --t-header-bg: #ffffff;
-  --t-header-fg: #111827;
-  --t-footer-bg: #000000;
-  --t-footer-fg: #ffffff;
-  --t-body-bg: #ffffff;
-}
-
-body { background: var(--t-body-bg); }
-.brand-mark { display: none; }
-.brand-name { font-weight: 500; letter-spacing: -.02em; font-size: 1.1rem; text-transform: lowercase; }
-.site-header { border-bottom: 1px solid var(--t-border); min-height: 64px; }
-.hero-area { padding-block: 40px 0; }
-.post-card { border: 0; border-bottom: 1px solid var(--t-border); border-radius: 0; box-shadow: none; background: transparent; }
-.post-card:hover { transform: none; box-shadow: none; }
-.post-card .card-media { display: none; }
-.card-title { font-weight: 500; font-size: 1.9rem; letter-spacing: -.03em; }
-.card-excerpt { color: var(--t-muted); font-size: .98rem; }
-.post-grid.grid-grid { grid-template-columns: 1fr; gap: 0; }
 .narrow-column { max-width: 720px; margin-inline: auto; }
-.article-title { font-size: clamp(2rem, 4vw, 3.2rem); font-weight: 500; letter-spacing: -.035em; }
-.site-footer { background: transparent; color: var(--t-muted); border-top: 1px solid var(--t-border); }
-.site-footer .widget-title { color: var(--t-text); }
-.site-footer a { color: var(--t-muted); }
+.post-grid.grid-grid { grid-template-columns: 1fr; }

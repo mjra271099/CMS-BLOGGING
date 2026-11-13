@@ -1,35 +1,18 @@
-/* Spectrum — theme identity for the entertainment niche.
-   Design tokens are also overridable live from the customizer. */
+/* Spectrum — tata letak.
+   Gaya visual (warna, radius, tipografi, bayangan) berasal dari
+   assets/front/system.css dan token di theme.json, jadi tampilannya seragam
+   dengan tema lain. Berkas ini hanya mengatur tata letak. */
 
+/* Tema gelap: pertahankan permukaan gelap. Nilai ini dimuat setelah
+   system.css sehingga menang atas token terang bawaan, tetapi varian warna
+   lain (primary, aksen, teks, garis) tetap diwarisi dari theme.json. */
 :root {
-  --t-primary: #db2777;
-  --t-primary-dark: #9d174d;
-  --t-accent: #8b5cf6;
-  --t-bg: #0f0716;
-  --t-surface: #1d1029;
-  --t-text: #faeff9;
-  --t-muted: #b499b1;
-  --t-border: #341c47;
-  --t-radius: 20px;
-  --t-radius-sm: max(2px, calc(var(--t-radius) - 6px));
-  --t-font: "Poppins", system-ui, sans-serif;
-  --t-font-head: "Poppins", system-ui, sans-serif;
-  --t-base-size: 16px;
-  --t-width: 1240px;
-  --t-space: 22px;
-  --t-header-bg: #1d1029;
-  --t-header-fg: #faeff9;
-  --t-footer-bg: #9d174d;
-  --t-footer-fg: #0b1020;
-  --t-body-bg: #0f0716;
+  color-scheme: dark;
+  --t-body-bg: #0a0f1a;
+  --t-header-bg: #0d1524;
+  --t-header-fg: #e8eefb;
+  --t-footer-bg: #070b14;
+  --t-footer-fg: #9fb0c7;
+  --t-shadow: 0 1px 2px rgba(0, 0, 0, .3), 0 12px 28px -22px rgba(0, 0, 0, .8);
+  --t-shadow-lg: 0 20px 44px -26px rgba(0, 0, 0, .9);
 }
-
-body { background: radial-gradient(1000px 560px at 10% -10%, rgba(139, 92, 246, .28), transparent), radial-gradient(800px 500px at 90% 10%, rgba(219, 39, 119, .22), transparent), var(--t-body-bg); }
-.site-header { background: rgba(15, 7, 22, .82); backdrop-filter: blur(14px); border-bottom: 1px solid var(--t-border); }
-.brand-name { font-weight: 800; letter-spacing: -.02em; }
-.card-poster { border: 1px solid var(--t-border); border-radius: 20px; overflow: hidden; }
-.card-poster .card-media { aspect-ratio: 3 / 4; }
-.card-poster .card-body { background: linear-gradient(180deg, rgba(29, 16, 41, .2), var(--t-surface)); }
-.card-poster .card-title { font-size: 1.15rem; font-weight: 600; }
-.immersive-hero .widget-area { display: grid; gap: 0; }
-.site-footer { background: #0b0510; }

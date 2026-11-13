@@ -105,8 +105,12 @@ final class Ui
         $head .= '<link rel="preconnect" href="https://fonts.googleapis.com">';
         $head .= '<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>';
 
-        // Theme stylesheets: base → theme → customizer.
+        // Theme stylesheets: base (primitives) → system (shared professional
+        // design language) → theme (tokens + layout) → customizer (inline).
         $head .= '<link rel="stylesheet" href="' . e(url('assets/front/base.css')) . '">';
+        $system = (defined('CMS_ROOT') ? CMS_ROOT : dirname(__DIR__, 2)) . '/assets/front/system.css';
+        $systemVersion = is_file($system) ? (int)filemtime($system) : 1;
+        $head .= '<link rel="stylesheet" href="' . e(url('assets/front/system.css')) . '?v=' . $systemVersion . '">';
         $css = $this->theme->asset('style.css');
         if ($css !== '') {
             $head .= '<link rel="stylesheet" href="' . e($css) . '">';

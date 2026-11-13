@@ -44,28 +44,28 @@
             "key": "primary_color",
             "label": "Warna utama",
             "type": "color",
-            "default": "#1e3a8a",
+            "default": "#2563eb",
             "group": "Warna"
         },
         {
             "key": "primary_dark",
             "label": "Warna utama gelap",
             "type": "color",
-            "default": "#172554",
+            "default": "#1d4ed8",
             "group": "Warna"
         },
         {
             "key": "accent_color",
             "label": "Warna aksen",
             "type": "color",
-            "default": "#f59e0b",
+            "default": "#0891b2",
             "group": "Warna"
         },
         {
             "key": "background_color",
             "label": "Latar halaman",
             "type": "color",
-            "default": "#f4f8ff",
+            "default": "#f4f7fb",
             "group": "Warna"
         },
         {
@@ -79,42 +79,42 @@
             "key": "text_color",
             "label": "Warna teks",
             "type": "color",
-            "default": "#0f1b33",
+            "default": "#172554",
             "group": "Warna"
         },
         {
             "key": "muted_color",
             "label": "Teks sekunder",
             "type": "color",
-            "default": "#56698a",
+            "default": "#64748b",
             "group": "Warna"
         },
         {
             "key": "border_color",
             "label": "Garis tepi",
             "type": "color",
-            "default": "#dbe6f8",
+            "default": "#e2e8f0",
             "group": "Warna"
         },
         {
             "key": "font_pair",
             "label": "Pasangan font (URL stylesheet)",
             "type": "text",
-            "default": "https://fonts.googleapis.com/css2?family=Source+Sans+3:wght@400;600;700&display=swap",
+            "default": "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap",
             "group": "Tipografi"
         },
         {
             "key": "font_family",
             "label": "Font teks",
             "type": "text",
-            "default": "\"Source Sans 3\", system-ui, sans-serif",
+            "default": "\"Inter\", system-ui, -apple-system, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
             "group": "Tipografi"
         },
         {
             "key": "font_heading",
             "label": "Font judul",
             "type": "text",
-            "default": "\"Source Sans 3\", system-ui, sans-serif",
+            "default": "\"Plus Jakarta Sans\", \"Inter\", system-ui, -apple-system, \"Segoe UI\", Roboto, sans-serif",
             "group": "Tipografi"
         },
         {
@@ -130,7 +130,7 @@
             "key": "radius",
             "label": "Radius sudut (px)",
             "type": "number",
-            "default": 12,
+            "default": 5,
             "min": 0,
             "max": 32,
             "group": "Tata letak"
@@ -139,7 +139,7 @@
             "key": "content_width",
             "label": "Lebar konten (px)",
             "type": "number",
-            "default": 1140,
+            "default": 1180,
             "min": 900,
             "max": 1600,
             "group": "Tata letak"
@@ -169,7 +169,7 @@
             "key": "header_style",
             "label": "Gaya header",
             "type": "select",
-            "default": "classic",
+            "default": "compact",
             "options": {
                 "classic": "Klasik",
                 "compact": "Ringkas",
@@ -182,7 +182,7 @@
             "key": "footer_style",
             "label": "Gaya footer",
             "type": "select",
-            "default": "tinted",
+            "default": "dark",
             "options": {
                 "dark": "Gelap",
                 "plain": "Terang",
@@ -195,7 +195,7 @@
             "key": "card_style",
             "label": "Gaya kartu artikel",
             "type": "select",
-            "default": "lesson",
+            "default": "feature",
             "options": {
                 "card": "Kartu",
                 "minimal": "Minimal",

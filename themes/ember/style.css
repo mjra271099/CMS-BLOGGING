@@ -1,38 +1,16 @@
-/* Ember — theme identity for the personal niche.
-   Design tokens are also overridable live from the customizer. */
+/* Ember — tata letak.
+   Gaya visual (warna, radius, tipografi, bayangan) berasal dari
+   assets/front/system.css dan token di theme.json, jadi tampilannya seragam
+   dengan tema lain. Berkas ini hanya mengatur tata letak. */
 
-:root {
-  --t-primary: #b45309;
-  --t-primary-dark: #78350f;
-  --t-accent: #f59e0b;
-  --t-bg: #fffbf5;
-  --t-surface: #ffffff;
-  --t-text: #2b2118;
-  --t-muted: #7c6a58;
-  --t-border: #efe1cf;
-  --t-radius: 6px;
-  --t-radius-sm: max(2px, calc(var(--t-radius) - 6px));
-  --t-font: "Source Serif Pro", Georgia, "Times New Roman", serif;
-  --t-font-head: "Fraunces", "Source Serif Pro", Georgia, serif;
-  --t-base-size: 18px;
-  --t-width: 1080px;
-  --t-space: 28px;
-  --t-header-bg: #ffffff;
-  --t-header-fg: #2b2118;
-  --t-footer-bg: #78350f;
-  --t-footer-fg: #ffffff;
-  --t-body-bg: #fffbf5;
+.journal-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 300px;
+  gap: clamp(24px, 3vw, 40px);
+  align-items: start;
 }
-
-body { line-height: 1.78; }
-.brand-name { font-size: 1.5rem; letter-spacing: -.01em; }
-.site-nav .menu-list > li > a { text-transform: uppercase; font-size: .74rem; letter-spacing: .14em; }
-.post-card.card-minimal { background: transparent; border: 0; box-shadow: none; border-bottom: 1px solid var(--t-border); border-radius: 0; }
-.post-card.card-minimal .card-media { aspect-ratio: 3 / 2; border-radius: var(--t-radius); }
-.post-card.card-minimal .card-title { font-size: 1.6rem; }
-.article-body.prose { font-size: 1.06rem; }
-.journal-layout { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 48px; align-items: start; }
+.journal-stream { min-width: 0; }
 .journal-stream .post-grid { grid-template-columns: 1fr; }
-.site-footer { background: var(--t-body-bg); color: var(--t-text); border-top: 1px solid var(--t-border); }
-.site-footer a, .site-footer .widget-content, .site-footer .mini-title { color: var(--t-muted); }
-.site-footer .widget-title { color: var(--t-text); }
+@media (max-width: 1024px) {
+  .journal-layout { grid-template-columns: minmax(0, 1fr); }
+}

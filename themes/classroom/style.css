@@ -1,36 +1,4 @@
-/* Classroom — theme identity for the education niche.
-   Design tokens are also overridable live from the customizer. */
-
-:root {
-  --t-primary: #1e3a8a;
-  --t-primary-dark: #172554;
-  --t-accent: #f59e0b;
-  --t-bg: #f4f8ff;
-  --t-surface: #ffffff;
-  --t-text: #0f1b33;
-  --t-muted: #56698a;
-  --t-border: #dbe6f8;
-  --t-radius: 12px;
-  --t-radius-sm: max(2px, calc(var(--t-radius) - 6px));
-  --t-font: "Source Sans 3", system-ui, sans-serif;
-  --t-font-head: "Source Sans 3", system-ui, sans-serif;
-  --t-base-size: 17px;
-  --t-width: 1140px;
-  --t-space: 26px;
-  --t-header-bg: #ffffff;
-  --t-header-fg: #0f1b33;
-  --t-footer-bg: #172554;
-  --t-footer-fg: #ffffff;
-  --t-body-bg: #f4f8ff;
-}
-
-body { background: var(--t-body-bg); }
-.brand-mark { border-radius: 10px; }
-.card-lesson { border-left: 4px solid var(--t-primary); border-radius: 12px; }
-.card-lesson .card-title { font-size: 1.2rem; }
-.card-lesson .card-excerpt { color: var(--t-muted); }
-.section-heading h2 { display: inline-flex; align-items: center; gap: 10px; }
-.homework-note { background: #fff8e6; border: 1px solid #f7e3b0; border-radius: 12px; padding: 18px 20px; }
-.site-footer { background: #eaf1fe; color: var(--t-text); }
-.site-footer .widget-content, .site-footer a, .site-footer .mini-title { color: var(--t-muted); }
-.site-footer .widget-title { color: var(--t-text); }
+/* Classroom — tata letak.
+   Gaya visual (warna, radius, tipografi, bayangan) berasal dari
+   assets/front/system.css dan token di theme.json, jadi tampilannya seragam
+   dengan tema lain. Berkas ini hanya mengatur tata letak. */

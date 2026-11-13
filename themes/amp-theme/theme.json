@@ -3,11 +3,12 @@
     "name": "AMP Theme",
     "version": "1.0.0",
     "author": "CMS Studio",
-    "description": "Tema cepat ala AMP: tanpa webfont, tanpa JavaScript tambahan, radius tegas 5px, dan layout stabil tanpa pergeseran.",
+    "description": "Tema profesional bergaya bersih: radius tegas 5px, garis 1px, bayangan tipis, tipografi Inter + Plus Jakarta Sans, dan layout stabil tanpa pergeseran.",
     "category": "magazine",
     "tags": [
         "amp",
         "cepat",
+        "professional",
         "magazine",
         "responsive",
         "aksesibel",
@@ -103,7 +104,7 @@
             "key": "font_pair",
             "label": "Pasangan font (URL stylesheet)",
             "type": "text",
-            "default": "",
+            "default": "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap",
             "description": "Biarkan kosong untuk tetap nol permintaan font (paling cepat, disarankan untuk AMP).",
             "group": "Tipografi"
         },
@@ -111,14 +112,14 @@
             "key": "font_family",
             "label": "Font teks",
             "type": "text",
-            "default": "system-ui, -apple-system, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+            "default": "\"Inter\", system-ui, -apple-system, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
             "group": "Tipografi"
         },
         {
             "key": "font_heading",
             "label": "Font judul",
             "type": "text",
-            "default": "system-ui, -apple-system, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+            "default": "\"Plus Jakarta Sans\", \"Inter\", system-ui, -apple-system, \"Segoe UI\", Roboto, sans-serif",
             "group": "Tipografi"
         },
         {

@@ -1,36 +1,14 @@
-/* Ledger — theme identity for the business niche.
-   Design tokens are also overridable live from the customizer. */
+/* Ledger — tata letak.
+   Gaya visual (warna, radius, tipografi, bayangan) berasal dari
+   assets/front/system.css dan token di theme.json, jadi tampilannya seragam
+   dengan tema lain. Berkas ini hanya mengatur tata letak. */
 
-:root {
-  --t-primary: #1d4ed8;
-  --t-primary-dark: #1e3a8a;
-  --t-accent: #0f766e;
-  --t-bg: #f7f8fb;
-  --t-surface: #ffffff;
-  --t-text: #0b1324;
-  --t-muted: #5b6478;
-  --t-border: #e3e7ef;
-  --t-radius: 8px;
-  --t-radius-sm: max(2px, calc(var(--t-radius) - 6px));
-  --t-font: "Public Sans", system-ui, sans-serif;
-  --t-font-head: "Public Sans", system-ui, sans-serif;
-  --t-base-size: 16px;
-  --t-width: 1220px;
-  --t-space: 22px;
-  --t-header-bg: #ffffff;
-  --t-header-fg: #0b1324;
-  --t-footer-bg: #1e3a8a;
-  --t-footer-fg: #ffffff;
-  --t-body-bg: #f7f8fb;
+.split-wrap {
+  display: grid;
+  grid-template-columns: 300px minmax(0, 1fr);
+  gap: clamp(24px, 3vw, 40px);
+  align-items: start;
 }
-
-body { background: var(--t-body-bg); }
-.brand-mark { border-radius: 8px; background: var(--t-primary); }
-.split-wrap { display: grid; grid-template-columns: 300px minmax(0, 1fr); gap: 40px; }
-.card-data { border-radius: 8px; box-shadow: none; border: 1px solid var(--t-border); }
-.card-data .card-body { padding: 18px 20px; }
-.card-data .card-title { font-size: 1.08rem; font-weight: 600; line-height: 1.4; }
-.card-data .card-excerpt { font-size: .9rem; }
-.stat-grid strong { font-variant-numeric: tabular-nums; font-size: 1.5rem; }
-.article-body.prose table { font-variant-numeric: tabular-nums; }
-.site-header { box-shadow: 0 1px 0 var(--t-border); }
+@media (max-width: 1024px) {
+  .split-wrap { grid-template-columns: minmax(0, 1fr); }
+}

@@ -44,28 +44,28 @@
             "key": "primary_color",
             "label": "Warna utama",
             "type": "color",
-            "default": "#1d4ed8",
+            "default": "#2563eb",
             "group": "Warna"
         },
         {
             "key": "primary_dark",
             "label": "Warna utama gelap",
             "type": "color",
-            "default": "#1e3a8a",
+            "default": "#1d4ed8",
             "group": "Warna"
         },
         {
             "key": "accent_color",
             "label": "Warna aksen",
             "type": "color",
-            "default": "#0f766e",
+            "default": "#0891b2",
             "group": "Warna"
         },
         {
             "key": "background_color",
             "label": "Latar halaman",
             "type": "color",
-            "default": "#f7f8fb",
+            "default": "#f4f7fb",
             "group": "Warna"
         },
         {
@@ -79,49 +79,49 @@
             "key": "text_color",
             "label": "Warna teks",
             "type": "color",
-            "default": "#0b1324",
+            "default": "#172554",
             "group": "Warna"
         },
         {
             "key": "muted_color",
             "label": "Teks sekunder",
             "type": "color",
-            "default": "#5b6478",
+            "default": "#64748b",
             "group": "Warna"
         },
         {
             "key": "border_color",
             "label": "Garis tepi",
             "type": "color",
-            "default": "#e3e7ef",
+            "default": "#e2e8f0",
             "group": "Warna"
         },
         {
             "key": "font_pair",
             "label": "Pasangan font (URL stylesheet)",
             "type": "text",
-            "default": "https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;600;700&display=swap",
+            "default": "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap",
             "group": "Tipografi"
         },
         {
             "key": "font_family",
             "label": "Font teks",
             "type": "text",
-            "default": "\"Public Sans\", system-ui, sans-serif",
+            "default": "\"Inter\", system-ui, -apple-system, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
             "group": "Tipografi"
         },
         {
             "key": "font_heading",
             "label": "Font judul",
             "type": "text",
-            "default": "\"Public Sans\", system-ui, sans-serif",
+            "default": "\"Plus Jakarta Sans\", \"Inter\", system-ui, -apple-system, \"Segoe UI\", Roboto, sans-serif",
             "group": "Tipografi"
         },
         {
             "key": "font_size",
             "label": "Ukuran teks (px)",
             "type": "number",
-            "default": 16,
+            "default": 17,
             "min": 14,
             "max": 22,
             "group": "Tipografi"
@@ -130,7 +130,7 @@
             "key": "radius",
             "label": "Radius sudut (px)",
             "type": "number",
-            "default": 8,
+            "default": 5,
             "min": 0,
             "max": 32,
             "group": "Tata letak"
@@ -139,7 +139,7 @@
             "key": "content_width",
             "label": "Lebar konten (px)",
             "type": "number",
-            "default": 1220,
+            "default": 1180,
             "min": 900,
             "max": 1600,
             "group": "Tata letak"
@@ -148,7 +148,7 @@
             "key": "spacing",
             "label": "Jarak antar blok (px)",
             "type": "number",
-            "default": 22,
+            "default": 26,
             "min": 12,
             "max": 48,
             "group": "Tata letak"
@@ -157,7 +157,7 @@
             "key": "sidebar_position",
             "label": "Posisi sidebar",
             "type": "select",
-            "default": "left",
+            "default": "right",
             "options": {
                 "left": "Kiri",
                 "right": "Kanan",
@@ -169,7 +169,7 @@
             "key": "header_style",
             "label": "Gaya header",
             "type": "select",
-            "default": "classic",
+            "default": "compact",
             "options": {
                 "classic": "Klasik",
                 "compact": "Ringkas",
@@ -195,7 +195,7 @@
             "key": "card_style",
             "label": "Gaya kartu artikel",
             "type": "select",
-            "default": "data",
+            "default": "feature",
             "options": {
                 "card": "Kartu",
                 "minimal": "Minimal",

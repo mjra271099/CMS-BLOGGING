@@ -1,35 +1,4 @@
-/* Showcase — theme identity for the affiliate niche.
-   Design tokens are also overridable live from the customizer. */
-
-:root {
-  --t-primary: #ea580c;
-  --t-primary-dark: #9a3412;
-  --t-accent: #0ea5e9;
-  --t-bg: #fffaf3;
-  --t-surface: #ffffff;
-  --t-text: #20160f;
-  --t-muted: #7a6a5e;
-  --t-border: #f0e2d2;
-  --t-radius: 16px;
-  --t-radius-sm: max(2px, calc(var(--t-radius) - 6px));
-  --t-font: "Rubik", system-ui, sans-serif;
-  --t-font-head: "Rubik", system-ui, sans-serif;
-  --t-base-size: 16px;
-  --t-width: 1200px;
-  --t-space: 24px;
-  --t-header-bg: #ffffff;
-  --t-header-fg: #20160f;
-  --t-footer-bg: #9a3412;
-  --t-footer-fg: #ffffff;
-  --t-body-bg: #fffaf3;
-}
-
-body { background: var(--t-body-bg); }
-.brand-name { font-weight: 700; }
-.card-product { border: 1px solid var(--t-border); border-radius: 16px; }
-.card-product .card-media { aspect-ratio: 1 / 1; background: #fff; }
-.card-product .card-body { padding: 16px 18px 20px; }
-.card-product .card-labels .label { background: var(--t-accent); color: #06202b; }
-.card-product:hover { box-shadow: 0 22px 44px -30px rgba(234, 88, 12, .5); }
-.hero-area .widget-area { grid-template-columns: 1.3fr 1fr; }
-.builder-cta { border-radius: 16px; }
+/* Showcase — tata letak.
+   Gaya visual (warna, radius, tipografi, bayangan) berasal dari
+   assets/front/system.css dan token di theme.json, jadi tampilannya seragam
+   dengan tema lain. Berkas ini hanya mengatur tata letak. */
