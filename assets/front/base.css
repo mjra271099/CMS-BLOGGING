@@ -335,6 +335,16 @@ table { border-collapse: collapse; width: 100%; }
 /* ---------- Sidebar & widgets ---------- */
 .sidebar { display: flex; flex-direction: column; gap: 20px; position: sticky; top: 92px; }
 .widget-area { display: flex; flex-direction: column; gap: 20px; }
+
+/* Standalone widget areas live outside the content card: before-content and
+   ad-top sit above the content, after-content and ad-bottom below it. They
+   have no vertical rhythm of their own, so they end up flush against the
+   block they face. Give them a small gutter on the content-facing side only
+   (so adjacent areas never double up). */
+.widget-area[data-area="before-content"],
+.widget-area[data-area="ad-top"] { margin-bottom: clamp(18px, 2.4vw, 28px); }
+.widget-area[data-area="after-content"] { margin-top: clamp(18px, 2.4vw, 28px); }
+.content-column > .widget-area:not(:first-child) { margin-top: clamp(18px, 2.4vw, 28px); }
 .widget {
   background: var(--t-surface); border: 1px solid var(--t-border);
   border-radius: var(--t-radius); padding: clamp(16px, 2vw, 22px);
