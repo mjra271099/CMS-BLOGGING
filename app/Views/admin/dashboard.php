@@ -84,122 +84,129 @@ foreach ($traffic as $row) {
     </a>
 </div>
 
-<div class="dashboard-cols">
-    <div class="card">
-        <h2>Tren Publikasi 14 Hari</h2>
-        <?php if ($traffic): ?>
-            <?= AdminUi::sparkline($traffic) ?>
-            <p class="help">Tinggi batang = jumlah artikel yang terbit per hari. Total hari ini: <strong><?= $publishedToday ?></strong>.</p>
-        <?php else: ?>
-            <div class="empty-state"><p>Belum ada data publikasi.</p></div>
-        <?php endif; ?>
+<?php /* Two independent columns: each one stacks its own cards, so a tall card
+         on one side no longer pushes the next row down and leaves a hole. */ ?>
+<div class="dashboard-grid">
+    <div class="dashboard-col">
+        <div class="card">
+            <h2>Tren Publikasi 14 Hari</h2>
+            <?php if ($traffic): ?>
+                <?= AdminUi::sparkline($traffic) ?>
+                <p class="help">Tinggi batang = jumlah artikel yang terbit per hari. Total hari ini: <strong><?= $publishedToday ?></strong>.</p>
+            <?php else: ?>
+                <div class="empty-state"><p>Belum ada data publikasi.</p></div>
+            <?php endif; ?>
 
-        <h3 style="margin-top:26px">Artikel Terpopuler</h3>
-        <?php if ($topPosts): ?>
-            <table>
-                <thead><tr><th>Judul</th><th>Dilihat</th><th></th></tr></thead>
-                <tbody>
-                <?php foreach ($topPosts as $post): ?>
-                    <tr>
-                        <td><?= e(AdminUi::excerpt((string)$post['title'], 52)) ?></td>
-                        <td><strong><?= number_format((int)$post['views'], 0, ',', '.') ?></strong></td>
-                        <td><a href="<?= e(post_url($post)) ?>" target="_blank" rel="noopener">Lihat</a></td>
-                    </tr>
-                <?php endforeach; ?>
-                </tbody>
-            </table>
-        <?php else: ?>
-            <p class="muted">Belum ada kunjungan tercatat.</p>
-        <?php endif; ?>
-    </div>
-
-    <div class="card">
-        <h2>Kesehatan SEO</h2>
-        <div class="seo-score <?= $seoScore >= 80 ? 'good' : ($seoScore >= 60 ? 'warn' : 'bad') ?>">
-            <span class="seo-number"><?= $seoScore ?></span>
-            <span class="seo-caption">dari 100</span>
+            <h3 style="margin-top:26px">Artikel Terpopuler</h3>
+            <?php if ($topPosts): ?>
+                <table>
+                    <thead><tr><th>Judul</th><th>Dilihat</th><th></th></tr></thead>
+                    <tbody>
+                    <?php foreach ($topPosts as $post): ?>
+                        <tr>
+                            <td><?= e(AdminUi::excerpt((string)$post['title'], 52)) ?></td>
+                            <td><strong><?= number_format((int)$post['views'], 0, ',', '.') ?></strong></td>
+                            <td><a href="<?= e(post_url($post)) ?>" target="_blank" rel="noopener">Lihat</a></td>
+                        </tr>
+                    <?php endforeach; ?>
+                    </tbody>
+                </table>
+            <?php else: ?>
+                <p class="muted">Belum ada kunjungan tercatat.</p>
+            <?php endif; ?>
         </div>
-        <p class="help"><?= $seoIssues ?> temuan pada <?= (int)($seo['checked'] ?? 0) ?> artikel terbit.</p>
-        <?php if (!empty($seo['counts'])): ?>
-        <div class="pill-row">
-            <span class="pill danger"><?= (int)$seo['counts']['error'] ?> error</span>
-            <span class="pill warning"><?= (int)$seo['counts']['warning'] ?> peringatan</span>
-            <span class="pill info"><?= (int)$seo['counts']['info'] ?> info</span>
-        </div>
-        <?php endif; ?>
-        <a class="btn secondary" style="margin-top:16px" href="<?= e(url('admin/index.php?view=seo')) ?>">Buka audit SEO</a>
 
-        <h3 style="margin-top:26px">Aktivitas Terbaru</h3>
-        <?php if ($activity): ?>
-            <ul class="activity-list">
-            <?php foreach ($activity as $entry): ?>
-                <li>
-                    <span class="act-dot"></span>
-                    <span class="act-body">
-                        <span class="act-action"><?= e(str_replace(['.', '_'], ' ', (string)$entry['action'])) ?></span>
-                        <span class="act-detail"><?= e((string)($entry['detail'] ?? '')) ?><?= !empty($entry['username']) ? ' · ' . e((string)$entry['username']) : '' ?></span>
-                    </span>
-                    <span class="act-time"><?= e(AdminUi::dateShort((string)$entry['created_at'])) ?></span>
-                </li>
-            <?php endforeach; ?>
-            </ul>
-        <?php else: ?>
-            <p class="muted">Belum ada aktivitas.</p>
-        <?php endif; ?>
-    </div>
-</div>
-
-<div class="dashboard-cols" style="margin-top:20px">
-    <div class="card">
-        <div class="toolbar" style="margin-bottom:6px">
-            <h2 style="margin:0">Artikel Terakhir</h2>
-            <a class="btn secondary small" href="<?= e(url('admin/index.php?view=posts')) ?>">Semua</a>
-        </div>
-        <?php if ($latest): ?>
-            <table>
-                <thead><tr><th>Judul</th><th>Status</th><th>Tanggal</th></tr></thead>
-                <tbody>
-                <?php foreach ($latest as $post): ?>
-                    <tr>
-                        <td><a href="<?= e(url('admin/index.php?view=post-edit&id=' . (int)$post['id'])) ?>"><?= e(AdminUi::excerpt((string)$post['title'], 48)) ?></a></td>
-                        <td><?= AdminUi::pill((string)$post['status']) ?></td>
-                        <td class="muted"><?= e(AdminUi::dateShort((string)($post['published_at'] ?? $post['created_at'] ?? ''))) ?></td>
-                    </tr>
-                <?php endforeach; ?>
-                </tbody>
-            </table>
-        <?php else: ?>
-            <div class="empty-state">
-                <div class="es-icon"><?= AdminUi::icon('edit', 22) ?></div>
-                <p>Belum ada artikel. <a href="<?= e(url('admin/index.php?view=post-edit')) ?>">Tulis yang pertama</a>.</p>
+        <div class="card">
+            <div class="toolbar" style="margin-bottom:6px">
+                <h2 style="margin:0">Artikel Terakhir</h2>
+                <a class="btn secondary small" href="<?= e(url('admin/index.php?view=posts')) ?>">Semua</a>
             </div>
-        <?php endif; ?>
-        <?php if ($scheduled > 0): ?>
-            <p class="help"><?= $scheduled ?> artikel terjadwal akan terbit otomatis.</p>
-        <?php endif; ?>
+            <?php if ($latest): ?>
+                <table>
+                    <thead><tr><th>Judul</th><th>Status</th><th>Tanggal</th></tr></thead>
+                    <tbody>
+                    <?php foreach ($latest as $post): ?>
+                        <tr>
+                            <td><a href="<?= e(url('admin/index.php?view=post-edit&id=' . (int)$post['id'])) ?>"><?= e(AdminUi::excerpt((string)$post['title'], 48)) ?></a></td>
+                            <td><?= AdminUi::pill((string)$post['status']) ?></td>
+                            <td class="muted"><?= e(AdminUi::dateShort((string)($post['published_at'] ?? $post['created_at'] ?? ''))) ?></td>
+                        </tr>
+                    <?php endforeach; ?>
+                    </tbody>
+                </table>
+            <?php else: ?>
+                <div class="empty-state">
+                    <div class="es-icon"><?= AdminUi::icon('edit', 22) ?></div>
+                    <p>Belum ada artikel. <a href="<?= e(url('admin/index.php?view=post-edit')) ?>">Tulis yang pertama</a>.</p>
+                </div>
+            <?php endif; ?>
+            <?php if ($scheduled > 0): ?>
+                <p class="help"><?= $scheduled ?> artikel terjadwal akan terbit otomatis.</p>
+            <?php endif; ?>
+        </div>
     </div>
 
-    <div class="card">
-        <div class="toolbar" style="margin-bottom:6px">
-            <h2 style="margin:0">Komentar Terbaru</h2>
-            <a class="btn secondary small" href="<?= e(url('admin/index.php?view=comments')) ?>">Moderasi</a>
+    <div class="dashboard-col">
+        <div class="card">
+            <h2>Kesehatan SEO</h2>
+            <div class="seo-score <?= $seoScore >= 80 ? 'good' : ($seoScore >= 60 ? 'warn' : 'bad') ?>">
+                <span class="seo-number"><?= $seoScore ?></span>
+                <span class="seo-caption">dari 100</span>
+            </div>
+            <p class="help"><?= $seoIssues ?> temuan pada <?= (int)($seo['checked'] ?? 0) ?> artikel terbit.</p>
+            <?php if (!empty($seo['counts'])): ?>
+            <div class="pill-row">
+                <span class="pill danger"><?= (int)$seo['counts']['error'] ?> error</span>
+                <span class="pill warning"><?= (int)$seo['counts']['warning'] ?> peringatan</span>
+                <span class="pill info"><?= (int)$seo['counts']['info'] ?> info</span>
+            </div>
+            <?php endif; ?>
+            <a class="btn secondary" style="margin-top:16px" href="<?= e(url('admin/index.php?view=seo')) ?>">Buka audit SEO</a>
+
+            <div class="toolbar" style="margin:24px 0 6px">
+                <h3 style="margin:0">Aktivitas Terbaru</h3>
+                <a class="btn secondary small" href="<?= e(url('admin/index.php?view=logs')) ?>">Semua</a>
+            </div>
+            <?php if ($activity): ?>
+                <ul class="activity-list">
+                <?php foreach ($activity as $entry): ?>
+                    <li>
+                        <span class="act-dot"></span>
+                        <span class="act-body">
+                            <span class="act-action"><?= e(str_replace(['.', '_'], ' ', (string)$entry['action'])) ?></span>
+                            <span class="act-detail"><?= e((string)($entry['detail'] ?? '')) ?><?= !empty($entry['username']) ? ' · ' . e((string)$entry['username']) : '' ?></span>
+                        </span>
+                        <span class="act-time"><?= e(AdminUi::dateShort((string)$entry['created_at'])) ?></span>
+                    </li>
+                <?php endforeach; ?>
+                </ul>
+            <?php else: ?>
+                <p class="muted">Belum ada aktivitas.</p>
+            <?php endif; ?>
         </div>
-        <?php if ($comments): ?>
-            <ul class="activity-list">
-            <?php foreach ($comments as $comment): ?>
-                <li>
-                    <span class="act-dot" style="background:<?= $comment['status'] === 'pending' ? '#d97706' : '#16a34a' ?>"></span>
-                    <span class="act-body">
-                        <span class="act-action"><?= e((string)$comment['author']) ?> · <?= AdminUi::pill((string)$comment['status']) ?></span>
-                        <span class="act-detail"><?= e(AdminUi::excerpt((string)$comment['body'], 70)) ?></span>
-                    </span>
-                    <span class="act-time"><?= e(AdminUi::dateShort((string)$comment['created_at'])) ?></span>
-                </li>
-            <?php endforeach; ?>
-            </ul>
-        <?php else: ?>
-            <p class="muted">Belum ada komentar masuk.</p>
-        <?php endif; ?>
+
+        <div class="card">
+            <div class="toolbar" style="margin-bottom:6px">
+                <h2 style="margin:0">Komentar Terbaru</h2>
+                <a class="btn secondary small" href="<?= e(url('admin/index.php?view=comments')) ?>">Moderasi</a>
+            </div>
+            <?php if ($comments): ?>
+                <ul class="activity-list">
+                <?php foreach ($comments as $comment): ?>
+                    <li>
+                        <span class="act-dot" style="background:<?= $comment['status'] === 'pending' ? '#d97706' : '#16a34a' ?>"></span>
+                        <span class="act-body">
+                            <span class="act-action"><?= e((string)$comment['author']) ?> · <?= AdminUi::pill((string)$comment['status']) ?></span>
+                            <span class="act-detail"><?= e(AdminUi::excerpt((string)$comment['body'], 70)) ?></span>
+                        </span>
+                        <span class="act-time"><?= e(AdminUi::dateShort((string)$comment['created_at'])) ?></span>
+                    </li>
+                <?php endforeach; ?>
+                </ul>
+            <?php else: ?>
+                <p class="muted">Belum ada komentar masuk.</p>
+            <?php endif; ?>
+        </div>
     </div>
 </div>
 

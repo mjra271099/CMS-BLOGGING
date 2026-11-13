@@ -180,7 +180,7 @@ final class AdminController
     {
         $base = ['user' => $user, 'view' => $view];
         return match ($view) {
-            'dashboard' => $base + ['title' => 'Ringkasan', 'stats' => Analytics::overview(), 'activity' => Analytics::recentActivity(10), 'latest' => Post::query(['status' => 'all'], 6), 'comments' => Analytics::latestComments(5), 'topPosts' => Analytics::topPosts(5), 'seo' => Seo::audit()],
+            'dashboard' => $base + ['title' => 'Ringkasan', 'stats' => Analytics::overview(), 'activity' => Analytics::recentActivity(8), 'latest' => Post::query(['status' => 'all'], 6), 'comments' => Analytics::latestComments(5), 'topPosts' => Analytics::topPosts(5), 'seo' => Seo::audit()],
             'posts' => $base + $this->postsData(),
             'post-edit' => $base + $this->postEditData(),
             'pages' => $base + ['title' => 'Halaman', 'pages' => Page::all(['status' => 'all'])],

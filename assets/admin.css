@@ -941,6 +941,7 @@ textarea:focus-visible {
 
 @media (max-width: 900px) {
     .dashboard-cols { grid-template-columns: 1fr; }
+    .dashboard-grid { grid-template-columns: minmax(0, 1fr); }
 }
 
 /* ==========================================================
@@ -1661,6 +1662,26 @@ h1, h2, h3, h4, h5, h6 {
    neighbour, which used to leave big empty areas inside the dashboard. */
 .dashboard-cols { gap: var(--sp-4); align-items: start; }
 
+/* Dashboard columns: two independent tracks. Each track stacks its own cards,
+   so a tall card on one side can never push the next row down and leave a big
+   empty hole in the other column. */
+.dashboard-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
+    gap: var(--sp-4);
+    align-items: stretch;
+}
+.dashboard-col {
+    display: flex;
+    flex-direction: column;
+    gap: var(--sp-4);
+    min-width: 0;
+}
+.dashboard-col .card { margin-bottom: 0; }
+/* The last card absorbs any leftover height so both columns end level and no
+   page-background hole appears beside the taller column. */
+.dashboard-col > .card:last-child { flex: 1 1 auto; }
+
 .quick-action {
     padding: 11px 14px;
     border-radius: var(--admin-radius);
@@ -2048,6 +2069,7 @@ body.sidebar-collapsed .sidebar-user { justify-content: center; padding: 7px 0; 
     .top { padding: 0 12px; }
     .main { padding: var(--sp-5) var(--sp-4) var(--sp-7); }
     .dashboard-cols { grid-template-columns: 1fr; }
+    .dashboard-grid { grid-template-columns: minmax(0, 1fr); }
 }
 
 @media (max-width: 640px) {

@@ -24,7 +24,10 @@ $counts = (array)($audit['counts'] ?? []);
     <button type="button" class="secondary" data-seo-audit><?= AdminUi::icon('refresh', 16) ?> Audit Ulang</button>
 </div>
 
-<div class="dashboard-cols">
+<?php /* Two independent columns: a long list on one side no longer pushes the
+         next row down and leaves an empty hole beside the shorter card. */ ?>
+<div class="dashboard-grid">
+    <div class="dashboard-col">
     <div class="card">
         <h2>Skor Kesehatan</h2>
         <div class="seo-score <?= $score >= 80 ? 'good' : ($score >= 60 ? 'warn' : 'bad') ?>">
@@ -46,32 +49,6 @@ $counts = (array)($audit['counts'] ?? []);
         </ul>
     </div>
 
-    <div class="card">
-        <h2>Temuan</h2>
-        <?php if (!$issues): ?>
-            <div class="empty-state"><p>Tidak ditemukan masalah. Kerja bagus!</p></div>
-        <?php else: ?>
-            <ul class="issue-list" data-issue-list>
-                <?php foreach (array_slice($issues, 0, 40) as $issue): ?>
-                    <li class="issue issue-<?= e((string)$issue['level']) ?>">
-                        <span class="pill <?= $issue['level'] === 'error' ? 'danger' : ($issue['level'] === 'warning' ? 'warning' : 'info') ?>"><?= e((string)$issue['level']) ?></span>
-                        <div style="flex:1">
-                            <span><?= e((string)$issue['message']) ?></span>
-                            <?php if (!empty($issue['id'])): ?>
-                                <a href="<?= e($adminBase . '?view=post-edit&id=' . (int)$issue['id']) ?>">Perbaiki →</a>
-                            <?php endif; ?>
-                        </div>
-                    </li>
-                <?php endforeach; ?>
-            </ul>
-            <?php if (count($issues) > 40): ?>
-                <p class="help">Menampilkan 40 dari <?= count($issues) ?> temuan.</p>
-            <?php endif; ?>
-        <?php endif; ?>
-    </div>
-</div>
-
-<div class="dashboard-cols">
     <div class="card">
         <h2>Verifikasi &amp; Teknis</h2>
         <form method="post" action="<?= e($adminBase . '?view=settings') ?>">
@@ -99,6 +76,32 @@ $counts = (array)($audit['counts'] ?? []);
             Robots: <a href="<?= e(url('robots.txt')) ?>" target="_blank" rel="noopener"><?= e(url('robots.txt')) ?></a><br>
             Feed: <a href="<?= e(url('feed/')) ?>" target="_blank" rel="noopener"><?= e(url('feed/')) ?></a>
         </p>
+    </div>
+    </div>
+
+    <div class="dashboard-col">
+    <div class="card">
+        <h2>Temuan</h2>
+        <?php if (!$issues): ?>
+            <div class="empty-state"><p>Tidak ditemukan masalah. Kerja bagus!</p></div>
+        <?php else: ?>
+            <ul class="issue-list" data-issue-list>
+                <?php foreach (array_slice($issues, 0, 40) as $issue): ?>
+                    <li class="issue issue-<?= e((string)$issue['level']) ?>">
+                        <span class="pill <?= $issue['level'] === 'error' ? 'danger' : ($issue['level'] === 'warning' ? 'warning' : 'info') ?>"><?= e((string)$issue['level']) ?></span>
+                        <div style="flex:1">
+                            <span><?= e((string)$issue['message']) ?></span>
+                            <?php if (!empty($issue['id'])): ?>
+                                <a href="<?= e($adminBase . '?view=post-edit&id=' . (int)$issue['id']) ?>">Perbaiki →</a>
+                            <?php endif; ?>
+                        </div>
+                    </li>
+                <?php endforeach; ?>
+            </ul>
+            <?php if (count($issues) > 40): ?>
+                <p class="help">Menampilkan 40 dari <?= count($issues) ?> temuan.</p>
+            <?php endif; ?>
+        <?php endif; ?>
     </div>
 
     <div class="card">
@@ -129,5 +132,6 @@ $counts = (array)($audit['counts'] ?? []);
             </table>
         <?php endif; ?>
         <a class="btn secondary" style="margin-top:14px" href="<?= e($adminBase . '?view=redirects') ?>">Kelola redirect</a>
+    </div>
     </div>
 </div>
