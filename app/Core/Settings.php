@@ -33,6 +33,9 @@ final class Settings
     {
         $blogId ??= Context::blogId();
         if (!isset(self::$cache[$blogId])) {
+            // The group must be "settings": Cache::remember() stores the entry
+            // in "default" when omitted, so Settings::flush()/flushGroup('settings')
+            // could never invalidate it and saved values kept reading stale.
             self::$cache[$blogId] = Cache::remember('settings.' . $blogId, 300, static function () use ($blogId): array {
                 try {
                     return Database::run(
@@ -42,7 +45,7 @@ final class Settings
                 } catch (\Throwable) {
                     return [];
                 }
-            });
+            }, 'settings');
         }
         return self::$cache[$blogId];
     }
