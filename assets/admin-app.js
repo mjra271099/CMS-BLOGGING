@@ -10,8 +10,17 @@
   const base = () => (document.body.dataset.adminBase || '');
 
   const adminRoot = () => {
-    const scriptUrl = new URL('assets/admin-app.js', window.location.href);
-    return scriptUrl.href.replace(/assets\/admin-app\.js.*$/, 'admin/index.php');
+    // The shell passes the canonical admin base URL (e.g. /admin/index.php).
+    const declared = document.body.dataset.adminBase;
+    if (declared) {
+      return declared;
+    }
+    // Fallback: derive it from this script's own URL.
+    const script = document.querySelector('script[src*="admin-app.js"]');
+    if (script) {
+      return new URL(script.getAttribute('src'), window.location.href).href.replace(/assets\/admin-app\.js.*$/, 'admin/index.php');
+    }
+    return new URL('admin/index.php', window.location.href).href;
   };
 
   const csrfToken = () => {
@@ -241,6 +250,13 @@
       }
       return;
     }
+    // Preferred path: the Tiptap editor exposes a global insert hook.
+    if (window.CMSRichEditor && typeof window.CMSRichEditor.insertImage === 'function') {
+      window.CMSRichEditor.focus();
+      window.CMSRichEditor.insertImage(item.url, item.alt || item.name || '');
+      return;
+    }
+    // Fallback for any legacy contenteditable surface.
     const editor = $('[data-wysiwyg]');
     const source = $('textarea[name="body"]');
     const markup = `<img src="${item.url}" alt="${(item.alt || '').replace(/"/g, '&quot;')}" loading="lazy">`;
@@ -684,4 +700,103 @@
       if (!window.confirm(form.dataset.confirm)) event.preventDefault();
     });
   });
+
+  // ---------------------------------------------------------------
+  // Shell: theme toggle, sidebar collapse / drawer, user menu, toasts
+  // ---------------------------------------------------------------
+  const root = document.documentElement;
+
+  const themeToggle = $('[data-theme-toggle]');
+  if (themeToggle) {
+    themeToggle.addEventListener('click', () => {
+      const next = root.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+      root.setAttribute('data-theme', next);
+      try { localStorage.setItem('cms-theme', next); } catch (error) { /* ignore */ }
+    });
+  }
+
+  const sidebar = $('#admin-sidebar');
+  const scrim = $('.sidebar-scrim');
+  const sidebarToggle = $('[data-sidebar-toggle]');
+  const isMobileNav = () => window.matchMedia('(max-width: 1024px)').matches;
+
+  const openDrawer = () => {
+    document.body.classList.add('sidebar-open');
+    if (scrim) scrim.hidden = false;
+    if (sidebarToggle) sidebarToggle.setAttribute('aria-expanded', 'true');
+  };
+  const closeDrawer = () => {
+    document.body.classList.remove('sidebar-open');
+    if (scrim) scrim.hidden = true;
+    if (sidebarToggle) sidebarToggle.setAttribute('aria-expanded', 'false');
+  };
+  const persistCollapsed = (collapsed) => {
+    try { localStorage.setItem('cms-sidebar', collapsed ? 'collapsed' : 'expanded'); } catch (error) { /* ignore */ }
+  };
+
+  if (sidebarToggle) {
+    sidebarToggle.addEventListener('click', () => {
+      if (isMobileNav()) {
+        document.body.classList.contains('sidebar-open') ? closeDrawer() : openDrawer();
+        return;
+      }
+      persistCollapsed(document.body.classList.toggle('sidebar-collapsed'));
+    });
+  }
+
+  const syncCollapseLabel = () => {
+    const collapsed = document.body.classList.contains('sidebar-collapsed');
+    $$('[data-sidebar-collapse]').forEach((button) => {
+      const label = collapsed ? 'Perluas sidebar' : 'Ringkas sidebar';
+      button.setAttribute('title', label);
+      button.setAttribute('aria-label', label);
+      button.setAttribute('aria-expanded', collapsed ? 'false' : 'true');
+    });
+  };
+  $$('[data-sidebar-collapse]').forEach((button) => {
+    button.addEventListener('click', () => {
+      persistCollapsed(document.body.classList.toggle('sidebar-collapsed'));
+      syncCollapseLabel();
+    });
+  });
+  syncCollapseLabel();
+
+  $$('[data-sidebar-close]').forEach((button) => button.addEventListener('click', closeDrawer));
+  if (sidebar) {
+    $$('a', sidebar).forEach((link) => link.addEventListener('click', () => { if (isMobileNav()) closeDrawer(); }));
+  }
+  document.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape') closeDrawer();
+  });
+  window.addEventListener('resize', debounce(() => { if (!isMobileNav()) closeDrawer(); }, 150));
+
+  const userMenu = $('.user-menu');
+  if (userMenu) {
+    document.addEventListener('click', (event) => {
+      if (userMenu.open && !userMenu.contains(event.target)) userMenu.open = false;
+    });
+    document.addEventListener('keydown', (event) => {
+      if (event.key === 'Escape') userMenu.open = false;
+    });
+  }
+
+  $$('.toast').forEach((toast) => {
+    const dismiss = () => {
+      toast.style.transition = 'opacity .18s ease, transform .18s ease';
+      toast.style.opacity = '0';
+      toast.style.transform = 'translateY(-6px)';
+      setTimeout(() => toast.remove(), 180);
+    };
+    const close = $('[data-toast-close]', toast);
+    if (close) close.addEventListener('click', dismiss);
+    setTimeout(dismiss, 6500);
+  });
+
+  const slugEcho = $('[data-slug-echo]');
+  const pageSlug = $('#slug');
+  if (slugEcho && pageSlug) {
+    const syncSlug = () => { slugEcho.textContent = pageSlug.value.trim() || 'slug'; };
+    pageSlug.addEventListener('input', syncSlug);
+    syncSlug();
+  }
 })();

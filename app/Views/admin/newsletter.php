@@ -30,7 +30,7 @@ foreach ($subscribers as $subscriber) {
     <h2>Daftar Pelanggan</h2>
     <?php if (!$subscribers): ?>
         <div class="empty-state">
-            <div class="es-icon">📬</div>
+            <div class="es-icon"><?= AdminUi::icon('mail', 22) ?></div>
             <p>Belum ada pelanggan. Formulir berlangganan tersedia di widget Newsletter.</p>
         </div>
     <?php else: ?>

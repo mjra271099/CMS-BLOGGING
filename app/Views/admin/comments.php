@@ -49,7 +49,7 @@ $tabs = [
 <?php if (!$items): ?>
 <div class="card">
     <div class="empty-state">
-        <div class="es-icon">💬</div>
+        <div class="es-icon"><?= AdminUi::icon('message', 22) ?></div>
         <p>Tidak ada komentar pada filter ini.</p>
     </div>
 </div>

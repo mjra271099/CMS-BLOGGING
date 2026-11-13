@@ -72,7 +72,7 @@ $statusTabs = [
 
     <?php if (!$posts): ?>
         <div class="empty-state">
-            <div class="es-icon">📄</div>
+            <div class="es-icon"><?= AdminUi::icon('file', 22) ?></div>
             <p>Belum ada postingan pada filter ini. <a href="<?= e($adminBase . '?view=post-edit') ?>">Tulis artikel baru</a>.</p>
         </div>
     <?php else: ?>
@@ -109,8 +109,8 @@ $statusTabs = [
                         <a href="<?= e($adminBase . '?view=post-edit&id=' . (int)$post['id']) ?>" style="font-weight:650">
                             <?= e((string)$post['title']) ?>
                         </a>
-                        <?php if (!empty($post['featured'])): ?><span class="pill info" title="Unggulan">★</span><?php endif; ?>
-                        <?php if (!empty($post['sticky'])): ?><span class="pill info" title="Disematkan">📌</span><?php endif; ?>
+                        <?php if (!empty($post['featured'])): ?><span class="pill info" title="Unggulan"><?= AdminUi::icon('star') ?></span><?php endif; ?>
+                        <?php if (!empty($post['sticky'])): ?><span class="pill info" title="Disematkan"><?= AdminUi::icon('pin') ?></span><?php endif; ?>
                         <div class="muted">/<?= e(AdminUi::excerpt(trim(strip_tags((string)($post['excerpt'] ?? ''))), 70)) ?></div>
                     </td>
                     <td class="muted">—</td>

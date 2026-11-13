@@ -74,7 +74,7 @@ $sections = (array)($document['sections'] ?? []);
             <div class="builder-sections" data-builder-sections>
                 <?php if (!$sections): ?>
                     <div class="empty-state">
-                        <div class="es-icon">🧱</div>
+                        <div class="es-icon"><?= AdminUi::icon('blocks', 22) ?></div>
                         <p>Kanvas kosong. Tambahkan blok dari panel sebelah kiri.</p>
                     </div>
                 <?php endif; ?>

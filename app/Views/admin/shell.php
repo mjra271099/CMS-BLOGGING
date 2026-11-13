@@ -2,8 +2,9 @@
 declare(strict_types=1);
 
 /**
- * Admin shell: top bar, grouped sidebar navigation, flash messages.
- * Every admin screen is rendered inside this layout by AdminController.
+ * Admin shell: collapsible sidebar, top bar with search / theme toggle / user
+ * menu, breadcrumb and the flash toasts. Every admin screen is rendered inside
+ * this layout by AdminController.
  *
  * @var string $title
  * @var string $view
@@ -42,87 +43,214 @@ try {
     $drafts = 0;
 }
 $badges = ['posts' => $drafts, 'comments' => $commentsPending];
-$brandLogo = Settings::get('logo_url');
+$brandLogo = (string)Settings::get('logo_url', '');
 $userName = (string)($user['display_name'] ?? '') ?: (string)($user['username'] ?? 'Pengguna');
+$userEmail = (string)($user['email'] ?? '');
+$userRole = (string)($user['role'] ?? '');
+$userInitials = AdminUi::initials($userName);
 $activeBlogName = (string)($activeBlog['name'] ?? $siteName);
+
+// Breadcrumb: resolve the current navigation label + group.
+$currentLabel = 'Ringkasan';
+$currentGroup = '';
+foreach ($nav as $group => $items) {
+    foreach ((array)$items as $key => $item) {
+        if ((string)$key === $view) {
+            $currentLabel = (string)($item[0] ?? $key);
+            $currentGroup = (string)$group;
+        }
+    }
+}
+
+// Editor screens load the Tiptap bundle and its styles.
+$isEditor = in_array($view, ['post-edit', 'page-edit'], true);
 ?>
 <!doctype html>
-<html lang="id">
+<html lang="id" data-theme="light">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="robots" content="noindex,nofollow">
+    <meta name="color-scheme" content="light dark">
     <title><?= e($title) ?> — <?= e($siteName) ?></title>
+    <script>
+    (function () {
+        try {
+            var stored = localStorage.getItem('cms-theme');
+            var theme = stored || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+            document.documentElement.setAttribute('data-theme', theme);
+        } catch (e) {}
+    })();
+    </script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap">
     <link rel="stylesheet" href="<?= e(asset_url('assets/admin.css')) ?>">
     <link rel="stylesheet" href="<?= e(asset_url('assets/admin-app.css')) ?>">
+    <?php if ($isEditor): ?>
+        <link rel="stylesheet" href="<?= e(asset_url('assets/admin-editor.css')) ?>">
+    <?php endif; ?>
     <?php if (Settings::get('favicon_url') !== ''): ?>
         <link rel="icon" href="<?= e(media_url(Settings::get('favicon_url'))) ?>">
     <?php endif; ?>
 </head>
 <body class="admin-body">
-<header class="top">
-    <strong>
-        <?php if ($brandLogo !== ''): ?>
-            <img src="<?= e(media_url($brandLogo)) ?>" alt="" style="height:26px;width:auto;border-radius:6px">
-        <?php endif; ?>
-        <?= e($activeBlogName) ?>
-        <small>Panel Admin</small>
-    </strong>
-    <div class="top-actions">
-        <a href="<?= e(url()) ?>" target="_blank" rel="noopener">Lihat situs ↗</a>
-        <?php if (count($blogs) > 1): ?>
-            <form method="post" action="<?= e($adminBase) ?>?view=dashboard" class="blog-switcher">
-                <input type="hidden" name="action" value="blog.switch">
-                <?= Csrf::field() ?>
-                <select name="blog_id" onchange="this.form.submit()" aria-label="Pilih blog">
-                    <?php foreach ($blogs as $blog): ?>
-                        <option value="<?= (int)$blog['id'] ?>"<?= (int)($activeBlog['id'] ?? 0) === (int)$blog['id'] ? ' selected' : '' ?>>
-                            <?= e((string)$blog['name']) ?>
-                        </option>
-                    <?php endforeach; ?>
-                </select>
-            </form>
-        <?php endif; ?>
-        <span class="top-user" title="<?= e((string)($user['email'] ?? '')) ?>"><?= e($userName) ?></span>
-        <form method="post" action="<?= e($adminBase) ?>?view=dashboard" class="inline">
-            <input type="hidden" name="action" value="logout">
-            <?= Csrf::field() ?>
-            <button type="submit" class="secondary small">Keluar</button>
-        </form>
-    </div>
-</header>
+<script>
+try { if (localStorage.getItem('cms-sidebar') === 'collapsed') document.body.classList.add('sidebar-collapsed'); } catch (e) {}
+</script>
+<a class="skip-link" href="#main-content">Lompat ke konten</a>
 
-<div class="layout">
-    <nav aria-label="Navigasi admin">
-        <?php foreach ($nav as $group => $items): ?>
-            <div class="nav-section"><?= e($group) ?></div>
-            <?php foreach ($items as $key => $item): ?>
-                <?php [$label, $icon] = [(string)($item[0] ?? $key), (string)($item[1] ?? 'grid')]; ?>
-                <a href="<?= e($adminBase . '?view=' . $key) ?>"<?= AdminUi::active($view, (string)$key) ?>>
-                    <span class="nav-icon"><?= AdminUi::icon($icon) ?></span>
-                    <?= e($label) ?>
-                    <?php if (!empty($badges[$key])): ?>
-                        <span class="badge"><?= (int)$badges[$key] ?></span>
-                    <?php endif; ?>
-                </a>
+<div class="admin-shell" id="admin-shell">
+    <aside class="sidebar" id="admin-sidebar" aria-label="Navigasi utama">
+        <div class="sidebar-brand">
+            <a class="brand-link" href="<?= e($adminBase . '?view=dashboard') ?>">
+                <?php if ($brandLogo !== ''): ?>
+                    <img class="brand-logo" src="<?= e(media_url($brandLogo)) ?>" alt="">
+                <?php else: ?>
+                    <span class="brand-mark" aria-hidden="true"><?= e(mb_substr($activeBlogName, 0, 1)) ?></span>
+                <?php endif; ?>
+                <span class="brand-text">
+                    <strong><?= e($activeBlogName) ?></strong>
+                    <small>Panel Admin</small>
+                </span>
+            </a>
+            <button type="button" class="sidebar-collapse" data-sidebar-collapse aria-label="Ringkas sidebar" title="Ringkas sidebar">
+                <?= AdminUi::icon('panel-left', 16) ?>
+            </button>
+            <button type="button" class="icon-btn sidebar-close" data-sidebar-close aria-label="Tutup navigasi">
+                <?= AdminUi::icon('x', 18) ?>
+            </button>
+        </div>
+
+        <nav class="sidebar-nav" aria-label="Navigasi admin">
+            <?php foreach ($nav as $group => $items): ?>
+                <div class="nav-section"><?= e($group) ?></div>
+                <?php foreach ((array)$items as $key => $item): ?>
+                    <?php [$label, $icon] = [(string)($item[0] ?? $key), (string)($item[1] ?? 'grid')]; ?>
+                    <a href="<?= e($adminBase . '?view=' . $key) ?>"<?= AdminUi::active($view, (string)$key) ?>>
+                        <span class="nav-icon"><?= AdminUi::icon($icon, 17) ?></span>
+                        <span class="sidebar-label"><?= e($label) ?></span>
+                        <?php if (!empty($badges[$key])): ?>
+                            <span class="badge"><?= (int)$badges[$key] ?></span>
+                        <?php endif; ?>
+                    </a>
+                <?php endforeach; ?>
             <?php endforeach; ?>
-        <?php endforeach; ?>
-    </nav>
+        </nav>
 
-    <main class="main">
-        <?php foreach ($flash as $message): ?>
-            <?php
-            $type = (string)($message['type'] ?? 'success');
-            $class = $type === 'error' ? 'error' : ($type === 'warning' ? 'warning' : 'notice');
-            ?>
-            <div class="<?= $class ?>"><?= e((string)($message['message'] ?? '')) ?></div>
-        <?php endforeach; ?>
-        <?= $content ?>
-    </main>
+        <div class="sidebar-foot">
+            <a class="sidebar-user" href="<?= e($adminBase . '?view=profile') ?>">
+                <span class="avatar" aria-hidden="true"><?= e($userInitials) ?></span>
+                <span class="user-meta">
+                    <strong><?= e($userName) ?></strong>
+                    <small><?= e($userRole !== '' ? $userRole : 'Profil saya') ?></small>
+                </span>
+            </a>
+        </div>
+    </aside>
+
+    <button type="button" class="sidebar-scrim" data-sidebar-close aria-label="Tutup navigasi" hidden></button>
+
+    <div class="admin-main">
+        <header class="top">
+            <button type="button" class="icon-btn sidebar-toggle" data-sidebar-toggle aria-label="Buka navigasi" aria-controls="admin-sidebar" aria-expanded="false">
+                <?= AdminUi::icon('panel-left', 19) ?>
+            </button>
+
+            <form class="top-search" role="search" method="get" action="<?= e($adminBase) ?>">
+                <input type="hidden" name="view" value="posts">
+                <span class="icon" aria-hidden="true"><?= AdminUi::icon('search', 16) ?></span>
+                <input type="search" name="q" value="<?= e((string)($_GET['q'] ?? '')) ?>"
+                       placeholder="Cari artikel…" aria-label="Cari artikel" autocomplete="off">
+            </form>
+
+            <div class="top-actions">
+                <?php if (count($blogs) > 1): ?>
+                    <form method="post" action="<?= e($adminBase) ?>?view=dashboard" class="blog-switcher">
+                        <input type="hidden" name="action" value="blog.switch">
+                        <?= Csrf::field() ?>
+                        <select name="blog_id" onchange="this.form.submit()" aria-label="Pilih blog">
+                            <?php foreach ($blogs as $blog): ?>
+                                <option value="<?= (int)$blog['id'] ?>"<?= (int)($activeBlog['id'] ?? 0) === (int)$blog['id'] ? ' selected' : '' ?>>
+                                    <?= e((string)$blog['name']) ?>
+                                </option>
+                            <?php endforeach; ?>
+                        </select>
+                    </form>
+                <?php endif; ?>
+
+                <a class="icon-btn" href="<?= e(url()) ?>" target="_blank" rel="noopener" title="Lihat situs" aria-label="Lihat situs">
+                    <?= AdminUi::icon('external', 18) ?>
+                </a>
+
+                <button type="button" class="icon-btn" data-theme-toggle aria-label="Ganti mode terang/gelap" title="Mode terang / gelap">
+                    <span class="icon-moon"><?= AdminUi::icon('moon', 18) ?></span>
+                    <span class="icon-sun"><?= AdminUi::icon('sun', 18) ?></span>
+                </button>
+
+                <details class="user-menu">
+                    <summary>
+                        <span class="avatar" aria-hidden="true"><?= e($userInitials) ?></span>
+                        <span class="user-name"><?= e($userName) ?></span>
+                        <?= AdminUi::icon('chevron-down', 14) ?>
+                    </summary>
+                    <div class="user-menu-panel">
+                        <div class="user-head">
+                            <strong><?= e($userName) ?></strong>
+                            <span><?= e($userEmail !== '' ? $userEmail : $userRole) ?></span>
+                        </div>
+                        <a href="<?= e($adminBase . '?view=profile') ?>"><?= AdminUi::icon('user', 16) ?> Profil saya</a>
+                        <a href="<?= e($adminBase . '?view=settings') ?>"><?= AdminUi::icon('settings', 16) ?> Pengaturan</a>
+                        <a href="<?= e($adminBase . '?view=logs') ?>"><?= AdminUi::icon('activity', 16) ?> Log aktivitas</a>
+                        <div class="user-menu-sep"></div>
+                        <form method="post" action="<?= e($adminBase) ?>?view=dashboard" class="inline">
+                            <input type="hidden" name="action" value="logout">
+                            <?= Csrf::field() ?>
+                            <button type="submit" class="danger-text"><?= AdminUi::icon('log-out', 16) ?> Keluar</button>
+                        </form>
+                    </div>
+                </details>
+            </div>
+        </header>
+
+        <main class="main" id="main-content" tabindex="-1">
+            <nav class="breadcrumb" aria-label="Breadcrumb">
+                <a href="<?= e($adminBase . '?view=dashboard') ?>">Beranda</a>
+                <?php if ($currentGroup !== ''): ?>
+                    <span class="sep" aria-hidden="true">/</span><span><?= e($currentGroup) ?></span>
+                <?php endif; ?>
+                <span class="sep" aria-hidden="true">/</span>
+                <span class="current" aria-current="page"><?= e($currentLabel) ?></span>
+            </nav>
+
+            <?php if ($flash): ?>
+            <div class="toast-stack" role="status" aria-live="polite">
+                <?php foreach ($flash as $message): ?>
+                    <?php
+                    $type = (string)($message['type'] ?? 'success');
+                    $type = in_array($type, ['success', 'error', 'warning', 'info'], true) ? $type : 'info';
+                    $icon = ['success' => 'check-circle', 'error' => 'x-circle', 'warning' => 'alert', 'info' => 'info'][$type];
+                    ?>
+                    <div class="toast <?= e($type) ?>">
+                        <span class="toast-icon"><?= AdminUi::icon($icon, 18) ?></span>
+                        <span class="toast-body"><?= e((string)($message['message'] ?? '')) ?></span>
+                        <button type="button" class="toast-close" data-toast-close aria-label="Tutup notifikasi">
+                            <?= AdminUi::icon('x', 15) ?>
+                        </button>
+                    </div>
+                <?php endforeach; ?>
+            </div>
+            <?php endif; ?>
+
+            <?= $content ?>
+        </main>
+    </div>
 </div>
 
 <script>document.body.dataset.adminBase = <?= json_encode($adminBase) ?>;</script>
-<script src="<?= e(asset_url('assets/admin-editor.js')) ?>" defer></script>
+<?php if ($isEditor): ?>
+    <script src="<?= e(asset_url('assets/vendor/tiptap/editor.js')) ?>" defer></script>
+<?php endif; ?>
 <script src="<?= e(asset_url('assets/admin-app.js')) ?>" defer></script>
 </body>
 </html>

@@ -26,7 +26,7 @@ $adminBase = url('admin/index.php');
     <p class="help">Backup mencakup artikel, halaman, kategori, tag, media metadata, pengaturan, widget dan menu blog aktif (format <code>cms-backup-v2</code>).</p>
     <?php if (!$files): ?>
         <div class="empty-state">
-            <div class="es-icon">🗄️</div>
+            <div class="es-icon"><?= AdminUi::icon('database', 22) ?></div>
             <p>Belum ada berkas backup. Klik "Buat Backup Sekarang".</p>
         </div>
     <?php else: ?>

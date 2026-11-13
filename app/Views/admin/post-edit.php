@@ -2,7 +2,7 @@
 declare(strict_types=1);
 
 /**
- * Post editor: Gutenberg-style title/body editor, taxonomy, publishing
+ * Post editor: large title, rich text body (Tiptap), taxonomy, publishing
  * controls, SEO fields, featured image and revision history.
  *
  * @var array|null $post
@@ -29,10 +29,11 @@ $categoriesFlat = array_merge($categoryNames);
 <div class="toolbar">
     <h1><?= $isEdit ? 'Edit Postingan' : 'Postingan Baru' ?></h1>
     <div class="admin-actions">
-        <a class="btn secondary" href="<?= e($adminBase . '?view=posts') ?>">← Kembali</a>
+        <a class="btn secondary" href="<?= e($adminBase . '?view=posts') ?>"><?= AdminUi::icon('chevron-left', 16) ?> Kembali</a>
         <?php if ($isEdit && $previewUrl !== ''): ?>
-            <a class="btn secondary" href="<?= e($previewUrl) ?>" target="_blank" rel="noopener">Pratinjau</a>
+            <a class="btn secondary" href="<?= e($previewUrl) ?>" target="_blank" rel="noopener"><?= AdminUi::icon('eye', 16) ?> Pratinjau</a>
         <?php endif; ?>
+        <button type="submit" form="post-form" class="btn"><?= AdminUi::icon('save', 16) ?> <?= $isEdit ? 'Simpan' : 'Simpan Postingan' ?></button>
     </div>
 </div>
 
@@ -54,73 +55,66 @@ $categoriesFlat = array_merge($categoryNames);
 
     <div class="editor-grid">
         <div class="editor-main">
-            <div class="card">
-                <label for="title" style="margin-top:0">Judul</label>
+            <div class="card editor-card">
                 <input id="title" type="text" name="title" value="<?= e((string)($post['title'] ?? '')) ?>"
-                       placeholder="Tulis judul yang menarik…" required class="title-input" autofocus>
+                       placeholder="Judul artikel yang menarik…" required class="title-input" autofocus
+                       aria-label="Judul artikel">
 
                 <div class="slug-row">
-                    <label for="slug" style="margin:0">Slug URL</label>
+                    <label for="slug" style="margin:0"><?= AdminUi::icon('link', 14) ?> Slug URL</label>
                     <input id="slug" type="text" name="slug" value="<?= e((string)($post['slug'] ?? '')) ?>"
                            placeholder="otomatis-dari-judul" class="slug-input" data-slug-check>
                     <span class="slug-status" data-slug-status></span>
                 </div>
                 <p class="help">Pratinjau tautan: <span id="permalink-preview"><?= e(base_url()) ?>…</span></p>
 
-                <div class="editor-toolbar" role="toolbar" aria-label="Format teks">
-                    <button type="button" data-command="bold" title="Tebal"><strong>B</strong></button>
-                    <button type="button" data-command="italic" title="Miring"><em>I</em></button>
-                    <button type="button" data-command="underline" title="Garis bawah"><u>U</u></button>
-                    <button type="button" data-command="formatBlock" data-value="h2" title="Judul 2">H2</button>
-                    <button type="button" data-command="formatBlock" data-value="h3" title="Judul 3">H3</button>
-                    <button type="button" data-command="insertUnorderedList" title="Daftar">•</button>
-                    <button type="button" data-command="createLink" title="Tautan">🔗</button>
-                    <button type="button" data-command="insertImage" title="Gambar">🖼</button>
-                    <button type="button" data-command="formatBlock" data-value="blockquote" title="Kutipan">❝</button>
-                    <button type="button" data-command="removeFormat" title="Hapus format">✗</button>
-                    <span class="toolbar-spacer"></span>
-                    <button type="button" class="secondary" data-toggle-html>Edit HTML</button>
-                    <button type="button" class="secondary" data-media-open title="Sisipkan media">Media</button>
+                <?= AdminUi::editorToolbar() ?>
+
+                <div class="rt-editor-wrap">
+                    <div data-editor-mount hidden
+                         data-placeholder="Mulai menulis artikel Anda…"
+                         data-aria-label="Isi artikel"></div>
+                </div>
+                <textarea name="body" rows="16" class="body-editor" aria-label="HTML artikel"><?= e($body) ?></textarea>
+                <div class="editor-status">
+                    <span class="editor-count" data-editor-count></span>
+                    <?php if ($isEdit): ?>
+                        <span data-autosave-status>Autosave aktif — perubahan disimpan sebagai draf setiap 20 detik.</span>
+                    <?php endif; ?>
                 </div>
 
-                <div class="wysiwyg" data-wysiwyg contenteditable="true" role="textbox" aria-multiline="true" aria-label="Isi artikel"></div>
-                <textarea name="body" rows="18" class="body-editor" hidden><?= e($body) ?></textarea>
-                <?php if ($isEdit): ?>
-                    <p class="help" data-autosave-status>Autosave aktif — perubahan disimpan sebagai draf setiap 20 detik.</p>
-                <?php endif; ?>
-
-                <label for="excerpt">Ringkasan / excerpt</label>
+                <label for="excerpt" style="margin-top:18px">Ringkasan / excerpt</label>
                 <textarea id="excerpt" name="excerpt" rows="3" placeholder="Ringkasan singkat untuk kartu artikel dan meta description."><?= e((string)($post['excerpt'] ?? '')) ?></textarea>
             </div>
 
             <div class="card">
                 <h2>SEO &amp; Metadata</h2>
-                <label for="meta_title">Meta title <span class="muted">(maks 65 karakter)</span></label>
-                <input id="meta_title" type="text" name="meta_title" maxlength="255"
-                       value="<?= e((string)($post['meta_title'] ?? '')) ?>" data-counter="meta_title">
-                <div class="counter" data-count-for="meta_title"></div>
-
-                <label for="meta_description">Meta description <span class="muted">(maks 160 karakter)</span></label>
-                <textarea id="meta_description" name="meta_description" rows="3" maxlength="320"
-                          data-counter="meta_description"><?= e((string)($post['meta_description'] ?? '')) ?></textarea>
-                <div class="counter" data-count-for="meta_description"></div>
-
                 <div class="row">
+                    <div>
+                        <label for="meta_title">Meta title <span class="muted">(maks 65 karakter)</span></label>
+                        <input id="meta_title" type="text" name="meta_title" maxlength="255"
+                               value="<?= e((string)($post['meta_title'] ?? '')) ?>" data-counter="meta_title">
+                        <div class="counter" data-count-for="meta_title"></div>
+                    </div>
                     <div>
                         <label for="canonical_url">Canonical URL</label>
                         <input id="canonical_url" type="url" name="canonical_url"
                                placeholder="<?= e(base_url()) ?>2026/01/judul.html"
                                value="<?= e((string)($post['canonical_url'] ?? '')) ?>">
                     </div>
-                    <div>
-                        <label for="robots">Robots</label>
-                        <select id="robots" name="robots">
-                            <?php foreach (['' => 'Default situs', 'index,follow' => 'index,follow', 'noindex,follow' => 'noindex,follow', 'index,nofollow' => 'index,nofollow', 'noindex,nofollow' => 'noindex,nofollow'] as $value => $label): ?>
-                                <option value="<?= e($value) ?>"<?= (string)($post['robots'] ?? '') === $value ? ' selected' : '' ?>><?= e($label) ?></option>
-                            <?php endforeach; ?>
-                        </select>
-                    </div>
                 </div>
+
+                <label for="meta_description">Meta description <span class="muted">(maks 160 karakter)</span></label>
+                <textarea id="meta_description" name="meta_description" rows="3" maxlength="320"
+                          data-counter="meta_description"><?= e((string)($post['meta_description'] ?? '')) ?></textarea>
+                <div class="counter" data-count-for="meta_description"></div>
+
+                <label for="robots">Robots</label>
+                <select id="robots" name="robots">
+                    <?php foreach (['' => 'Default situs', 'index,follow' => 'index,follow', 'noindex,follow' => 'noindex,follow', 'index,nofollow' => 'index,nofollow', 'noindex,nofollow' => 'noindex,nofollow'] as $value => $label): ?>
+                        <option value="<?= e($value) ?>"<?= (string)($post['robots'] ?? '') === $value ? ' selected' : '' ?>><?= e($label) ?></option>
+                    <?php endforeach; ?>
+                </select>
 
                 <div class="seo-preview" aria-hidden="true">
                     <span class="seo-url"><?= e(base_url()) ?>…</span>
@@ -180,7 +174,8 @@ $categoriesFlat = array_merge($categoryNames);
             </div>
 
             <div class="card">
-                <h2>Kategori</h2>
+                <h2>Kategori &amp; Tag</h2>
+                <label for="categories">Kategori</label>
                 <input type="text" name="categories" id="categories" value="<?= e(implode(', ', $categoryNames)) ?>"
                        placeholder="Teknologi, Bisnis">
                 <div class="chip-suggestions">
@@ -190,7 +185,7 @@ $categoriesFlat = array_merge($categoryNames);
                 </div>
                 <p class="help">Pisahkan dengan koma. Kategori baru dibuat otomatis.</p>
 
-                <h2 style="margin-top:24px">Tag</h2>
+                <label for="tags">Tag</label>
                 <input type="text" name="tags" id="tags" value="<?= e(implode(', ', $tagNames)) ?>" placeholder="tutorial, produktivitas">
                 <p class="help">Tag membantu pembaca menemukan artikel terkait.</p>
             </div>
@@ -207,7 +202,7 @@ $categoriesFlat = array_merge($categoryNames);
                 <input type="text" name="thumbnail" value="<?= e((string)($post['thumbnail'] ?? '')) ?>"
                        placeholder="URL gambar atau pilih dari media" data-featured-input>
                 <div class="admin-actions" style="margin-top:10px">
-                    <button type="button" class="secondary" data-media-open data-media-target="featured">Pilih dari Media</button>
+                    <button type="button" class="secondary" data-media-open data-media-target="featured"><?= AdminUi::icon('image', 16) ?> Pilih dari Media</button>
                 </div>
                 <label for="og_image">Gambar Open Graph</label>
                 <input id="og_image" type="text" name="og_image" value="<?= e((string)($post['og_image'] ?? '')) ?>" placeholder="Default: gambar unggulan">

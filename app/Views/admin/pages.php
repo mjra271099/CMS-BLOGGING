@@ -23,7 +23,7 @@ $adminBase = url('admin/index.php');
 <div class="card">
     <?php if (!$pages): ?>
         <div class="empty-state">
-            <div class="es-icon">📃</div>
+            <div class="es-icon"><?= AdminUi::icon('file', 22) ?></div>
             <p>Belum ada halaman statis. <a href="<?= e($adminBase . '?view=page-edit') ?>">Buat halaman pertama</a>.</p>
         </div>
     <?php else: ?>

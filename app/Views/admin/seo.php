@@ -49,7 +49,7 @@ $counts = (array)($audit['counts'] ?? []);
     <div class="card">
         <h2>Temuan</h2>
         <?php if (!$issues): ?>
-            <div class="empty-state"><p>Tidak ditemukan masalah. Kerja bagus! 🎉</p></div>
+            <div class="empty-state"><p>Tidak ditemukan masalah. Kerja bagus!</p></div>
         <?php else: ?>
             <ul class="issue-list" data-issue-list>
                 <?php foreach (array_slice($issues, 0, 40) as $issue): ?>

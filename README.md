@@ -75,7 +75,9 @@ app/
 assets/
   front/base.css, front/app.js     desain sistem front-end
   admin.css, admin-app.css/js      dashboard
+  admin-editor.css                 lapisan tampilan editor kaya (Tiptap)
 themes/<slug>/   theme.json, layout.php, style.css, screenshot.svg, functions.php
+resources/editor/editor.js         sumber editor; dibundel ke assets/vendor/tiptap/editor.js
 database/        schema.sql, migrations/
 tests/           run.php (integrasi), http.php (smoke test HTTP)
 bin/console.php
@@ -117,6 +119,19 @@ Semua data diakses lewat kit `App\Theme\Ui`, sehingga tema pihak ketiga tidak pe
 ## Widget
 
 Widget disimpan di tabel `widgets` dan dikelompokkan lewat `section_id`. Visibilitas mendukung kombinasi halaman, perangkat (desktop/mobile/tablet), dan peran pengguna. Urutan dan area diatur dari Admin → Tata Letak (drag-and-drop); ada pula endpoint `?ajax=widget.reorder`.
+
+## Aset admin
+
+Dashboard memakai satu set token di `assets/admin.css` (warna, jarak 4–40 px, radius 5 px, tipografi Inter, mode gelap). Komponen baru ada di lapisan v3 pada berkas yang sama; `assets/admin-app.css` hanya menambah gaya per layar.
+
+Editor kaya memakai Tiptap v3 yang di-self-host. Berkas yang disajikan browser adalah hasil bundel, jadi setelah mengubah `resources/editor/editor.js` jalankan:
+
+```sh
+npm install      # sekali saja
+npm run build    # menulis assets/vendor/tiptap/editor.js
+```
+
+`node_modules/` tidak ikut di-commit; hasil bundel (`assets/vendor/tiptap/editor.js`) ikut agar hosting tanpa Node tetap berjalan. Toolbar dirender dari `AdminUi::editorToolbar()` memakai ikon SVG yang sama dengan sisa dashboard.
 
 ## Pengujian
 

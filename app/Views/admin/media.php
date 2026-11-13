@@ -68,7 +68,7 @@ $search = (string)($_GET['q'] ?? '');
 
         <?php if (!$items): ?>
             <div class="empty-state">
-                <div class="es-icon">🖼️</div>
+                <div class="es-icon"><?= AdminUi::icon('image', 22) ?></div>
                 <p>Belum ada media. Unggah berkas pertama Anda.</p>
             </div>
         <?php else: ?>

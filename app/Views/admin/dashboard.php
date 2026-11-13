@@ -44,7 +44,7 @@ foreach ($traffic as $row) {
 ?>
 <section class="dashboard-welcome">
     <div>
-        <h2>Selamat datang kembali, <?= e($userName) ?> 👋</h2>
+        <h2>Selamat datang kembali, <?= e($userName) ?></h2>
         <p><?= e(Settings::get('site_name', 'Blog Anda')) ?> — <?= $published ?> artikel terbit, <?= $drafts ?> draf menunggu, <?= $pendingComments ?> komentar perlu ditinjau.</p>
     </div>
     <div class="quick-actions" style="flex:0 1 auto">
@@ -170,7 +170,7 @@ foreach ($traffic as $row) {
             </table>
         <?php else: ?>
             <div class="empty-state">
-                <div class="es-icon">✍️</div>
+                <div class="es-icon"><?= AdminUi::icon('edit', 22) ?></div>
                 <p>Belum ada artikel. <a href="<?= e(url('admin/index.php?view=post-edit')) ?>">Tulis yang pertama</a>.</p>
             </div>
         <?php endif; ?>

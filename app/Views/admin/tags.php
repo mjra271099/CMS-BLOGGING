@@ -20,7 +20,7 @@ $adminBase = url('admin/index.php');
 <div class="card">
     <?php if (!$tags): ?>
         <div class="empty-state">
-            <div class="es-icon">🏷️</div>
+            <div class="es-icon"><?= AdminUi::icon('tag', 22) ?></div>
             <p>Belum ada tag. Tag dibuat otomatis saat Anda menuliskan label pada postingan.</p>
         </div>
     <?php else: ?>

@@ -23,15 +23,16 @@ $hasBuilder = !empty($builderDoc['sections']);
 <div class="toolbar">
     <h1><?= $isEdit ? 'Edit Halaman' : 'Halaman Baru' ?></h1>
     <div class="admin-actions">
-        <a class="btn secondary" href="<?= e($adminBase . '?view=pages') ?>">← Semua halaman</a>
+        <a class="btn secondary" href="<?= e($adminBase . '?view=pages') ?>"><?= AdminUi::icon('chevron-left', 16) ?> Semua halaman</a>
         <?php if ($isEdit): ?>
-            <a class="btn secondary" href="<?= e($adminBase . '?view=builder&page=' . (int)$page['id']) ?>">Buka di Builder</a>
-            <a class="btn secondary" href="<?= e(page_url($page)) ?>" target="_blank" rel="noopener">Lihat</a>
+            <a class="btn secondary" href="<?= e($adminBase . '?view=builder&page=' . (int)$page['id']) ?>"><?= AdminUi::icon('blocks', 16) ?> Buka di Builder</a>
+            <a class="btn secondary" href="<?= e(page_url($page)) ?>" target="_blank" rel="noopener"><?= AdminUi::icon('eye', 16) ?> Lihat</a>
         <?php endif; ?>
+        <button type="submit" form="page-form" class="btn"><?= AdminUi::icon('save', 16) ?> <?= $isEdit ? 'Simpan' : 'Buat Halaman' ?></button>
     </div>
 </div>
 
-<form method="post" action="<?= e($adminBase . '?view=page-edit' . ($isEdit ? '&id=' . (int)$page['id'] : '')) ?>" data-editor>
+<form method="post" id="page-form" action="<?= e($adminBase . '?view=page-edit' . ($isEdit ? '&id=' . (int)$page['id'] : '')) ?>" data-editor>
     <input type="hidden" name="action" value="page.save">
     <input type="hidden" name="id" value="<?= (int)($page['id'] ?? 0) ?>">
     <?= \App\Core\Csrf::field() ?>
@@ -39,12 +40,14 @@ $hasBuilder = !empty($builderDoc['sections']);
 
     <div class="editor-grid">
         <div class="editor-main">
-            <div class="card">
-                <label for="title" style="margin-top:0">Judul halaman</label>
-                <input id="title" type="text" name="title" value="<?= e((string)($page['title'] ?? '')) ?>" required class="title-input">
+            <div class="card editor-card">
+                <input id="title" type="text" name="title" value="<?= e((string)($page['title'] ?? '')) ?>" required
+                       class="title-input" placeholder="Judul halaman…" aria-label="Judul halaman">
 
-                <label for="slug">Slug</label>
-                <input id="slug" type="text" name="slug" value="<?= e((string)($page['slug'] ?? '')) ?>" placeholder="tentang-kami">
+                <div class="slug-row">
+                    <label for="slug" style="margin:0"><?= AdminUi::icon('link', 14) ?> Slug</label>
+                    <input id="slug" type="text" name="slug" value="<?= e((string)($page['slug'] ?? '')) ?>" placeholder="tentang-kami">
+                </div>
                 <p class="help">Tautan: <?= e(base_url()) ?>p/<span data-slug-echo><?= e((string)($page['slug'] ?? 'slug')) ?></span>.html</p>
 
                 <?php if ($hasBuilder): ?>
@@ -53,19 +56,19 @@ $hasBuilder = !empty($builderDoc['sections']);
                     </div>
                 <?php endif; ?>
 
-                <div class="editor-toolbar" role="toolbar" aria-label="Format teks">
-                    <button type="button" data-command="bold"><strong>B</strong></button>
-                    <button type="button" data-command="italic"><em>I</em></button>
-                    <button type="button" data-command="formatBlock" data-value="h2">H2</button>
-                    <button type="button" data-command="insertUnorderedList">•</button>
-                    <button type="button" data-command="createLink">🔗</button>
-                    <span class="toolbar-spacer"></span>
-                    <button type="button" class="secondary" data-toggle-html>Edit HTML</button>
-                </div>
-                <div class="wysiwyg" data-wysiwyg contenteditable="true" role="textbox" aria-multiline="true"></div>
-                <textarea name="body" rows="16" hidden><?= e((string)($page['body'] ?? '')) ?></textarea>
+                <?= AdminUi::editorToolbar() ?>
 
-                <label for="excerpt">Ringkasan</label>
+                <div class="rt-editor-wrap">
+                    <div data-editor-mount hidden
+                         data-placeholder="Tulis isi halaman…"
+                         data-aria-label="Isi halaman"></div>
+                </div>
+                <textarea name="body" rows="14" class="body-editor" aria-label="HTML halaman"><?= e((string)($page['body'] ?? '')) ?></textarea>
+                <div class="editor-status">
+                    <span class="editor-count" data-editor-count></span>
+                </div>
+
+                <label for="excerpt" style="margin-top:18px">Ringkasan</label>
                 <textarea id="excerpt" name="excerpt" rows="2"><?= e((string)($page['excerpt'] ?? '')) ?></textarea>
             </div>
 
