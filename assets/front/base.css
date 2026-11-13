@@ -538,13 +538,20 @@ table { border-collapse: collapse; width: 100%; }
 }
 @media (max-width: 860px) {
   .nav-toggle { display: flex; }
+  /* The dropdown is anchored to the full-width header row, not to the
+     hamburger button: .site-nav is only as wide as the toggle, which made
+     the panel collapse to ~40px and sit on top of the button. Making the
+     header row the containing block keeps the panel full-bleed. */
+  .header-inner { position: relative; }
+  .site-nav { position: static; }
   .nav-panel {
     display: none; position: absolute; top: 100%; left: 0; right: 0;
-    max-height: calc(100dvh - 70px); overflow-y: auto; overscroll-behavior: contain;
+    max-height: calc(100vh - 70px);
+    max-height: calc(100dvh - 70px);
+    overflow-y: auto; overscroll-behavior: contain;
     background: var(--t-surface); border-bottom: 1px solid var(--t-border);
-    padding: 12px 20px 20px; box-shadow: var(--t-shadow-lg);
+    padding: 12px 20px 20px; box-shadow: var(--t-shadow-lg); z-index: 45;
   }
-  .site-nav { position: relative; }
   .nav-panel.is-open, .nav-panel.nav-open { display: block; }
   .menu-list { flex-direction: column; }
   .menu-list > li > a { padding: .7rem .6rem; }
