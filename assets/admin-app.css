@@ -144,7 +144,23 @@ body.admin-body { margin: 0; }
     align-items: start;
 }
 .editor-main, .editor-side { min-width: 0; }
-.editor-side .card { position: sticky; top: calc(var(--admin-header-height) + 16px); }
+
+/* The settings column sticks as ONE panel. Sticking each card separately made
+   them pile up on top of each other while scrolling; here only the column is
+   sticky, so its cards keep their spacing. When the panel is taller than the
+   viewport it scrolls internally instead of hiding the last card. */
+.editor-side {
+    position: sticky;
+    top: calc(var(--admin-header-height) + 16px);
+    align-self: start;
+    max-height: calc(100vh - var(--admin-header-height) - 32px);
+    max-height: calc(100dvh - var(--admin-header-height) - 32px);
+    overflow-y: auto;
+    overflow-x: hidden;
+    scrollbar-width: thin;
+    scrollbar-gutter: stable;
+}
+.editor-side .card { position: static; }
 
 input.title-input {
     min-height: 52px;
@@ -611,6 +627,12 @@ input.slug-input { min-height: 34px; padding: 5px 9px; font-size: 12px; }
 
 @media (max-width: 1050px) {
     .editor-grid, .layout-shell, .media-cols, .customizer-shell { grid-template-columns: 1fr; }
+    .editor-side {
+        position: static;
+        max-height: none;
+        overflow: visible;
+        scrollbar-gutter: auto;
+    }
     .editor-side .card, .customizer-preview { position: static; }
     .customizer-preview iframe { height: 520px; }
 }
