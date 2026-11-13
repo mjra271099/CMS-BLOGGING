@@ -211,11 +211,21 @@ final class Ui
     {
         $search = $this->widgetArea('search');
         if (trim($search) !== '') {
-            return $search;
+            // Mark the panel copy so the shared rule can style it, and strip
+            // duplicate ids to keep the document unique.
+            $tagged = (string)preg_replace('/\bwidget-area\b/', 'widget-area header-search', $search, 1);
+            return $this->stripIds($tagged);
         }
-        return '<form class="header-search nav-search" action="' . e(url('search')) . '" method="get" role="search">'
-            . '<input type="search" name="q" placeholder="Cari di blog ini…" aria-label="Cari artikel">'
-            . '<button type="submit" aria-label="Cari">⌕</button></form>';
+        return $this->searchForm('Cari di blog ini…', 'nav-search');
+    }
+
+    /**
+     * Remove id attributes from a fragment so the same widget can appear in
+     * both the header and the mobile panel without duplicate ids.
+     */
+    private function stripIds(string $html): string
+    {
+        return (string)preg_replace('/\s+id="[^"]*"/i', '', $html);
     }
 
     private function defaultNavigation(): string
@@ -233,17 +243,28 @@ final class Ui
 
     public function headerActions(): string
     {
-        $out = '<div class="header-actions">';
+        // The mobile panel already carries a search box (see navigation()),
+        // and that widget area is not scoped per location, so rendering the
+        // same widget here would duplicate its field ids on the page.
         $search = $this->widgetArea('search');
-        if (trim($search) === '') {
-            $out .= '<form class="header-search" action="' . e(url('search')) . '" method="get" role="search">'
-                . '<input type="search" name="q" placeholder="Cari…" aria-label="Cari artikel">'
-                . '<button type="submit" aria-label="Cari">⌕</button></form>';
+        $isWidget = trim($search) !== '';
+        $out = '<div class="header-actions' . ($isWidget ? '' : ' no-mobile-menu') . '">';
+        if (!$isWidget) {
+            $out .= $this->searchForm('Cari…', 'header-search');
         } else {
-            $out .= $search;
+            // Tag the real widget so CSS can hide it on mobile even if its
+            // markup differs from the built-in form.
+            $out .= (string)preg_replace('/\bwidget-area\b/', 'widget-area header-search', $search, 1);
         }
         $out .= '</div>';
         return $out;
+    }
+
+    private function searchForm(string $placeholder, string $extraClass = ''): string
+    {
+        return '<form class="header-search' . ($extraClass !== '' ? ' ' . e($extraClass) : '') . '" action="' . e(url('search')) . '" method="get" role="search">'
+            . '<input type="search" name="q" placeholder="' . e($placeholder) . '" aria-label="Cari artikel">'
+            . '<button type="submit" aria-label="Cari">⌕</button></form>';
     }
 
     // ------------------------------------------------------------------

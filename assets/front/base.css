@@ -130,6 +130,10 @@ table { border-collapse: collapse; width: 100%; }
 }
 .nav-toggle span { display: block; width: 18px; height: 2px; background: currentColor; }
 .nav-panel { display: flex; align-items: center; }
+/* The panel copy of the search exists only for the mobile dropdown; hide it
+   on desktop where the toggle is hidden and the panel is always inline. */
+.nav-panel .nav-search,
+.nav-panel .widget-area[data-area="search"] { display: none; }
 .menu-list, .submenu { list-style: none; margin: 0; padding: 0; }
 .menu-list { display: flex; flex-wrap: wrap; gap: 4px; }
 .menu-list > li > a {
@@ -556,10 +560,17 @@ table { border-collapse: collapse; width: 100%; }
   .menu-list { flex-direction: column; }
   .menu-list > li > a { padding: .7rem .6rem; }
   .submenu { position: static; display: block; box-shadow: none; border: 0; padding-left: 14px; }
-  /* Keep search reachable on mobile by moving it inside the dropdown. */
+  /* Search lives in the dropdown on mobile: hide the header copy, show the
+     panel copy only while the panel is open. */
   .header-actions .header-search { display: none; }
   .nav-panel .header-search,
-  .nav-panel .search-widget { display: flex; margin-top: 12px; }
+  .nav-panel .search-widget { display: none; }
+  .nav-panel.is-open .header-search,
+  .nav-panel.nav-open .header-search,
+  .nav-panel.is-open .nav-search,
+  .nav-panel.nav-open .nav-search,
+  .nav-panel.is-open .search-widget,
+  .nav-panel.nav-open .search-widget { display: flex; margin-top: 12px; }
   .nav-panel .header-search input { flex: 1; width: auto; min-width: 0; }
   .nav-panel .widget-area { margin-top: 12px; }
   .header-inner { min-height: 62px; }
