@@ -1,0 +1,36 @@
+/* Reel — theme identity for the video niche.
+   Design tokens are also overridable live from the customizer. */
+
+:root {
+  --t-primary: #ef4444;
+  --t-primary-dark: #b91c1c;
+  --t-accent: #f97316;
+  --t-bg: #0c0a11;
+  --t-surface: #17131f;
+  --t-text: #f4f1f8;
+  --t-muted: #a49cb5;
+  --t-border: #2a2436;
+  --t-radius: 10px;
+  --t-radius-sm: max(2px, calc(var(--t-radius) - 6px));
+  --t-font: "Inter", system-ui, sans-serif;
+  --t-font-head: "Bebas Neue", "Inter", sans-serif;
+  --t-base-size: 16px;
+  --t-width: 1280px;
+  --t-space: 20px;
+  --t-header-bg: #17131f;
+  --t-header-fg: #f4f1f8;
+  --t-footer-bg: #b91c1c;
+  --t-footer-fg: #0b1020;
+  --t-body-bg: #0c0a11;
+}
+
+body { background: var(--t-body-bg); }
+.site-header { background: #0c0a11; border-bottom: 1px solid var(--t-border); }
+.brand-name { font-family: var(--t-font-head); letter-spacing: .06em; font-size: 1.6rem; }
+.card-video .card-media { aspect-ratio: 16 / 9; }
+.card-video .card-media::after { content: "▶"; position: absolute; inset: 50% auto auto 50%; transform: translate(-50%, -50%); width: 46px; height: 46px; border-radius: 50%; background: rgba(239, 68, 68, .92); color: #fff; display: grid; place-items: center; font-size: 15px; }
+.card-video .card-media { position: relative; }
+.card-video { background: #17131f; border: 1px solid var(--t-border); }
+.card-video .card-title { font-family: var(--t-font-head); font-size: 1.25rem; letter-spacing: .03em; }
+.widget-ticker { background: var(--t-primary); color: #fff; border-radius: 8px; padding: 8px 0; }
+.site-footer { background: #0c0a11; }

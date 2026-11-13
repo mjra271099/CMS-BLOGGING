@@ -1,0 +1,12 @@
+/.env
+/config.php
+/config.local.php
+/storage/logs/*
+/storage/cache/*
+/storage/backups/*
+/storage/generator/history.json
+/uploads/*
+!/uploads/.htaccess
+/theme-export/*
+*.zip
+.DS_Store

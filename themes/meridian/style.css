@@ -1,0 +1,34 @@
+/* Meridian — theme identity for the professional niche.
+   Design tokens are also overridable live from the customizer. */
+
+:root {
+  --t-primary: #0f766e;
+  --t-primary-dark: #115e59;
+  --t-accent: #14b8a6;
+  --t-bg: #f8fafc;
+  --t-surface: #ffffff;
+  --t-text: #0f172a;
+  --t-muted: #64748b;
+  --t-border: #e2e8f0;
+  --t-radius: 10px;
+  --t-radius-sm: max(2px, calc(var(--t-radius) - 6px));
+  --t-font: "IBM Plex Sans", system-ui, -apple-system, sans-serif;
+  --t-font-head: "IBM Plex Sans", system-ui, sans-serif;
+  --t-base-size: 16px;
+  --t-width: 1240px;
+  --t-space: 22px;
+  --t-header-bg: #ffffff;
+  --t-header-fg: #0f172a;
+  --t-footer-bg: #115e59;
+  --t-footer-fg: #ffffff;
+  --t-body-bg: #f8fafc;
+}
+
+.brand-mark { background: var(--t-primary); border-radius: 10px; box-shadow: 0 8px 20px -12px var(--t-primary); }
+.menu-list > li > a { font-size: .9rem; letter-spacing: .01em; }
+.split-wrap { display: grid; grid-template-columns: 300px minmax(0, 1fr); gap: 40px; align-items: start; }
+.split-main .site-main, .split-main .shell { padding-inline: 0; max-width: none; }
+.card-bordered .card-media { border-bottom: 1px solid var(--t-border); }
+.card-bordered { box-shadow: none; }
+.stat-strip { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 1px; background: var(--t-border); border-radius: var(--t-radius); overflow: hidden; }
+.stat-strip > div { background: var(--t-surface); padding: 22px; }

@@ -1,15 +1,14 @@
-<div class="footer-widgets"><div class="container footer-cols">
-<div class="footer-col">
-<?php render_widgets('footer-about'); ?>
-</div><div class="footer-col">
-<?php render_widgets('footer-links'); ?>
-</div><div class="footer-col">
-<?php render_widgets('footer-social'); ?>
-</div>
-</div></div>
-<footer id="footer" role="contentinfo"><div class="container">
-<?php render_widgets('footer-bottom'); ?>
-</div></footer>
-<?= setting('theme_footer_code') ?>
-</body>
-</html>
+<?php
+declare(strict_types=1);
+
+/**
+ * Legacy footer partial. Delegates to the active theme's UI kit, which also
+ * closes </body></html> and emits footer widgets/scripts.
+ */
+
+if (!defined('CMS_ROOT')) {
+    require __DIR__ . '/app/bootstrap.php';
+}
+
+$ui = new \App\Theme\Ui(\App\Core\Theme::instance(), is_array($page ?? null) ? $page : []);
+echo $ui->footer();

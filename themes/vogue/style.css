@@ -1,0 +1,39 @@
+/* Vogue — theme identity for the fashion niche.
+   Design tokens are also overridable live from the customizer. */
+
+:root {
+  --t-primary: #111111;
+  --t-primary-dark: #000000;
+  --t-accent: #c8a165;
+  --t-bg: #f7f4ef;
+  --t-surface: #ffffff;
+  --t-text: #141414;
+  --t-muted: #6f6a63;
+  --t-border: #e5ded2;
+  --t-radius: 0px;
+  --t-radius-sm: max(2px, calc(var(--t-radius) - 6px));
+  --t-font: "Jost", system-ui, sans-serif;
+  --t-font-head: "Cormorant Garamond", "Times New Roman", serif;
+  --t-base-size: 17px;
+  --t-width: 1280px;
+  --t-space: 34px;
+  --t-header-bg: #ffffff;
+  --t-header-fg: #141414;
+  --t-footer-bg: #000000;
+  --t-footer-fg: #ffffff;
+  --t-body-bg: #f7f4ef;
+}
+
+body { background: var(--t-body-bg); }
+.site-header { border-bottom: 1px solid var(--t-border); }
+.brand-name { font-family: var(--t-font-head); font-size: 2.4rem; letter-spacing: .12em; text-transform: uppercase; font-weight: 600; }
+.menu-list > li > a { text-transform: uppercase; font-size: .7rem; letter-spacing: .18em; }
+.magazine-cover .widget-area, .hero-area .widget-area { grid-template-columns: 1.6fr 1fr; }
+.card-editorial { background: transparent; border: 0; border-radius: 0; box-shadow: none; }
+.card-editorial .card-media { aspect-ratio: 4 / 5; }
+.card-editorial .card-body { padding-inline: 0; }
+.card-editorial .card-title { font-family: var(--t-font-head); font-size: 1.7rem; font-weight: 600; }
+.card-editorial .card-excerpt { display: none; }
+.grid-grid { grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); }
+.article-title { font-family: var(--t-font-head); font-size: clamp(2.4rem, 5vw, 3.8rem); font-weight: 600; }
+.article-labels .label { text-transform: uppercase; letter-spacing: .18em; font-size: .7rem; border-radius: 0; }

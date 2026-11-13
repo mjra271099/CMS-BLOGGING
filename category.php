@@ -1,17 +1,22 @@
-<section class="main" id="main">
-<div class="status-msg-wrap"><?= e($category['name']) ?></div>
 <?php
-$perPage = max(1, min(50, (int)setting('posts_per_page', '7')));
-$current = max(1, (int)($_GET['page'] ?? 1));
-$countStmt = db()->prepare(
-    'SELECT COUNT(DISTINCT p.id) FROM posts p JOIN post_categories pc ON pc.post_id=p.id
-     JOIN categories c ON c.id=pc.category_id WHERE c.slug=? AND p.status="published" AND p.published_at<=NOW()'
-);
-$countStmt->execute([$category['slug']]);
-$total = (int)$countStmt->fetchColumn();
-foreach (published_posts($perPage, ($current - 1) * $perPage, $category['slug']) as $item) {
-    render_post_card($item);
+declare(strict_types=1);
+
+/**
+ * Legacy category entry point. Resolves ?slug= and redirects to the current
+ * category URL (which is preserved as /category/<slug>).
+ */
+
+if (!defined('CMS_ROOT')) {
+    require __DIR__ . '/app/bootstrap.php';
 }
-pagination($current, (int)ceil($total / $perPage), '');
-?>
-</section>
+
+$slug = trim((string)($_GET['slug'] ?? ''));
+if ($slug !== '') {
+    foreach (\App\Models\Taxonomy::categories() as $category) {
+        if ((string)$category['slug'] === $slug) {
+            \App\Core\Response::redirect(category_url($category), 301);
+        }
+    }
+}
+
+\App\Core\Response::redirect(url(), 302);

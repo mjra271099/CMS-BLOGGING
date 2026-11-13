@@ -1,5 +1,20 @@
-<article class="post page"><div class="post-inner">
-<div class="breadcrumbs"><span><a class="homebread" href="<?= e(url()) ?>">Home</a></span> › <?= e($page['title']) ?></div>
-<h1 class="post-title entry-title"><?= e($page['title']) ?></h1>
-<div class="post-body entry-content"><?= $page['body'] ?></div>
-</div></article>
+<?php
+declare(strict_types=1);
+
+/**
+ * Legacy page entry point. Resolves ?slug= and redirects to /p/<slug>.html.
+ */
+
+if (!defined('CMS_ROOT')) {
+    require __DIR__ . '/app/bootstrap.php';
+}
+
+$slug = trim((string)($_GET['slug'] ?? $_GET['p'] ?? ''));
+if ($slug !== '') {
+    $page = \App\Models\Page::findBySlug($slug);
+    if ($page) {
+        \App\Core\Response::redirect(page_url($page), 301);
+    }
+}
+
+\App\Core\Response::redirect(url(), 302);

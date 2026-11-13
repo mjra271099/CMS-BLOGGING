@@ -1,63 +1,139 @@
-# CMS PHP berdasarkan template-Dipake.xml
+# CMS Blogging Multi-Blog (setara Blogger)
 
-Proyek ini dibuat terpisah di folder baru dan mempertahankan `assets/template-source.xml` sebagai sumber Blogger yang tidak diubah. CSS template diekstrak ke `assets/template.css`; `assets/cms-adapter.css` hanya menambahkan adapter kecil untuk elemen AMP yang diganti dengan HTML standar.
+Platform blogging PHP modern yang dibangun di atas fondasi CMS lama: satu kode basis untuk banyak blog, banyak pengguna, tema folder-based, widget engine, page builder, SEO lengkap, dan dashboard admin baru. Semua URL Blogger lama tetap berfungsi, dan data lama dapat diupgrade tanpa menghapus isi.
 
-## Pemetaan template
+Aset Blogger asli (`assets/template-source.xml`) tidak diubah; CSS template lama diekstrak ke `assets/template.css`.
 
-| Komponen Blogger | Implementasi CMS |
-|---|---|
-| `b:section` / `b:widget` | Baris widget di tabel `widgets`, dikelompokkan dengan `section_id`; tata letak dapat diubah dari Admin → Tata Letak |
-| `b:include` | Komponen PHP bersama seperti `header.php`, `footer.php`, `sidebar.php`, dan `functions.php` |
-| `b:loop` | Loop PHP atas hasil query PDO |
-| `data:post` / `data:blog` | Kolom posting/halaman dan pengaturan website dari MySQL |
-| Header1, PageList1, LinkList3 | Identitas website/logo dan navigasi ke beranda/halaman serta tautan kustom |
-| BlogSearch1 | Form pencarian MySQL |
-| HTML2 / HTML1 | Konten widget HTML sumber template, termasuk marquee, disimpan pada database |
-| FeaturedPost1 / Blog1 | Postingan unggulan bertanda dan daftar posting terbaru dengan pagination |
-| Label1 / PopularPosts1 | Kategori dan posting populer berdasarkan jumlah kunjungan |
-| Text1, Text2, LinkList1, LinkList2 | Widget footer dengan konten dari tabel `widgets` |
-| Disqus AMP comments | Komentar MySQL dengan antrean moderasi, persetujuan, spam, dan penghapusan |
-| AMP carousel / gambar / form | HTML responsif biasa; carousel memakai scroll horizontal dan form komentar memakai PHP |
-| Permalink Blogger | URL artikel `/YYYY/MM/slug.html`; halaman `/p/slug.html`; kategori `/search/label/slug` |
+## Fitur
 
-Template sumber juga memuat metadata SEO, logo SVG, warna dan aturan responsive CSS, marquee animasi, menu, pencarian, serta markup postingan. Nilai CSS asal dipertahankan. Runtime AMP tidak dipakai pada output PHP karena halaman memakai form server-side dan aset stylesheet lokal; elemen gambar/form diubah ke HTML standar dan aturan tampilannya dipertahankan.
+- **Multi-blog & multi-user** — tabel `blogs`, `blog_users`, dan `Context` per-blog; setiap posting, halaman, kategori, tag, komentar, media, widget, dan pengaturan ter-scope `blog_id`. Pengguna bisa punya peran berbeda di tiap blog (`owner`, `admin`, `editor`, `author`, `contributor`).
+- **22 tema bawaan** — tema folder-based dengan layout, CSS, screenshot, dan `functions.php` opsional. Aktifkan, duplikat, ekspor, atau impor ZIP dari Admin → Tema.
+- **Kustomisasi tema** — skema pengaturan per tema (`color`, `select`, `checkbox`, `text`), disimpan per blog di `theme_settings`, dan dipancarkan sebagai CSS variable (`--t-*`) tanpa menimpa file tema.
+- **Widget engine** — 20+ tipe widget dengan visibilitas (per halaman, perangkat, peran), urutan drag-and-drop, duplikasi, serta area widget per tema (`header`, `sidebar`, `footer-1..3`, `before-content`, `ad-top`, dan lainnya).
+- **Page builder** — 18 tipe blok (hero, heading, teks, gambar, galeri, tombol, CTA, kolom, fitur, video, kutipan, pemisah, spacer, HTML, postingan, FAQ, testimoni, newsletter) yang dikembalikan sebagai JSON tervalidasi lalu dirender sebagai HTML tersanitasi.
+- **SEO** — meta title/description, canonical, Open Graph/Twitter, Schema.org (`BlogPosting`, `BreadcrumbList`, `WebSite`), sitemap XML, robots.txt, RSS feed, redirect manager, dan audit SEO dengan skor.
+- **Media library** — unggah gambar (JPG/PNG/GIF/WebP) dengan thumbnail otomatis, metadata alt/caption/folder, resize, dan penggantian file.
+- **Dashboard admin baru** — MVC (`AdminController` + `app/Views/admin/*`) menggantikan `admin/index.php` satu-file. Ringkasan, editor dengan autosave, kustomizer live preview, builder, moderasi komentar, pengaturan, backup, dan log aktivitas.
+- **Keamanan** — CSRF pada semua form, escaping output, sanitasi HTML pada konten/kustom HTML, password hash `PASSWORD_DEFAULT`, cookie `HttpOnly`/`SameSite`, security headers, folder implementasi (`app/`, `database/`, `storage/`, `tests/`, `bin/`) dan berkas kredensial diblokir dari HTTP, serta eksekusi PHP di `uploads/` dilarang.
+- **CLI** — `bin/console.php` untuk instalasi, migrasi, seed, sinkronisasi tema, pembuatan pengguna, pembersihan cache, dan status.
 
 ## Persyaratan
 
-- PHP 8.1 atau lebih baru dengan ekstensi `PDO`, `pdo_mysql`, dan `fileinfo`.
-- MySQL 5.7+ atau MariaDB yang mendukung tipe JSON dan indeks FULLTEXT InnoDB.
-- Apache dengan `mod_rewrite`/`.htaccess` aktif (umum pada shared hosting/cPanel).
-- Folder proyek dapat ditulis sementara saat instalasi; `uploads/` harus dapat ditulis oleh PHP.
+- PHP 8.1+ dengan ekstensi `pdo_mysql`, `gd`, `fileinfo`, `mbstring`, `json`.
+- MySQL 5.7+ / MariaDB dengan InnoDB dan `utf8mb4`.
+- Apache dengan `mod_rewrite`/`.htaccess` (shared hosting/cPanel). Untuk pengembangan lokal, PHP built-in server didukung via `router.php`.
+- Folder proyek dapat ditulis sementara saat instalasi; `uploads/` dan `storage/` harus dapat ditulis PHP.
 
 ## Instalasi
 
-1. Unggah folder `cms-self-hosted` ke hosting.
-2. Buat database MySQL/MariaDB dan pengguna database dari cPanel, lalu berikan hak akses penuh ke database tersebut.
-3. Buka `https://domain-anda/cms-self-hosted/install.php`.
-4. Isi koneksi database, URL website lengkap (termasuk subfolder jika ada), nama website, dan akun administrator. Password admin minimal 12 karakter.
-5. Setelah diarahkan ke Admin, masuk melalui `/admin/`. Atur deskripsi, logo/favicon, homepage, jumlah posting per halaman, dan password melalui Pengaturan.
+### Web installer
 
-Installer membuat `config.php`, tabel database, akun admin pertama, serta mengimpor konfigurasi 14 widget dari XML. `config.php` diblokir dari akses HTTP oleh `.htaccess`. Jika installer tidak dapat menulis file konfigurasi pada hosting, atur izin folder aplikasi sementara sesuai panduan hosting, jalankan installer, lalu kembalikan izin folder ke nilai yang aman.
+1. Unggah seluruh folder ke hosting.
+2. Buat database dan pengguna database, lalu beri hak akses penuh.
+3. Buka `https://domain-anda/install.php` dan isi host, port, nama database, pengguna, password, URL situs, serta akun administrator (password minimal 12 karakter).
+4. Installer menulis `config.php`, membuat skema v2 (25 tabel), mendaftarkan 22 tema, mengaktifkan tema `aurora`, lalu mengarahkan ke `admin/index.php`.
+5. Setelah selesai, hapus atau kunci kembali `install.php`.
 
-## Fitur Admin
-
-- Ringkasan jumlah posting, halaman, komentar tertunda, posting terbaru, dan aktivitas.
-- CRUD posting/halaman, draft/publikasi/jadwal, slug, kategori, tag, thumbnail, SEO, preview aman untuk admin, dan editor visual/HTML.
-- Tata letak widget berbasis database: tambah, edit, aktif/nonaktif, urutkan, pindahkan area, dan hapus. Widget Blog inti tetap terkunci.
-- Tema: CSS override, layout HTML frontend dengan token komponen, kode tambahan di `<head>`/footer, preview, snapshot, dan pemulihan.
-- Moderasi komentar, pencarian/filter status, dan penghapusan.
-- Media library gambar (JPG/PNG/GIF/WebP maksimal 5 MB).
-- Pengaturan website/homepage, pagination, permalink Blogger, favicon/logo, komentar, dan kata sandi admin.
-- Sitemap XML, robots.txt, RSS, canonical, Open Graph/Twitter, Schema.org, breadcrumb, dan pencarian.
-
-Konten artikel/halaman tidak dimasukkan ke file PHP. HTML widget, konten artikel, dan kode tema memang dirender sebagai HTML sesuai hak administrator; batasi akun admin dan gunakan HTTPS. Perubahan template/CSS tambahan dicadangkan sebelum penyimpanan. Layout HTML tema opsional; jika digunakan, tata susunan komponen menggunakan token `{{header}}`, `{{search}}`, `{{top_banner}}`, `{{featured}}`, `{{main_content}}` (wajib), `{{middle_content}}`, `{{sidebar}}`, dan `{{footer}}`.
-
-## Pemeriksaan lokal
-
-Jalankan lint PHP dengan:
+### CLI
 
 ```sh
-find . -name '*.php' -print0 | xargs -0 -n1 php -l
+php bin/console.php install --name="Blog Saya" --url="https://contoh.com/" \
+    --username=admin --email=admin@example.com --password=rahasia-kuat-123
+php bin/console.php theme:sync
+php bin/console.php seed            # contoh artikel (opsional)
+php bin/console.php status
 ```
 
-Server pengembangan juga harus memiliki ekstensi `pdo_mysql`; uji CRUD dan tampilan setelah database dibuat melalui installer.
+Konfigurasi dibaca dari `config.php`, atau dari berkas lain lewat variabel lingkungan `CMS_CONFIG` (mis. `CMS_CONFIG=config.local.php`). `config.sample.php` menyediakan contoh.
+
+## Upgrade dari instalasi lama
+
+Migrasi 001 (`database/migrations/001_modern_core.php`) mengupgrade skema lama **di tempat**, bukan menimpanya:
+
+1. Backup database.
+2. Unggah folder baru di atas instalasi lama (atau ke folder baru lalu salin `config.php`).
+3. Jalankan:
+
+```sh
+php bin/console.php migrate
+php bin/console.php theme:sync
+```
+
+Tabel `settings` lama diganti nama menjadi `settings_legacy_backup` dan data dipindahkan ke `settings` baru per blog. Tabel `schema_migrations` mencatat versi yang sudah dijalankan sehingga migrasi aman diulang.
+
+## Struktur
+
+```
+app/
+  Core/        Config, Database, Context, Settings, Cache, Auth, Csrf, Theme,
+               ThemeEngine, Widget, Migrator, View, Response, Theme/Ui
+  Models/      Post, Page, Taxonomy, Comment, Blog, Menu, Media
+  Services/    Seo, Builder, Newsletter, Analytics, Backup
+  Http/        FrontController, AdminController, AdminUi
+  Views/admin/ 26 template dashboard
+  Http/Theme/Ui.php   kit UI yang dipakai semua tema
+assets/
+  front/base.css, front/app.js     desain sistem front-end
+  admin.css, admin-app.css/js      dashboard
+themes/<slug>/   theme.json, layout.php, style.css, screenshot.svg, functions.php
+database/        schema.sql, migrations/
+tests/           run.php (integrasi), http.php (smoke test HTTP)
+bin/console.php
+index.php, admin/index.php, router.php, .htaccess
+```
+
+Legacy front files (`header.php`, `footer.php`, `sidebar.php`, `post.php`, `page.php`, `category.php`, `search.php`) tetap ada sebagai shim tipis yang mendelegasikan ke arsitektur `app/` agar tautan lama tetap bekerja.
+
+## URL
+
+| Halaman | URL |
+|---|---|
+| Artikel | `/YYYY/MM/slug.html` |
+| Halaman | `/p/slug.html` |
+| Label/kategori | `/search/label/<slug>` |
+| Tag | `/search/label/<slug>` atau `/tag/<slug>` |
+| Pencarian | `/search?q=kata` |
+| Arsip | `/YYYY/MM/` |
+| Sitemap | `/sitemap.xml` |
+| Feed | `/feed.xml`, `/feed/`, `/rss` |
+| Admin | `/admin/index.php?view=…` |
+
+## Tema
+
+Tema adalah folder di `themes/<slug>/`:
+
+```
+theme.json     metadata: slug, name, version, author, category, supports,
+               layouts, dan skema settings untuk kustomizer
+layout.php     struktur halaman; memanggil method kit UI ($ui->head(), $ui->header(),
+               $ui->content()/contentInner(), $ui->sidebar(), $ui->footer(), dll.)
+style.css      identitas visual (CSS variable --t-* dari kustomizer)
+screenshot.svg pratinjau di galeri tema
+functions.php  opsional; hook PHP tema
+```
+
+Semua data diakses lewat kit `App\Theme\Ui`, sehingga tema pihak ketiga tidak pernah menyentuh database secara langsung dan aman dipasang dari ZIP.
+
+## Widget
+
+Widget disimpan di tabel `widgets` dan dikelompokkan lewat `section_id`. Visibilitas mendukung kombinasi halaman, perangkat (desktop/mobile/tablet), dan peran pengguna. Urutan dan area diatur dari Admin → Tata Letak (drag-and-drop); ada pula endpoint `?ajax=widget.reorder`.
+
+## Pengujian
+
+```sh
+# Integrasi DB (membuat dan menghapus hanya baris zztest-*)
+CMS_CONFIG=config.local.php php tests/run.php
+
+# Smoke test HTTP terhadap server lokal
+php -S 127.0.0.1:8090 -t . router.php
+php tests/http.php http://127.0.0.1:8090
+```
+
+`tests/run.php` menguji utilitas inti, Settings/Cache, CRUD posting/halaman/taksonomi/komentar, widget & reorder, page builder, SEO, tema, dan hak akses. `tests/http.php` menguji routing, header keamanan, sitemap/feed, URL Blogger, shim legacy, dan bahwa berkas privat tidak dapat diakses.
+
+## Catatan operasional
+
+- Konten artikel, HTML widget, dan kode tema dirender sebagai HTML atas hak administrator; batasi jumlah admin dan wajibkan HTTPS.
+- `config.php`, `config.local.php`, dan `themes/*/functions.php` diblokir dari akses HTTP; berkas di `storage/`, `database/`, `app/`, `tests/`, dan `bin/` juga.
+- Jalankan Admin → Backup (atau `App\Services\Backup` via kode) sebelum perubahan besar; backup disimpan di `storage/backups/`.
+- Cache ada di `storage/cache/`; bersihkan dengan `php bin/console.php cache:clear`.

@@ -1,0 +1,32 @@
+/* Pine — theme identity for the nature niche.
+   Design tokens are also overridable live from the customizer. */
+
+:root {
+  --t-primary: #166534;
+  --t-primary-dark: #14532d;
+  --t-accent: #ca8a04;
+  --t-bg: #f6f8f3;
+  --t-surface: #ffffff;
+  --t-text: #1b2a1e;
+  --t-muted: #5d7060;
+  --t-border: #e2e8d9;
+  --t-radius: 14px;
+  --t-radius-sm: max(2px, calc(var(--t-radius) - 6px));
+  --t-font: "Mulish", system-ui, sans-serif;
+  --t-font-head: "Lora", Georgia, serif;
+  --t-base-size: 17px;
+  --t-width: 1140px;
+  --t-space: 26px;
+  --t-header-bg: #ffffff;
+  --t-header-fg: #1b2a1e;
+  --t-footer-bg: #14532d;
+  --t-footer-fg: #ffffff;
+  --t-body-bg: #f6f8f3;
+}
+
+body { background: linear-gradient(180deg, #f8faf5 0%, #f4f8ef 100%); }
+.brand-name { font-family: var(--t-font-head); font-weight: 500; }
+.card-leaf { border-radius: 14px 14px 14px 2px; border: 1px solid var(--t-border); box-shadow: 0 18px 40px -34px rgba(22, 101, 52, .45); }
+.card-leaf .card-title { font-family: var(--t-font-head); }
+.journal-layout { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 44px; align-items: start; }
+.site-footer { background: #14532d; }

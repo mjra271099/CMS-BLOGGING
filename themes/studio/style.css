@@ -1,0 +1,35 @@
+/* Studio — theme identity for the landing niche.
+   Design tokens are also overridable live from the customizer. */
+
+:root {
+  --t-primary: #4f46e5;
+  --t-primary-dark: #3730a3;
+  --t-accent: #10b981;
+  --t-bg: #f8f8ff;
+  --t-surface: #ffffff;
+  --t-text: #14142b;
+  --t-muted: #64648b;
+  --t-border: #e2e1ff;
+  --t-radius: 24px;
+  --t-radius-sm: max(2px, calc(var(--t-radius) - 6px));
+  --t-font: "Plus Jakarta Sans", system-ui, sans-serif;
+  --t-font-head: "Plus Jakarta Sans", system-ui, sans-serif;
+  --t-base-size: 17px;
+  --t-width: 1200px;
+  --t-space: 30px;
+  --t-header-bg: #ffffff;
+  --t-header-fg: #14142b;
+  --t-footer-bg: #3730a3;
+  --t-footer-fg: #ffffff;
+  --t-body-bg: #f8f8ff;
+}
+
+body { background: var(--t-body-bg); }
+.hero-area .widget-area { display: grid; gap: 0; }
+.hero-area .widget-area > * { background: transparent; }
+.card-feature { border: 0; border-radius: 24px; box-shadow: 0 26px 60px -40px rgba(79, 70, 229, .6); }
+.card-feature .card-title { font-size: 1.3rem; }
+.landing-cta { padding-block: 10px 60px; }
+.landing-cta .widget-area { background: linear-gradient(135deg, var(--t-primary), var(--t-accent)); color: #fff; border-radius: 26px; padding: clamp(28px, 5vw, 56px); }
+.landing-cta .widget-title, .landing-cta p, .landing-cta a { color: #fff; }
+.landing-cta .widget-title::before { background: #fff; }

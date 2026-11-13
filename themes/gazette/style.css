@@ -1,0 +1,37 @@
+/* Gazette — theme identity for the news niche.
+   Design tokens are also overridable live from the customizer. */
+
+:root {
+  --t-primary: #b91c1c;
+  --t-primary-dark: #7f1d1d;
+  --t-accent: #dc2626;
+  --t-bg: #fbfaf7;
+  --t-surface: #ffffff;
+  --t-text: #171412;
+  --t-muted: #6b6259;
+  --t-border: #e7e1d8;
+  --t-radius: 2px;
+  --t-radius-sm: max(2px, calc(var(--t-radius) - 6px));
+  --t-font: Georgia, "Times New Roman", serif;
+  --t-font-head: "Playfair Display", Georgia, serif;
+  --t-base-size: 17px;
+  --t-width: 1220px;
+  --t-space: 26px;
+  --t-header-bg: #ffffff;
+  --t-header-fg: #171412;
+  --t-footer-bg: #7f1d1d;
+  --t-footer-fg: #ffffff;
+  --t-body-bg: #fbfaf7;
+}
+
+.brand-name { font-family: var(--t-font-head); font-size: 2.1rem; letter-spacing: -.02em; }
+.header-centered .header-inner { border-bottom: 3px double var(--t-text); padding-block: 22px 12px; }
+.menu-list > li > a { text-transform: uppercase; font-size: .74rem; letter-spacing: .1em; font-weight: 600; }
+.newsroom-lead .widget-area { display: grid; grid-template-columns: 2fr 1fr; gap: 24px; }
+.newsroom-more { padding-block: 24px 48px; }
+.card-news { flex-direction: row; align-items: stretch; }
+.card-news .card-media { flex: 0 0 42%; aspect-ratio: auto; }
+.card-news .card-body { padding: 18px 20px; }
+.card-news .card-title { font-family: var(--t-font-head); font-size: 1.35rem; }
+.newsroom-lead .featured-item:first-child h3 { font-size: 1.9rem; }
+.archive-count { border-left: 3px solid var(--t-primary); padding-left: 12px; }

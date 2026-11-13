@@ -1,0 +1,37 @@
+/* Manual — theme identity for the documentation niche.
+   Design tokens are also overridable live from the customizer. */
+
+:root {
+  --t-primary: #7c3aed;
+  --t-primary-dark: #5b21b6;
+  --t-accent: #22d3ee;
+  --t-bg: #fbfbfd;
+  --t-surface: #ffffff;
+  --t-text: #1e1b2e;
+  --t-muted: #6b6880;
+  --t-border: #e8e6f2;
+  --t-radius: 10px;
+  --t-radius-sm: max(2px, calc(var(--t-radius) - 6px));
+  --t-font: "Inter", system-ui, sans-serif;
+  --t-font-head: "Inter", system-ui, sans-serif;
+  --t-base-size: 16px;
+  --t-width: 1320px;
+  --t-space: 22px;
+  --t-header-bg: #ffffff;
+  --t-header-fg: #1e1b2e;
+  --t-footer-bg: #5b21b6;
+  --t-footer-fg: #ffffff;
+  --t-body-bg: #fbfbfd;
+}
+
+body { background: var(--t-body-bg); }
+.site-header { background: var(--t-surface); border-bottom: 1px solid var(--t-border); }
+.docs-layout { display: grid; grid-template-columns: 232px minmax(0, 1fr) 220px; gap: 40px; align-items: start; padding-block: 32px 72px; }
+.docs-nav { position: sticky; top: 92px; display: flex; flex-direction: column; gap: 18px; }
+.docs-nav .widget-title { font-size: .78rem; text-transform: uppercase; letter-spacing: .12em; color: var(--t-muted); }
+.docs-nav .menu-list { flex-direction: column; align-items: stretch; }
+.docs-nav .menu-list > li > a { padding: .4rem .6rem; }
+.docs-content { min-width: 0; }
+.docs-aside { position: sticky; top: 92px; }
+.card-panel { box-shadow: none; border: 1px solid var(--t-border); }
+.article-body.prose pre { background: #1e1b2e; color: #f4f2ff; }

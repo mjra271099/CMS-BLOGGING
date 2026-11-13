@@ -1,0 +1,259 @@
+{
+    "slug": "prism",
+    "name": "Prism",
+    "version": "1.0.0",
+    "author": "CMS Studio",
+    "description": "Majalah digital penuh warna untuk topik beragam.",
+    "category": "magazine",
+    "tags": [
+        "magazine",
+        "responsive",
+        "accessibility",
+        "seo-ready"
+    ],
+    "screenshot": "screenshot.svg",
+    "supports": {
+        "sidebar": "right",
+        "hero": true,
+        "builder": true
+    },
+    "areas": [
+        "announcement",
+        "header",
+        "menu",
+        "top-banner",
+        "featured",
+        "before-content",
+        "main",
+        "middle-content",
+        "after-content",
+        "sidebar",
+        "ad-top",
+        "ad-bottom",
+        "footer-about",
+        "footer-links",
+        "footer-social",
+        "footer-bottom",
+        "footer-1",
+        "footer-2",
+        "footer-3",
+        "custom"
+    ],
+    "settings": [
+        {
+            "key": "primary_color",
+            "label": "Warna utama",
+            "type": "color",
+            "default": "#7c3aed",
+            "group": "Warna"
+        },
+        {
+            "key": "primary_dark",
+            "label": "Warna utama gelap",
+            "type": "color",
+            "default": "#5b21b6",
+            "group": "Warna"
+        },
+        {
+            "key": "accent_color",
+            "label": "Warna aksen",
+            "type": "color",
+            "default": "#ec4899",
+            "group": "Warna"
+        },
+        {
+            "key": "background_color",
+            "label": "Latar halaman",
+            "type": "color",
+            "default": "#faf7ff",
+            "group": "Warna"
+        },
+        {
+            "key": "surface_color",
+            "label": "Latar kartu",
+            "type": "color",
+            "default": "#ffffff",
+            "group": "Warna"
+        },
+        {
+            "key": "text_color",
+            "label": "Warna teks",
+            "type": "color",
+            "default": "#1b1526",
+            "group": "Warna"
+        },
+        {
+            "key": "muted_color",
+            "label": "Teks sekunder",
+            "type": "color",
+            "default": "#6e6483",
+            "group": "Warna"
+        },
+        {
+            "key": "border_color",
+            "label": "Garis tepi",
+            "type": "color",
+            "default": "#ebe4f8",
+            "group": "Warna"
+        },
+        {
+            "key": "font_pair",
+            "label": "Pasangan font (URL stylesheet)",
+            "type": "text",
+            "default": "https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;800&family=Fraunces:opsz,wght@9..144,600;9..144,800&display=swap",
+            "group": "Tipografi"
+        },
+        {
+            "key": "font_family",
+            "label": "Font teks",
+            "type": "text",
+            "default": "\"Outfit\", system-ui, sans-serif",
+            "group": "Tipografi"
+        },
+        {
+            "key": "font_heading",
+            "label": "Font judul",
+            "type": "text",
+            "default": "\"Fraunces\", Georgia, serif",
+            "group": "Tipografi"
+        },
+        {
+            "key": "font_size",
+            "label": "Ukuran teks (px)",
+            "type": "number",
+            "default": 17,
+            "min": 14,
+            "max": 22,
+            "group": "Tipografi"
+        },
+        {
+            "key": "radius",
+            "label": "Radius sudut (px)",
+            "type": "number",
+            "default": 18,
+            "min": 0,
+            "max": 32,
+            "group": "Tata letak"
+        },
+        {
+            "key": "content_width",
+            "label": "Lebar konten (px)",
+            "type": "number",
+            "default": 1240,
+            "min": 900,
+            "max": 1600,
+            "group": "Tata letak"
+        },
+        {
+            "key": "spacing",
+            "label": "Jarak antar blok (px)",
+            "type": "number",
+            "default": 26,
+            "min": 12,
+            "max": 48,
+            "group": "Tata letak"
+        },
+        {
+            "key": "sidebar_position",
+            "label": "Posisi sidebar",
+            "type": "select",
+            "default": "right",
+            "options": {
+                "left": "Kiri",
+                "right": "Kanan",
+                "none": "Tanpa sidebar"
+            },
+            "group": "Tata letak"
+        },
+        {
+            "key": "header_style",
+            "label": "Gaya header",
+            "type": "select",
+            "default": "classic",
+            "options": {
+                "classic": "Klasik",
+                "compact": "Ringkas",
+                "centered": "Tengah",
+                "transparent": "Transparan"
+            },
+            "group": "Tata letak"
+        },
+        {
+            "key": "footer_style",
+            "label": "Gaya footer",
+            "type": "select",
+            "default": "dark",
+            "options": {
+                "dark": "Gelap",
+                "plain": "Terang",
+                "tinted": "Berwarna",
+                "minimal": "Minimal"
+            },
+            "group": "Tata letak"
+        },
+        {
+            "key": "card_style",
+            "label": "Gaya kartu artikel",
+            "type": "select",
+            "default": "magazine",
+            "options": {
+                "card": "Kartu",
+                "minimal": "Minimal",
+                "bordered": "Berbingkai",
+                "outline": "Garis",
+                "soft": "Lembut",
+                "news": "Koran",
+                "editorial": "Editorial",
+                "recipe": "Resep",
+                "overlay": "Overlay",
+                "gallery": "Galeri",
+                "tile": "Tile",
+                "data": "Data",
+                "panel": "Panel",
+                "product": "Produk",
+                "video": "Video",
+                "lesson": "Pelajaran",
+                "feature": "Fitur",
+                "magazine": "Majalah",
+                "block": "Blok",
+                "leaf": "Daun",
+                "poster": "Poster",
+                "bare": "Polos"
+            },
+            "group": "Tata letak"
+        },
+        {
+            "key": "custom_css",
+            "label": "CSS kustom",
+            "type": "textarea",
+            "default": "",
+            "group": "Lanjutan"
+        },
+        {
+            "key": "show_hero",
+            "label": "Tampilkan area unggulan",
+            "type": "checkbox",
+            "default": 1,
+            "group": "Lanjutan"
+        },
+        {
+            "key": "show_breadcrumbs",
+            "label": "Tampilkan breadcrumb",
+            "type": "checkbox",
+            "default": 1,
+            "group": "Lanjutan"
+        },
+        {
+            "key": "show_reading_time",
+            "label": "Tampilkan waktu baca",
+            "type": "checkbox",
+            "default": 1,
+            "group": "Lanjutan"
+        }
+    ],
+    "layouts": {
+        "home": "default",
+        "post": "default",
+        "page": "default"
+    }
+}

@@ -1,0 +1,35 @@
+/* Atelier — theme identity for the portfolio niche.
+   Design tokens are also overridable live from the customizer. */
+
+:root {
+  --t-primary: #4338ca;
+  --t-primary-dark: #312e81;
+  --t-accent: #fb7185;
+  --t-bg: #f4f4ff;
+  --t-surface: #ffffff;
+  --t-text: #12122b;
+  --t-muted: #6b6b8f;
+  --t-border: #deddf7;
+  --t-radius: 20px;
+  --t-radius-sm: max(2px, calc(var(--t-radius) - 6px));
+  --t-font: "Manrope", system-ui, sans-serif;
+  --t-font-head: "Clash Display", "Manrope", sans-serif;
+  --t-base-size: 17px;
+  --t-width: 1260px;
+  --t-space: 26px;
+  --t-header-bg: #ffffff;
+  --t-header-fg: #12122b;
+  --t-footer-bg: #312e81;
+  --t-footer-fg: #ffffff;
+  --t-body-bg: #f4f4ff;
+}
+
+body { background: var(--t-body-bg); }
+.brand-name { font-weight: 800; letter-spacing: -.04em; font-size: 1.5rem; }
+.hero-area .widget-area { grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); }
+.card-tile { border: 0; box-shadow: 0 20px 44px -32px rgba(67, 56, 202, .55); border-radius: 20px; }
+.card-tile .card-media { aspect-ratio: 4 / 3; }
+.card-tile:hover { transform: translateY(-5px) rotate(-.4deg); }
+.portfolio-strip { padding-block: 30px 60px; }
+.portfolio-strip .widget-area { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 20px; }
+.section-heading h2 { font-weight: 800; letter-spacing: -.03em; }

@@ -1,0 +1,41 @@
+# ---------------------------------------------------------------------------
+# CMS URL rewriting + hardening
+# Pretty Blogger-style URLs are routed to index.php, which resolves them.
+# ---------------------------------------------------------------------------
+
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+
+    # Keep the admin area out of the front router.
+    RewriteRule ^admin/ - [L]
+
+    # Real files and directories are served directly (assets, themes, uploads).
+    RewriteCond %{REQUEST_FILENAME} -f [OR]
+    RewriteCond %{REQUEST_FILENAME} -d
+    RewriteRule ^ - [L]
+
+    # Everything else is a front-end route.
+    RewriteRule ^ index.php [L]
+</IfModule>
+
+<IfModule mod_headers.c>
+    Header always set X-Content-Type-Options "nosniff"
+    Header always set X-Frame-Options "SAMEORIGIN"
+    Header always set Referrer-Policy "strict-origin-when-cross-origin"
+    Header always set Permissions-Policy "geolocation=(), microphone=(), camera=()"
+</IfModule>
+
+# Block direct access to implementation folders and credentials.
+<FilesMatch "^(config\.php|config\.local\.php|config\.sample\.php|functions\.php)$">
+    Require all denied
+</FilesMatch>
+<IfModule mod_rewrite.c>
+    RewriteRule ^(app|database|storage|tests|bin)/ - [F,L]
+</IfModule>
+
+Options -Indexes
+
+# ---------------------------------------------------------------------------
+# PHP built-in server router (used only when running `php -S`).
+# Apache ignores this file; it exists so local development matches production.
+# ---------------------------------------------------------------------------

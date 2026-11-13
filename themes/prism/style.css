@@ -1,0 +1,33 @@
+/* Prism — theme identity for the magazine niche.
+   Design tokens are also overridable live from the customizer. */
+
+:root {
+  --t-primary: #7c3aed;
+  --t-primary-dark: #5b21b6;
+  --t-accent: #ec4899;
+  --t-bg: #faf7ff;
+  --t-surface: #ffffff;
+  --t-text: #1b1526;
+  --t-muted: #6e6483;
+  --t-border: #ebe4f8;
+  --t-radius: 18px;
+  --t-radius-sm: max(2px, calc(var(--t-radius) - 6px));
+  --t-font: "Outfit", system-ui, sans-serif;
+  --t-font-head: "Fraunces", Georgia, serif;
+  --t-base-size: 17px;
+  --t-width: 1240px;
+  --t-space: 26px;
+  --t-header-bg: #ffffff;
+  --t-header-fg: #1b1526;
+  --t-footer-bg: #5b21b6;
+  --t-footer-fg: #ffffff;
+  --t-body-bg: #faf7ff;
+}
+
+body { background: linear-gradient(160deg, #faf7ff 0%, #fff 40%, #fdf2ff 100%); }
+.brand-mark { background: conic-gradient(from 210deg, var(--t-primary), var(--t-accent), var(--t-primary)); }
+.card-magazine .card-media { aspect-ratio: 3 / 2; }
+.card-magazine .card-labels .label { background: color-mix(in srgb, var(--t-accent) 14%, transparent); color: var(--t-accent); }
+.card-magazine .card-title { font-family: var(--t-font-head); font-weight: 600; }
+.hero-area .widget-area { grid-template-columns: 1.5fr 1fr; }
+.site-footer { background: #1b1526; }

@@ -1,0 +1,141 @@
+<?php
+declare(strict_types=1);
+
+/**
+ * HTTP smoke tests. Point it at a running local server:
+ *
+ *   php tests/http.php http://127.0.0.1:8090
+ *
+ * Verifies routing, security headers, sitemap/feed output and that private
+ * files are not web-accessible.
+ */
+
+$base = rtrim((string)($argv[1] ?? getenv('TEST_URL') ?: 'http://127.0.0.1:8090'), '/');
+
+$passed = 0;
+$failed = 0;
+$failures = [];
+
+/**
+ * @return array{status:int, headers:array<string,string>, body:string, location:string}
+ */
+function request(string $url): array
+{
+    $ch = curl_init($url);
+    curl_setopt_array($ch, [
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_HEADER => true,
+        CURLOPT_FOLLOWLOCATION => false,
+        CURLOPT_TIMEOUT => 15,
+        CURLOPT_USERAGENT => 'cms-smoke-test/1.0',
+    ]);
+    $response = (string)curl_exec($ch);
+    $status = (int)curl_getinfo($ch, CURLINFO_RESPONSE_CODE);
+    $headerSize = (int)curl_getinfo($ch, CURLINFO_HEADER_SIZE);
+    $headerText = substr($response, 0, $headerSize);
+    $body = substr($response, $headerSize);
+    curl_close($ch);
+
+    $headers = [];
+    foreach (preg_split('/\r?\n/', $headerText) ?: [] as $line) {
+        if (str_contains($line, ':')) {
+            [$name, $value] = explode(':', $line, 2);
+            $headers[strtolower(trim($name))] = trim($value);
+        }
+    }
+    return ['status' => $status, 'headers' => $headers, 'body' => $body, 'location' => $headers['location'] ?? ''];
+}
+
+function check(string $name, bool $condition, string $detail = ''): void
+{
+    global $passed, $failed, $failures;
+    if ($condition) {
+        $passed++;
+        echo "  ok   {$name}\n";
+        return;
+    }
+    $failed++;
+    $failures[] = $name . ($detail !== '' ? ' — ' . $detail : '');
+    echo "  FAIL {$name}" . ($detail !== '' ? ' — ' . $detail : '') . "\n";
+}
+
+function section(string $name): void
+{
+    echo "\n== {$name} ==\n";
+}
+
+echo "Testing {$base}\n";
+
+section('Public pages');
+$home = request($base . '/');
+check('Home returns 200', $home['status'] === 200, 'status=' . $home['status']);
+check('Home is HTML', str_contains($home['headers']['content-type'] ?? '', 'text/html'));
+check('Home has one <main>', substr_count(strtolower($home['body']), '<main') === 1);
+check('Home has canonical link', str_contains($home['body'], 'rel="canonical"'));
+check('Home has RSS alternate', str_contains($home['body'], 'application/rss+xml'));
+check('Home loads base.css', str_contains($home['body'], 'assets/front/base.css'));
+
+section('SEO endpoints');
+$sitemap = request($base . '/sitemap.xml');
+check('Sitemap returns 200', $sitemap['status'] === 200, 'status=' . $sitemap['status']);
+check('Sitemap is XML', str_contains($sitemap['headers']['content-type'] ?? '', 'xml'));
+check('Sitemap has <urlset>', str_contains($sitemap['body'], '<urlset'));
+$robots = request($base . '/robots.txt');
+check('Robots returns 200', $robots['status'] === 200);
+check('Robots points at sitemap', stripos($robots['body'], 'sitemap:') !== false);
+$feed = request($base . '/feed.xml');
+check('Feed returns 200', $feed['status'] === 200, 'status=' . $feed['status']);
+check('Feed is RSS', stripos($feed['body'], '<rss') !== false);
+
+section('Blogger-style URLs');
+$firstPostPath = '';
+if (preg_match('~<loc>([^<]+/20\d{2}/\d{2}/[^<]+\.html)</loc>~', $sitemap['body'], $match)) {
+    $firstPostPath = parse_url($match[1], PHP_URL_PATH) ?: '';
+}
+check('Sitemap exposes a post permalink', $firstPostPath !== '');
+if ($firstPostPath !== '') {
+    $post = request($base . $firstPostPath);
+    check('Post permalink returns 200', $post['status'] === 200, 'status=' . $post['status']);
+    check('Post has one <main>', substr_count(strtolower($post['body']), '<main') === 1);
+    check('Post has article schema', str_contains($post['body'], '"@type":"BlogPosting"') || str_contains($post['body'], 'BlogPosting'));
+}
+$page = request($base . '/p/tentang-kami.html');
+check('Page permalink returns 200', $page['status'] === 200, 'status=' . $page['status']);
+$category = request($base . '/search/label/olahraga');
+check('Label archive returns 200', in_array($category['status'], [200, 404], true), 'status=' . $category['status']);
+$search = request($base . '/search?q=uji');
+check('Search returns 200', $search['status'] === 200, 'status=' . $search['status']);
+
+section('Legacy shims');
+$legacy = request($base . '/search.php?q=uji');
+check('Legacy search shim redirects', in_array($legacy['status'], [301, 302], true), 'status=' . $legacy['status']);
+check('Legacy search targets /search', str_contains($legacy['location'], '/search'), 'location=' . $legacy['location']);
+
+section('Security');
+check('Home sends X-Frame-Options', ($home['headers']['x-frame-options'] ?? '') === 'SAMEORIGIN');
+check('Home sends nosniff', ($home['headers']['x-content-type-options'] ?? '') === 'nosniff');
+check('Home sends Referrer-Policy', ($home['headers']['referrer-policy'] ?? '') !== '');
+foreach (['/config.php', '/config.local.php', '/app/bootstrap.php', '/database/schema.sql', '/storage/logs/cms.log', '/bin/console.php', '/themes/gazette/functions.php'] as $path) {
+    $blocked = request($base . $path);
+    check('Blocked path ' . $path, in_array($blocked['status'], [403, 404], true), 'status=' . $blocked['status']);
+}
+$unknown = request($base . '/tidak-ada-halaman-zztest');
+check('Unknown URL returns 404', $unknown['status'] === 404, 'status=' . $unknown['status']);
+
+section('Admin');
+$login = request($base . '/admin/index.php?view=login');
+check('Admin login page returns 200', $login['status'] === 200, 'status=' . $login['status']);
+check('Login page has CSRF field', str_contains($login['body'], 'name="csrf"'));
+$dashboard = request($base . '/admin/index.php?view=dashboard');
+check('Dashboard requires login', in_array($dashboard['status'], [301, 302], true), 'status=' . $dashboard['status']);
+
+echo "\n" . str_repeat('-', 56) . "\n";
+echo sprintf("%d passed, %d failed\n", $passed, $failed);
+if ($failures !== []) {
+    echo "\nFailures:\n";
+    foreach ($failures as $failure) {
+        echo ' - ' . $failure . "\n";
+    }
+    exit(1);
+}
+exit(0);

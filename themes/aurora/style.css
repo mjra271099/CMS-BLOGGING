@@ -1,0 +1,31 @@
+/* Aurora — theme identity for the personal niche.
+   Design tokens are also overridable live from the customizer. */
+
+:root {
+  --t-primary: #2563eb;
+  --t-primary-dark: #1e40af;
+  --t-accent: #0ea5e9;
+  --t-bg: #f6f7fb;
+  --t-surface: #ffffff;
+  --t-text: #101828;
+  --t-muted: #667085;
+  --t-border: #e4e7ec;
+  --t-radius: 14px;
+  --t-radius-sm: max(2px, calc(var(--t-radius) - 6px));
+  --t-font: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --t-font-head: "Inter", system-ui, -apple-system, sans-serif;
+  --t-base-size: 16px;
+  --t-width: 1200px;
+  --t-space: 24px;
+  --t-header-bg: #ffffff;
+  --t-header-fg: #101828;
+  --t-footer-bg: #1e40af;
+  --t-footer-fg: #ffffff;
+  --t-body-bg: #f6f7fb;
+}
+
+body { background: radial-gradient(1200px 600px at 15% -10%, color-mix(in srgb, var(--t-primary) 10%, transparent), transparent), var(--t-body-bg); }
+.site-header { backdrop-filter: saturate(160%) blur(10px); background: color-mix(in srgb, var(--t-header-bg) 88%, transparent); }
+.hero-area .widget-area { grid-template-columns: 1.4fr 1fr; }
+.post-grid.grid-grid { grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); }
+.card-title { font-weight: 700; letter-spacing: -.015em; }

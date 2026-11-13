@@ -1,0 +1,35 @@
+/* Circuit — theme identity for the technology niche.
+   Design tokens are also overridable live from the customizer. */
+
+:root {
+  --t-primary: #22d3ee;
+  --t-primary-dark: #0891b2;
+  --t-accent: #a78bfa;
+  --t-bg: #0b1020;
+  --t-surface: #131a2d;
+  --t-text: #e6edf7;
+  --t-muted: #94a3b8;
+  --t-border: #243049;
+  --t-radius: 12px;
+  --t-radius-sm: max(2px, calc(var(--t-radius) - 6px));
+  --t-font: "Inter", system-ui, -apple-system, sans-serif;
+  --t-font-head: "Space Grotesk", "Inter", system-ui, sans-serif;
+  --t-base-size: 16px;
+  --t-width: 1200px;
+  --t-space: 24px;
+  --t-header-bg: #131a2d;
+  --t-header-fg: #e6edf7;
+  --t-footer-bg: #0891b2;
+  --t-footer-fg: #0b1020;
+  --t-body-bg: #0b1020;
+}
+
+body { background: radial-gradient(900px 500px at 80% -10%, rgba(34, 211, 238, .12), transparent), var(--t-body-bg); }
+.site-header { background: color-mix(in srgb, var(--t-surface) 92%, transparent); backdrop-filter: blur(12px); }
+.brand-mark { background: linear-gradient(135deg, var(--t-primary), var(--t-accent)); color: #06121f; }
+.card-outline { background: color-mix(in srgb, var(--t-surface) 70%, transparent); border: 1px solid var(--t-border); box-shadow: none; }
+.card-outline:hover { border-color: var(--t-primary); box-shadow: 0 0 0 1px var(--t-primary), 0 18px 40px -24px var(--t-primary); }
+.card-title { font-family: var(--t-font-head); letter-spacing: -.01em; }
+.tag { background: color-mix(in srgb, var(--t-primary) 12%, transparent); color: var(--t-primary); border-color: transparent; }
+.mini-date, .meta-reading { font-variant-numeric: tabular-nums; }
+.article-body.prose code { background: rgba(255, 255, 255, .06); }
