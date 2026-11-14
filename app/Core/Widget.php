@@ -202,9 +202,13 @@ final class Widget
                 continue;
             }
             $uniqueId = 'widget-' . (int)$widget['id'];
+            $body = self::render($widget, $context);
+            // Mark widgets whose header carries a trailing action so the
+            // stylesheet can float it to the right of the title.
+            $hasAction = str_contains($body, 'class="featured-more"');
             $output .= '<div id="' . $uniqueId . '" class="widget widget-' . strtolower((string)$widget['type'])
-                . ' area-' . e($section) . '">';
-            $output .= self::render($widget, $context);
+                . ' area-' . e($section) . ($hasAction ? ' has-widget-action' : '') . '">';
+            $output .= $body;
             $output .= '</div>';
         }
         return $output;
@@ -522,20 +526,24 @@ final class Widget
         if ($layout === 'carousel') {
             return self::renderFeaturedCarousel($posts);
         }
-        $output = '<div class="widget-content featured-posts featured-' . e($layout) . '">';
-        foreach ($posts as $post) {
-            $output .= self::featuredItem($post);
-        }
+        // The "see all" link sits in the widget header, on the same row as the
+        // title (left = title, right = link), so it is emitted before the grid
+        // and the widget's flex layout lets the grid wrap onto its own line.
+        $button = '';
         if ($more !== null) {
             $name = (string)($more['name'] ?? '');
             $label = $name !== ''
                 ? __('featured_more_category', ['category' => $name])
                 : __('featured_more');
-            $output .= '<a class="featured-more" href="' . e(category_url($more)) . '">'
+            $button = '<a class="featured-more" href="' . e(category_url($more)) . '">'
                 . '<span>' . e($label) . '</span>'
                 . '<svg viewBox="0 0 20 20" width="16" height="16" aria-hidden="true" focusable="false">'
                 . '<path d="M4 10h11M11 5l5 5-5 5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>'
                 . '</svg></a>';
+        }
+        $output = $button . '<div class="widget-content featured-posts featured-' . e($layout) . '">';
+        foreach ($posts as $post) {
+            $output .= self::featuredItem($post);
         }
         return $output . '</div>';
     }
