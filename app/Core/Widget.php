@@ -45,7 +45,7 @@ final class Widget
                 'description' => 'Artikel bertanda unggulan.',
                 'fields' => [
                     'numItemsToShow' => ['type' => 'number', 'label' => 'Jumlah item', 'default' => 3, 'min' => 1, 'max' => 12],
-                    'layout' => ['type' => 'select', 'label' => 'Gaya', 'default' => 'list', 'options' => ['list' => 'Daftar', 'cards' => 'Kartu']],
+                    'layout' => ['type' => 'select', 'label' => 'Gaya', 'default' => 'list', 'options' => ['list' => 'Daftar', 'cards' => 'Kartu', 'carousel' => 'Carousel horizontal']],
                 ],
             ],
             'Label' => [
@@ -452,6 +452,9 @@ final class Widget
             return '';
         }
         $layout = (string)($config['layout'] ?? 'list');
+        if ($layout === 'carousel') {
+            return self::renderFeaturedCarousel($posts);
+        }
         $output = '<div class="widget-content featured-posts featured-' . e($layout) . '">';
         foreach ($posts as $post) {
             $image = post_image_url($post);
@@ -462,6 +465,42 @@ final class Widget
             $output .= '<div class="featured-body"><h3><a href="' . e(post_url($post)) . '">' . e($post['title']) . '</a></h3>'
                 . '<p>' . e(excerpt($post, 110)) . '</p></div></article>';
         }
+        return $output . '</div>';
+    }
+
+    /**
+     * Horizontal carousel of featured posts.
+     *
+     * Native horizontal scrolling with scroll-snap does the sliding, so it
+     * works without JavaScript and keeps keyboard and trackpad behaviour. The
+     * arrow buttons are a progressive enhancement wired up in app.js.
+     *
+     * @param array<int, array<string, mixed>> $posts
+     */
+    private static function renderFeaturedCarousel(array $posts): string
+    {
+        $output = '<div class="widget-content featured-posts featured-carousel" data-carousel>';
+        $output .= '<div class="carousel-track" data-carousel-track tabindex="0"'
+            . ' role="group" aria-label="' . e(__('featured_carousel')) . '">';
+        foreach ($posts as $post) {
+            $image = post_image_url($post);
+            $output .= '<article class="featured-item">';
+            if ($image !== '') {
+                $output .= '<a class="featured-thumb" href="' . e(post_url($post)) . '">'
+                    . '<img src="' . e($image) . '" alt="' . e($post['title']) . '" loading="lazy" decoding="async"></a>';
+            }
+            $output .= '<div class="featured-body"><h3><a href="' . e(post_url($post)) . '">' . e($post['title']) . '</a></h3>'
+                . '<p>' . e(excerpt($post, 110)) . '</p></div></article>';
+        }
+        $output .= '</div>';
+        $output .= '<button type="button" class="carousel-nav carousel-nav--prev" data-carousel-prev'
+            . ' aria-label="' . e(__('carousel_prev')) . '" hidden>'
+            . '<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" focusable="false">'
+            . '<path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M15 5l-7 7 7 7"/></svg></button>';
+        $output .= '<button type="button" class="carousel-nav carousel-nav--next" data-carousel-next'
+            . ' aria-label="' . e(__('carousel_next')) . '" hidden>'
+            . '<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" focusable="false">'
+            . '<path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg></button>';
         return $output . '</div>';
     }
 

@@ -156,6 +156,86 @@
   });
 
   // ---------------------------------------------------------------
+  // Featured posts carousel
+  //
+  // The track scrolls natively, so this only adds arrow buttons and the
+  // state classes the CSS uses for the edge fade. Without JS the row is
+  // still swipeable and every link remains reachable by keyboard.
+  // ---------------------------------------------------------------
+  const reduceMotionEarly = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  doc.querySelectorAll('[data-carousel]').forEach((widget) => {
+    const track = widget.querySelector('[data-carousel-track]');
+    const prev = widget.querySelector('[data-carousel-prev]');
+    const next = widget.querySelector('[data-carousel-next]');
+    if (!track || !prev || !next) {
+      return;
+    }
+
+    // One card width plus the flex gap, so a click lands on a card boundary.
+    const step = () => {
+      const item = track.querySelector('.featured-item');
+      if (!item) {
+        return track.clientWidth;
+      }
+      const styles = window.getComputedStyle(track);
+      const gap = parseFloat(styles.columnGap || styles.gap) || 0;
+      return item.getBoundingClientRect().width + gap;
+    };
+
+    const sync = () => {
+      const max = track.scrollWidth - track.clientWidth;
+      // A sub-pixel rounding gap would otherwise leave an arrow stuck on.
+      const overflowing = max > 2;
+      widget.classList.toggle('is-overflowing', overflowing);
+      widget.classList.toggle('is-at-start', track.scrollLeft <= 2);
+      widget.classList.toggle('is-at-end', track.scrollLeft >= max - 2);
+      prev.hidden = !overflowing || track.scrollLeft <= 2;
+      next.hidden = !overflowing || track.scrollLeft >= max - 2;
+    };
+
+    const scrollByStep = (direction) => {
+      track.scrollBy({
+        left: direction * step(),
+        behavior: reduceMotionEarly ? 'auto' : 'smooth',
+      });
+    };
+
+    prev.addEventListener('click', () => scrollByStep(-1));
+    next.addEventListener('click', () => scrollByStep(1));
+
+    // Arrow keys when the track itself has focus.
+    track.addEventListener('keydown', (event) => {
+      if (event.key === 'ArrowRight') {
+        event.preventDefault();
+        scrollByStep(1);
+      } else if (event.key === 'ArrowLeft') {
+        event.preventDefault();
+        scrollByStep(-1);
+      }
+    });
+
+    let ticking = false;
+    track.addEventListener('scroll', () => {
+      if (ticking) {
+        return;
+      }
+      ticking = true;
+      window.requestAnimationFrame(() => {
+        ticking = false;
+        sync();
+      });
+    });
+
+    if (window.ResizeObserver) {
+      new ResizeObserver(sync).observe(track);
+    } else {
+      window.addEventListener('resize', sync);
+    }
+
+    sync();
+  });
+
+  // ---------------------------------------------------------------
   // Table of contents offset for sticky headers
   // ---------------------------------------------------------------
   if (doc.querySelector('.toc')) {

@@ -245,6 +245,114 @@ a { text-underline-offset: 3px; }
 .featured-posts { display: grid; gap: 16px; }
 .featured-posts.featured-cards { grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); }
 
+/* Horizontal carousel. Scrolling is native (overflow + scroll-snap) so it
+   works without JavaScript; the arrows are an enhancement added by app.js. */
+.featured-posts.featured-carousel {
+  position: relative;
+  display: block;
+  gap: 0;
+  /* Card metrics. Wide containers override the width below so exactly three
+     cards fit; narrower ones keep this comfortable fixed size. */
+  --featured-carousel-width: 260px;
+  --featured-carousel-gap: 14px;
+}
+
+.featured-carousel .carousel-track {
+  display: flex;
+  gap: var(--featured-carousel-gap);
+  padding: 2px 2px 6px;
+  margin: 0;
+  overflow-x: auto;
+  overscroll-behavior-inline: contain;
+  scroll-snap-type: x mandatory;
+  scroll-padding-inline: 2px;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+
+.featured-carousel .carousel-track::-webkit-scrollbar { display: none; }
+
+/* Focus ring lives on the track since it is the scrollable element. */
+.featured-carousel .carousel-track:focus-visible {
+  outline: 2px solid var(--t-primary);
+  outline-offset: 3px;
+  border-radius: var(--t-radius);
+}
+
+.featured-carousel .featured-item {
+  flex: 0 0 var(--featured-carousel-width);
+  width: var(--featured-carousel-width);
+  scroll-snap-align: start;
+  /* Keep the card clickable end-to-end without a stray text selection. */
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+.featured-carousel .featured-item :is(h3, p) { -webkit-user-select: text; user-select: text; }
+
+/* Full-bleed edge fade so it is obvious the row continues. Sits above the
+   cards (z-index 1) but below the arrows (z-index 2). */
+.featured-carousel::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 6px;
+  z-index: 1;
+  width: 56px;
+  pointer-events: none;
+  background: linear-gradient(90deg, transparent, var(--t-surface));
+  opacity: 0;
+  transition: opacity .2s ease;
+}
+
+.featured-carousel.is-overflowing:not(.is-at-end)::after { opacity: 1; }
+
+.carousel-nav {
+  position: absolute;
+  top: calc(50% - 26px);
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border: var(--amp-hairline);
+  border-radius: 50%;
+  background: var(--t-surface);
+  color: var(--t-text);
+  box-shadow: var(--t-shadow);
+  cursor: pointer;
+  transition: background .2s ease, color .2s ease, opacity .2s ease;
+}
+
+.carousel-nav[hidden] { display: none; }
+.carousel-nav:hover { background: var(--t-primary); border-color: var(--t-primary); color: #fff; }
+.carousel-nav:focus-visible { outline: 2px solid var(--t-primary); outline-offset: 2px; }
+.carousel-nav--prev { left: 0; }
+.carousel-nav--next { right: 0; }
+
+/* Wide containers fit exactly three cards. The width is set on the item so
+   the percentage resolves against the flex container, not the item itself. */
+@media (min-width: 900px) {
+  .featured-carousel .featured-item {
+    flex: 0 0 calc((100% - (2 * var(--featured-carousel-gap))) / 3);
+    width: calc((100% - (2 * var(--featured-carousel-gap))) / 3);
+  }
+}
+
+/* Without JS the arrows never appear, and the track is still swipeable. */
+@media (max-width: 860px) {
+  .carousel-nav { display: none; }
+
+  .featured-carousel::after { display: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .featured-carousel .carousel-track { scroll-behavior: auto; }
+}
+
 .featured-item { display: flex; flex-direction: column; gap: 10px; }
 
 .featured-thumb {

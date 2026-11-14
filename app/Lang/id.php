@@ -115,4 +115,8 @@ return [
     'pagination' => 'Navigasi halaman',
     'previous_page' => '‹ Sebelumnya',
     'next_page' => 'Berikutnya ›',
+    // Carousel
+    'featured_carousel' => 'Postingan unggulan',
+    'carousel_prev' => 'Geser ke kiri',
+    'carousel_next' => 'Geser ke kanan',
 ];

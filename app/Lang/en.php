@@ -114,4 +114,8 @@ return [
     'pagination' => 'Pagination',
     'previous_page' => '‹ Previous',
     'next_page' => 'Next ›',
+    // Carousel
+    'featured_carousel' => 'Featured posts',
+    'carousel_prev' => 'Scroll left',
+    'carousel_next' => 'Scroll right',
 ];
