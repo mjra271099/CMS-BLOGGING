@@ -245,6 +245,29 @@ a { text-underline-offset: 3px; }
 .featured-posts { display: grid; gap: 16px; }
 .featured-posts.featured-cards { grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); }
 
+/* "See all" link for category blocks in card style. It spans the grid so it
+   sits under the cards instead of taking a card slot. */
+.featured-more {
+  grid-column: 1 / -1;
+  justify-self: center;
+  display: inline-flex; align-items: center; gap: .45rem;
+  margin-top: 4px; padding: .5rem 1.05rem;
+  border: 1px solid var(--t-border); border-radius: 999px;
+  background: var(--t-surface); color: var(--t-primary);
+  font-size: .82rem; font-weight: 700; text-decoration: none;
+  transition: background .2s ease, border-color .2s ease, color .2s ease;
+}
+.featured-more:hover,
+.featured-more:focus-visible {
+  background: var(--t-primary); border-color: var(--t-primary); color: #fff;
+}
+.featured-more svg { transition: transform .2s ease; }
+.featured-more:hover svg { transform: translateX(3px); }
+@media (prefers-reduced-motion: reduce) {
+  .featured-more, .featured-more svg { transition: none; }
+  .featured-more:hover svg { transform: none; }
+}
+
 /* Horizontal carousel. Scrolling is native (overflow + scroll-snap) so it
    works without JavaScript; the arrows are an enhancement added by app.js. */
 .featured-posts.featured-carousel {

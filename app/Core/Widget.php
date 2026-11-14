@@ -58,6 +58,7 @@ final class Widget
                     'category' => ['type' => 'select', 'label' => 'Kategori', 'source' => 'categories', 'default' => ''],
                     'numItemsToShow' => ['type' => 'number', 'label' => 'Jumlah item', 'default' => 3, 'min' => 1, 'max' => 12],
                     'layout' => ['type' => 'select', 'label' => 'Gaya', 'default' => 'list', 'options' => ['list' => 'Daftar', 'cards' => 'Kartu', 'carousel' => 'Carousel horizontal']],
+                    'showMore' => ['type' => 'checkbox', 'label' => 'Tombol "Lihat semua" (gaya kartu)', 'default' => 1],
                 ],
             ],
             'Label' => [
@@ -497,16 +498,25 @@ final class Widget
         if (!$posts) {
             return '';
         }
-        return self::renderFeaturedItems($posts, $config);
+        // In card style the block is a preview grid, so offer a link through
+        // to the full category archive. Other styles keep their compact shape.
+        $layout = (string)($config['layout'] ?? 'list');
+        $more = ($layout === 'cards' && !empty($config['showMore'])) ? $category : null;
+        return self::renderFeaturedItems($posts, $config, $more);
     }
 
     /**
      * Shared markup for the featured-style blocks (posts + category).
      *
+     * When $more is a category row a trailing "see all" button links to that
+     * category's archive, letting the block advertise content beyond the
+     * preview without a separate page.
+     *
      * @param array<int, array<string, mixed>> $posts
-     * @param array<string, mixed> $config
+     * @param array<string, mixed>            $config
+     * @param array<string, mixed>|null       $more
      */
-    private static function renderFeaturedItems(array $posts, array $config): string
+    private static function renderFeaturedItems(array $posts, array $config, ?array $more = null): string
     {
         $layout = (string)($config['layout'] ?? 'list');
         if ($layout === 'carousel') {
@@ -515,6 +525,17 @@ final class Widget
         $output = '<div class="widget-content featured-posts featured-' . e($layout) . '">';
         foreach ($posts as $post) {
             $output .= self::featuredItem($post);
+        }
+        if ($more !== null) {
+            $name = (string)($more['name'] ?? '');
+            $label = $name !== ''
+                ? __('featured_more_category', ['category' => $name])
+                : __('featured_more');
+            $output .= '<a class="featured-more" href="' . e(category_url($more)) . '">'
+                . '<span>' . e($label) . '</span>'
+                . '<svg viewBox="0 0 20 20" width="16" height="16" aria-hidden="true" focusable="false">'
+                . '<path d="M4 10h11M11 5l5 5-5 5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>'
+                . '</svg></a>';
         }
         return $output . '</div>';
     }

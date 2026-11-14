@@ -119,4 +119,6 @@ return [
     'featured_carousel' => 'Postingan unggulan',
     'carousel_prev' => 'Geser ke kiri',
     'carousel_next' => 'Geser ke kanan',
+    'featured_more' => 'Lihat semua',
+    'featured_more_category' => 'Lihat semua :category',
 ];
