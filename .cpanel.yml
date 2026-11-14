@@ -1,4 +1,4 @@
 ---
 deployment:
   tasks:
-    - /bin/bash -c 'set -e; DEPLOYPATH=/home2/justpas1/blog.v-dey.com; cd /home2/justpas1/CMS-BLOGGING; /bin/tar --exclude="./.git" --exclude="./.env" --exclude="./.cpanel.yml" --exclude="./storage/*" --exclude="./uploads/*" -cf - . | /bin/tar -xf - -C "$DEPLOYPATH"'
+    - /bin/bash -c 'set -e; DEPLOYPATH=/home2/justpas1/blog.v-dey.com; cd /home2/justpas1/CMS-BLOGGING; /bin/tar --exclude="./.git" --exclude="./.env" --exclude="./.cpanel.yml" --exclude="./storage/*" --exclude="./uploads/*" -cf - . | /bin/tar -xf - -C "$DEPLOYPATH"; /bin/chmod 755 "$DEPLOYPATH"; /usr/bin/find "$DEPLOYPATH" -type d ! -path "$DEPLOYPATH/storage*" ! -path "$DEPLOYPATH/uploads*" -exec /bin/chmod 755 {} +; /usr/bin/find "$DEPLOYPATH" -type f ! -path "$DEPLOYPATH/storage/*" ! -path "$DEPLOYPATH/uploads/*" -exec /bin/chmod 644 {} +'
