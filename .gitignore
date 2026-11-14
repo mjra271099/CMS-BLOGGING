@@ -27,3 +27,6 @@ Thumbs.db
 /storage/cache/
 /storage/logs/
 /storage/tmp/
+
+# Local deployment leftovers
+.cpanel.yml.backup

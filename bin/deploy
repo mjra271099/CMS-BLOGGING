@@ -1,0 +1,247 @@
+#!/usr/bin/env bash
+#
+# deploy — kirim perubahan lokal project ini ke GitHub (branch main).
+#
+# Pemakaian:
+#   deploy                      # commit dengan pesan otomatis + push
+#   deploy "pesan commit"       # commit dengan pesan khusus + push
+#   deploy --dry-run            # hanya tampilkan rencana, tidak mengubah apa pun
+#   deploy --help               # bantuan
+#
+# Alur:
+#   1. Cek perubahan (git status)
+#   2. Tidak ada perubahan -> berhenti dengan pesan
+#   3. Ada perubahan -> git add + git commit
+#   4. git fetch + rebase bila remote lebih baru (hindari konflik push)
+#   5. git push origin main
+#   6. Sukses -> cPanel Git Version Control otomatis men-deploy via .cpanel.yml
+#
+# Aman: TIDAK PERNAH memakai `git reset --hard`, `git clean -f`, atau membuang
+# perubahan lokal. Semua kegagalan dihentikan (set -e) dengan pesan penyebab.
+#
+set -Eeuo pipefail
+
+# ---------------------------------------------------------------------------
+# Konfigurasi
+# ---------------------------------------------------------------------------
+BRANCH="main"
+REMOTE="origin"
+
+# Warna (nonaktif otomatis bila bukan terminal).
+if [ -t 1 ]; then
+    C_RESET=$'\033[0m'; C_RED=$'\033[31m'; C_GREEN=$'\033[32m'
+    C_YELLOW=$'\033[33m'; C_BLUE=$'\033[34m'; C_BOLD=$'\033[1m'
+else
+    C_RESET=""; C_RED=""; C_GREEN=""; C_YELLOW=""; C_BLUE=""; C_BOLD=""
+fi
+
+info()  { printf '%s\n' "${C_BLUE}==>${C_RESET} $*"; }
+ok()    { printf '%s\n' "${C_GREEN}  ✓${C_RESET} $*"; }
+warn()  { printf '%s\n' "${C_YELLOW}  !${C_RESET} $*"; }
+fail()  { printf '%s\n' "${C_RED}  ✗ $*${C_RESET}" >&2; }
+die()   { fail "$*"; exit 1; }
+
+# ---------------------------------------------------------------------------
+# Opsi
+# ---------------------------------------------------------------------------
+DRY_RUN=0
+COMMIT_MSG=""
+for arg in "$@"; do
+    case "$arg" in
+        -h|--help)
+            sed -n '3,21p' "$0" | sed 's/^# \{0,1\}//'
+            exit 0
+            ;;
+        -n|--dry-run)
+            DRY_RUN=1
+            ;;
+        -*)
+            die "Opsi tidak dikenal: $arg (gunakan --help)"
+            ;;
+        *)
+            if [ -n "$COMMIT_MSG" ]; then
+                die "Pesan commit hanya boleh satu argumen."
+            fi
+            COMMIT_MSG="$arg"
+            ;;
+    esac
+done
+
+# ---------------------------------------------------------------------------
+# Pastikan dijalankan di dalam repository Git
+# ---------------------------------------------------------------------------
+if [ "$DRY_RUN" -eq 1 ]; then
+    info "MODE DRY-RUN — tidak ada perubahan yang akan disimpan atau dikirim."
+fi
+
+if ! git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+    die "Direktori ini bukan repository Git. Jalankan dari folder project."
+fi
+
+REPO_ROOT="$(git rev-parse --show-toplevel)"
+cd "$REPO_ROOT"
+info "Repository: ${C_BOLD}${REPO_ROOT}${C_RESET}"
+
+# Script ini khusus untuk project CMS Blogging. Tolak repo lain agar tidak
+# salah deploy (misalnya saat dijalankan dari folder project yang berbeda).
+EXPECTED_REMOTE_RE="mjra271099/CMS-BLOGGING"
+ACTUAL_REMOTE="$(git remote get-url "$REMOTE" 2>/dev/null || true)"
+if ! printf '%s' "$ACTUAL_REMOTE" | grep -qi "$EXPECTED_REMOTE_RE"; then
+    die "Repo ini bukan project yang diharapkan.
+       Remote '$REMOTE' = ${ACTUAL_REMOTE:-<kosong>}
+       Diharapkan berisi: $EXPECTED_REMOTE_RE
+       Script tidak akan menyentuh repo lain demi keamanan."
+fi
+
+# ---------------------------------------------------------------------------
+# Cek prasyarat: remote, branch, koneksi
+# ---------------------------------------------------------------------------
+git remote get-url "$REMOTE" >/dev/null 2>&1 \
+    || die "Remote '$REMOTE' tidak ditemukan. Cek: git remote -v"
+
+CURRENT_BRANCH="$(git branch --show-current)"
+[ -n "$CURRENT_BRANCH" ] || die "Sedang detached HEAD. Pindah ke branch '$BRANCH' dulu."
+if [ "$CURRENT_BRANCH" != "$BRANCH" ]; then
+    die "Branch saat ini '$CURRENT_BRANCH', bukan '$BRANCH'. Pindah dulu: git switch $BRANCH"
+fi
+
+# Pastikan pengguna Git sudah disetel (kalau tidak, commit akan ditolak).
+if ! git config user.email >/dev/null 2>&1 || ! git config user.name >/dev/null 2>&1; then
+    die "Identitas Git (user.name / user.email) belum diset. Contoh:
+       git config --global user.name 'Nama Anda'
+       git config --global user.email 'email@contoh.com'"
+fi
+
+# ---------------------------------------------------------------------------
+# Langkah 1 — periksa perubahan (git status)
+# ---------------------------------------------------------------------------
+info "Memeriksa perubahan (git status)..."
+
+if git diff --quiet && git diff --cached --quiet \
+   && [ -z "$(git ls-files --others --exclude-standard)" ]; then
+    warn "Tidak ada perubahan untuk di-commit. Working tree bersih."
+    # Sinkronkan dulu agar hitungan commit tertinggal akurat (bukan ref lama).
+    if git fetch "$REMOTE" "$BRANCH" --quiet 2>/dev/null; then
+        UNPUSHED="$(git rev-list --count "${REMOTE}/${BRANCH}..HEAD" 2>/dev/null || echo 0)"
+    else
+        UNPUSHED=0
+        warn "Tidak bisa memeriksa ${REMOTE} — lewati pengecekan commit tertinggal."
+    fi
+    if [ "${UNPUSHED:-0}" -gt 0 ]; then
+        info "Tetapi ada ${UNPUSHED} commit lokal yang belum dikirim ke GitHub."
+    else
+        ok "Semua commit lokal sudah ada di ${REMOTE}/${BRANCH}. Tidak ada yang perlu dilakukan."
+        exit 0
+    fi
+else
+    # -----------------------------------------------------------------------
+    # Langkah 2 — tampilkan ringkasan perubahan
+    # -----------------------------------------------------------------------
+    info "Perubahan yang terdeteksi:"
+    git -c color.status=always status --short | sed 's/^/    /'
+
+    # Peringatan khusus file sensitif yang masih ter-track.
+    SENSITIVE="$(git status --short \
+        | awk '{print $NF}' \
+        | grep -E '(^|/)(config\.local\.php|config\.php|\.env|\.env\..*|.*\.(pem|key))$' || true)"
+    if [ -n "$SENSITIVE" ]; then
+        warn "Perhatian — file berikut terlihat sensitif dan akan ikut ter-commit:"
+        printf '      %s\n' $SENSITIVE
+        warn "Pastikan file rahasia TIDAK masuk Git (sebaiknya ada di .gitignore)."
+    fi
+
+    # Pastikan remote bisa dihubungi SEBELUM commit, supaya kegagalan jaringan
+    # tidak meninggalkan commit yang belum terkirim.
+    info "Memeriksa koneksi ke ${REMOTE}..."
+    if ! git ls-remote --heads "$REMOTE" "$BRANCH" >/dev/null 2>&1; then
+        die "Tidak bisa menghubungi ${REMOTE}. Periksa koneksi internet / akses SSH ke GitHub.
+       Tidak ada commit yang dibuat; perubahan lokal Anda utuh."
+    fi
+    ok "Remote ${REMOTE} dapat dihubungi."
+
+    if [ "$DRY_RUN" -eq 1 ]; then
+        info "DRY-RUN selesai. Tidak ada yang di-commit atau di-push."
+        exit 0
+    fi
+
+    # -----------------------------------------------------------------------
+    # Langkah 3 — commit
+    # -----------------------------------------------------------------------
+    if [ -z "$COMMIT_MSG" ]; then
+        COMMIT_MSG="Update $(date '+%Y-%m-%d %H:%M:%S')"
+    fi
+    info "Menambahkan perubahan (git add -A)..."
+    git add -A
+
+    # Jangan pernah membuat commit kosong.
+    if git diff --cached --quiet; then
+        warn "Tidak ada perubahan yang bisa di-commit setelah git add."
+        warn "Kemungkinan semua perubahan diabaikan oleh .gitignore."
+        exit 0
+    fi
+
+    info "Membuat commit: ${C_BOLD}${COMMIT_MSG}${C_RESET}"
+    if ! git commit -m "$COMMIT_MSG"; then
+        die "Commit gagal. Periksa hook atau konfigurasi Git di atas."
+    fi
+    ok "Commit berhasil: $(git log -1 --oneline)"
+fi
+
+# ---------------------------------------------------------------------------
+# Langkah 4 — sinkronkan dengan remote sebelum push (deteksi konflik)
+# ---------------------------------------------------------------------------
+info "Menyinkronkan dengan ${REMOTE}/${BRANCH}..."
+if ! git fetch "$REMOTE" "$BRANCH" --quiet; then
+    die "Gagal menghubungi ${REMOTE}. Periksa koneksi internet / akses SSH ke GitHub."
+fi
+
+# Hitung berapa commit lokal vs remote.
+BEHIND="$(git rev-list --count "HEAD..${REMOTE}/${BRANCH}" 2>/dev/null || echo 0)"
+
+if [ "${BEHIND:-0}" -gt 0 ]; then
+    warn "Remote lebih baru ${BEHIND} commit. Mencoba rebase lokal di atas remote..."
+    if ! git rebase "${REMOTE}/${BRANCH}"; then
+        fail "Konflik saat rebase. Perubahan lokal Anda AMAN dan tidak dihapus."
+        warn "Selesaikan manual lalu jalankan ulang deploy:"
+        warn "    git status            # lihat file konflik"
+        warn "    # edit file, git add <file>, git rebase --continue"
+        warn "Atau batalkan rebase (perubahan tetap aman):"
+        warn "    git rebase --abort"
+        exit 1
+    fi
+    ok "Rebase selesai."
+fi
+
+# ---------------------------------------------------------------------------
+# Langkah 5 — push
+# ---------------------------------------------------------------------------
+info "Mengirim ke ${REMOTE}/${BRANCH} (git push)..."
+if ! git push "$REMOTE" "$BRANCH"; then
+    fail "Push gagal. Kemungkinan penyebab:"
+    fail "  • Tidak punya akses (SSH key / token) ke ${REMOTE}"
+    fail "  • Remote menolak karena ada commit baru (jalankan deploy lagi)"
+    fail "  • Aturan proteksi branch di GitHub"
+    fail "Perubahan lokal Anda tetap aman dan tidak dihapus."
+    exit 1
+fi
+ok "Push berhasil."
+
+# ---------------------------------------------------------------------------
+# Langkah 6 — pesan sukses + info deployment
+# ---------------------------------------------------------------------------
+printf '\n%s\n' "${C_GREEN}${C_BOLD}=== DEPLOY BERHASIL ===${C_RESET}"
+ok "Branch ${BRANCH} sudah terkirim ke GitHub (${REMOTE})."
+ok "Commit terakhir: $(git log -1 --oneline)"
+
+if [ -f "${REPO_ROOT}/.cpanel.yml" ]; then
+    printf '\n'
+    info "cPanel Git Version Control akan otomatis men-deploy dari GitHub."
+    ok "Deployment dijalankan mengikuti aturan di .cpanel.yml"
+    warn "Tunggu 1–3 menit, lalu cek situs produksi Anda."
+else
+    printf '\n'
+    warn "File .cpanel.yml tidak ditemukan — auto-deploy cPanel mungkin tidak aktif."
+fi
+
+printf '\n'
+info "Selesai. 🚀"
