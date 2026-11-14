@@ -296,9 +296,27 @@ final class Tmdb
         $data = $this->get('/' . $kind . '/' . max(1, $id), [
             'append_to_response' => $append,
             'include_image_language' => 'id,en,null',
+            // Without this, appended videos are filtered to the blog language,
+            // so an Indonesian blog gets an empty list (and no trailer).
+            'include_video_language' => $this->videoLanguages(),
         ]);
         $data['_media_type'] = $kind;
         return $data;
+    }
+
+    /**
+     * Video languages to request alongside the details: the blog language,
+     * English (TMDB hosts almost every official trailer in en) and the
+     * language-neutral entries (`null`).
+     */
+    private function videoLanguages(): string
+    {
+        $codes = [
+            strtolower(substr($this->language, 0, 2)),
+            'en',
+            'null',
+        ];
+        return implode(',', array_values(array_unique(array_filter($codes, static fn(string $c): bool => $c !== ''))));
     }
 
     /**
@@ -397,14 +415,27 @@ final class Tmdb
     }
 
     /**
+     * TMDB accepts two credential shapes: a v4 read access token (a long JWT,
+     * sent as a Bearer header) and the older v3 API key (32 hex characters,
+     * sent as an `api_key` query parameter). The key itself is valid for both
+     * accounts, so the shape decides how it must be presented.
+     */
+    private function isV3Key(): bool
+    {
+        return preg_match('/^[0-9a-f]{32}$/i', $this->token) === 1;
+    }
+
+    /**
      * @return array{status:int, body:string}
      */
     private function request(string $url): array
     {
-        $headers = [
-            'Accept: application/json',
-            'Authorization: Bearer ' . $this->token,
-        ];
+        $headers = ['Accept: application/json'];
+        if ($this->isV3Key()) {
+            $url .= (str_contains($url, '?') ? '&' : '?') . 'api_key=' . rawurlencode($this->token);
+        } else {
+            $headers[] = 'Authorization: Bearer ' . $this->token;
+        }
         if (function_exists('curl_init')) {
             $curl = curl_init($url);
             curl_setopt_array($curl, [

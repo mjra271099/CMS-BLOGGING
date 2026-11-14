@@ -34,6 +34,7 @@ use App\Models\Post;
 use App\Models\Taxonomy;
 use App\Services\Builder;
 use App\Services\Seo;
+use App\Services\TmdbArticle;
 
 if (!Database::tableExists('users')) {
     fwrite(STDERR, "Database belum diinstal. Jalankan bin/console.php install.\n");
@@ -228,6 +229,50 @@ try {
     $createdRedirectIds[] = $redirectId;
     check('Redirect is stored', (Seo::redirectFor('/zztest-lama')['status_code'] ?? 0) === 301);
     check('Seo::audit returns a score', isset(Seo::audit()['score']));
+
+    section('TMDB article');
+    $video = static fn(string $type, string $key, bool $official, string $lang, string $date, string $site = 'YouTube'): array => [
+        'type' => $type,
+        'key' => $key,
+        'official' => $official,
+        'iso_639_1' => $lang,
+        'published_at' => $date,
+        'site' => $site,
+        'name' => $key,
+    ];
+    $trailerKey = static function (array $videos): string {
+        $article = TmdbArticle::build([
+            'id' => 1,
+            'title' => 'Uji',
+            'release_date' => '2020-01-01',
+            'overview' => 'Sinopsis uji.',
+            'poster_path' => '/p.jpg',
+            'backdrop_path' => '/b.jpg',
+            'videos' => ['results' => $videos],
+        ], ['trailer']);
+        return preg_match('~youtube\.com/embed/([A-Za-z0-9_-]+)~', (string)$article['body'], $match) ? $match[1] : '';
+    };
+    check('TMDB trailer picks the newest official trailer', $trailerKey([
+        $video('Trailer', 'LAMA', true, 'en', '2020-01-01T00:00:00.000Z'),
+        $video('Trailer', 'BARU', true, 'en', '2023-01-01T00:00:00.000Z'),
+    ]) === 'BARU');
+    check('TMDB trailer prefers English uploads', $trailerKey([
+        $video('Trailer', 'FR', true, 'fr', '2024-01-01T00:00:00.000Z'),
+        $video('Trailer', 'EN', true, 'en', '2019-01-01T00:00:00.000Z'),
+    ]) === 'EN');
+    check('TMDB trailer falls back to an official teaser', $trailerKey([
+        $video('Teaser', 'TEASER', true, 'en', '2021-01-01T00:00:00.000Z'),
+        $video('Clip', 'CLIP', true, 'en', '2025-01-01T00:00:00.000Z'),
+    ]) === 'TEASER');
+    check('TMDB trailer ignores unofficial uploads', $trailerKey([
+        $video('Trailer', 'FAN', false, 'en', '2024-01-01T00:00:00.000Z'),
+    ]) === '');
+    check('TMDB trailer ignores non-YouTube hosts', $trailerKey([
+        $video('Trailer', 'VIMEO', true, 'en', '2024-01-01T00:00:00.000Z', 'Vimeo'),
+    ]) === '');
+    check('TMDB trailer is omitted without an official video', $trailerKey([
+        $video('Clip', 'CLIP', true, 'en', '2024-01-01T00:00:00.000Z'),
+    ]) === '');
 
     section('Themes');
     check('Bundled themes exist', count(Theme::bundledSlugs()) >= 15);

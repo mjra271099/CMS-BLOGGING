@@ -1,0 +1,2121 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#f6f8fc" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0a0e1a" media="(prefers-color-scheme: dark)">
+<meta name="description" content="QR Code Generator serbaguna untuk URL, WhatsApp, teks, email, WiFi, vCard, dan lainnya. Unduh PNG, JPG, WEBP, SVG.">
+<title>QR Code Generator — Serbaguna &amp; Profesional</title>
+<style>
+/* ============================================================
+   1. DESIGN TOKENS
+   ============================================================ */
+:root {
+  --bg: #f6f8fc;
+  --surface: #ffffff;
+  --surface-2: #f8fafc;
+  --surface-3: #f1f5f9;
+  --border: #e5eaf2;
+  --border-strong: #cbd5e1;
+  --glass: rgba(255, 255, 255, 0.88);
+
+  --text: #0f172a;
+  --text-muted: #64748b;
+  --text-subtle: #94a3b8;
+
+  --accent: #2563eb;
+  --accent-hover: #1d4ed8;
+  --accent-soft: #eff6ff;
+  --accent-ring: rgba(37, 99, 235, 0.18);
+
+  --success: #15803d;
+  --success-soft: #f0fdf4;
+  --error: #b91c1c;
+  --error-soft: #fef2f2;
+
+  --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-mono: "SF Mono", Monaco, "Cascadia Code", "Roboto Mono", Consolas, monospace;
+
+  --r-sm: 10px;
+  --r: 14px;
+  --r-lg: 18px;
+  --r-xl: 22px;
+  --r-full: 999px;
+
+  --shadow-xs: 0 1px 2px rgba(15, 23, 42, 0.05);
+  --shadow-sm: 0 2px 6px rgba(15, 23, 42, 0.06), 0 1px 2px rgba(15, 23, 42, 0.04);
+  --shadow: 0 6px 18px rgba(15, 23, 42, 0.07), 0 2px 5px rgba(15, 23, 42, 0.04);
+  --shadow-lg: 0 18px 44px rgba(15, 23, 42, 0.14), 0 4px 12px rgba(15, 23, 42, 0.06);
+
+  --ease: cubic-bezier(0.4, 0, 0.2, 1);
+  --dur-fast: 150ms;
+  --dur: 220ms;
+  --dur-slow: 340ms;
+
+  --header-h: 60px;
+  --action-h: 72px;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0a0e1a;
+    --surface: #131a2e;
+    --surface-2: #1a2338;
+    --surface-3: #1f2a42;
+    --border: #263049;
+    --border-strong: #374151;
+    --glass: rgba(19, 26, 46, 0.88);
+
+    --text: #f1f5f9;
+    --text-muted: #94a3b8;
+    --text-subtle: #64748b;
+
+    --accent: #3b82f6;
+    --accent-hover: #60a5fa;
+    --accent-soft: rgba(59, 130, 246, 0.12);
+    --accent-ring: rgba(59, 130, 246, 0.3);
+
+    --success: #4ade80;
+    --success-soft: rgba(74, 222, 128, 0.1);
+    --error: #f87171;
+    --error-soft: rgba(248, 113, 113, 0.1);
+  }
+}
+
+/* ============================================================
+   2. RESET & BASE
+   ============================================================ */
+*, *::before, *::after { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+
+body {
+  margin: 0;
+  min-height: 100dvh;
+  font-family: var(--font-sans);
+  font-size: 15px;
+  line-height: 1.5;
+  color: var(--text);
+  background:
+    radial-gradient(900px 460px at 0% -18%, rgba(219, 234, 254, 0.55), transparent 60%),
+    radial-gradient(900px 460px at 100% -18%, rgba(237, 233, 254, 0.5), transparent 60%),
+    var(--bg);
+  background-attachment: fixed;
+  padding-bottom: calc(var(--action-h) + env(safe-area-inset-bottom) + 8px);
+  -webkit-font-smoothing: antialiased;
+  -webkit-tap-highlight-color: transparent;
+  transition: background-color var(--dur-slow) var(--ease), color var(--dur-slow) var(--ease);
+}
+
+@media (prefers-color-scheme: dark) {
+  body {
+    background:
+      radial-gradient(900px 460px at 0% -18%, rgba(37, 99, 235, 0.14), transparent 60%),
+      radial-gradient(900px 460px at 100% -18%, rgba(124, 58, 237, 0.12), transparent 60%),
+      var(--bg);
+    background-attachment: fixed;
+  }
+}
+
+::selection { background: var(--accent-ring); }
+
+/* ============================================================
+   3. STICKY HEADER
+   ============================================================ */
+.app-header {
+  position: sticky;
+  top: 0;
+  z-index: 60;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: var(--header-h);
+  padding: calc(8px + env(safe-area-inset-top)) 16px 8px;
+  background: var(--glass);
+  backdrop-filter: saturate(180%) blur(18px);
+  -webkit-backdrop-filter: saturate(180%) blur(18px);
+  border-bottom: 1px solid var(--border);
+}
+
+.brand { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.brand-mark {
+  width: 36px; height: 36px; flex-shrink: 0;
+  display: grid; place-items: center;
+  border-radius: 11px;
+  background: linear-gradient(135deg, var(--accent), #7c3aed);
+  color: #fff;
+  box-shadow: 0 6px 16px -8px rgba(37, 99, 235, 0.85);
+}
+.brand-mark svg { width: 20px; height: 20px; }
+
+.brand-text { min-width: 0; }
+.brand h1 {
+  margin: 0;
+  font-size: 15px; font-weight: 800;
+  letter-spacing: -0.3px; line-height: 1.2;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  background: linear-gradient(90deg, #2563eb, #7c3aed 55%, #db2777);
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+}
+.brand p { display: none; margin: 1px 0 0; font-size: 11px; line-height: 1.3; color: var(--text-muted); }
+
+@media (prefers-color-scheme: dark) {
+  .brand h1 {
+    background: linear-gradient(90deg, #60a5fa, #a78bfa 55%, #f472b6);
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+  }
+}
+
+/* NEW: header actions (blog link + mini preview) */
+.header-actions {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.blog-link {
+  display: inline-flex; align-items: center; gap: 6px;
+  min-height: 38px; padding: 0 13px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-full);
+  background: var(--surface);
+  color: var(--text);
+  font-size: 12.5px; font-weight: 700;
+  letter-spacing: 0.2px;
+  text-decoration: none;
+  white-space: nowrap;
+  box-shadow: var(--shadow-xs);
+  transition: background-color var(--dur-fast) var(--ease),
+              color var(--dur-fast) var(--ease),
+              border-color var(--dur-fast) var(--ease),
+              transform var(--dur-fast) var(--ease);
+}
+.blog-link:hover {
+  background: var(--accent-soft);
+  border-color: var(--accent);
+  color: var(--accent);
+}
+.blog-link:active { transform: scale(0.96); }
+.blog-link svg { width: 13px; height: 13px; flex-shrink: 0; }
+
+.mini-btn {
+  margin-left: 0; flex-shrink: 0;
+  width: 44px; height: 44px; padding: 4px;
+  display: grid; place-items: center;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface);
+  cursor: pointer;
+  box-shadow: var(--shadow-xs);
+  transition: transform var(--dur-fast) var(--ease), border-color var(--dur-fast) var(--ease);
+}
+.mini-btn:active { transform: scale(0.94); border-color: var(--accent); }
+.mini-inner {
+  width: 100%; height: 100%;
+  display: grid; place-items: center;
+  overflow: hidden; border-radius: 8px;
+}
+.mini-inner canvas, .mini-inner svg {
+  display: block; width: 100% !important; height: 100% !important; border-radius: 6px;
+}
+.mini-btn.is-empty .mini-inner::after {
+  content: ""; width: 10px; height: 10px; border-radius: 50%; background: var(--border-strong);
+}
+
+@media (min-width: 480px) {
+  .brand p { display: block; }
+  .brand-mark { width: 40px; height: 40px; border-radius: 12px; }
+  .brand-mark svg { width: 22px; height: 22px; }
+  .brand h1 { font-size: 17px; }
+  .mini-btn { width: 50px; height: 50px; }
+  .blog-link { min-height: 40px; padding: 0 15px; font-size: 13px; }
+}
+
+/* ============================================================
+   4. LAYOUT
+   ============================================================ */
+.wrap { max-width: 1180px; margin: 0 auto; padding: 14px 14px 0; }
+.layout { display: grid; grid-template-columns: minmax(0, 1fr); gap: 14px; }
+
+/* ============================================================
+   5. CARDS
+   ============================================================ */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  padding: 16px;
+  box-shadow: var(--shadow-sm);
+  transition: background-color var(--dur-slow) var(--ease), border-color var(--dur-slow) var(--ease);
+}
+
+/* ============================================================
+   6. TABS
+   ============================================================ */
+.tabs {
+  display: flex; gap: 8px; overflow-x: auto;
+  padding: 2px 2px 14px; margin: 0 -2px 14px;
+  scrollbar-width: none; -webkit-overflow-scrolling: touch;
+  scroll-snap-type: x proximity;
+  border-bottom: 1px solid var(--border);
+  mask-image: linear-gradient(to right, #000 90%, transparent 100%);
+  -webkit-mask-image: linear-gradient(to right, #000 90%, transparent 100%);
+}
+.tabs::-webkit-scrollbar { display: none; }
+
+.tab {
+  flex: 0 0 auto; scroll-snap-align: start;
+  display: inline-flex; align-items: center; gap: 6px;
+  min-height: 44px; padding: 0 15px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-full);
+  background: var(--surface);
+  font: inherit; font-size: 13.5px; font-weight: 600;
+  color: var(--text-muted); white-space: nowrap;
+  cursor: pointer;
+  transition: all var(--dur-fast) var(--ease);
+}
+.tab:hover { border-color: var(--border-strong); background: var(--surface-2); color: var(--text); }
+.tab:active { transform: scale(0.97); }
+.tab.active {
+  background: var(--accent); border-color: var(--accent); color: #fff;
+  box-shadow: 0 6px 16px -8px var(--accent);
+}
+
+/* ============================================================
+   7. PANELS
+   ============================================================ */
+.panel { display: none; animation: fade var(--dur) var(--ease); }
+.panel.active { display: block; }
+@keyframes fade {
+  from { opacity: 0; transform: translateY(5px); }
+  to   { opacity: 1; transform: none; }
+}
+
+/* ============================================================
+   8. FORM FIELDS
+   ============================================================ */
+.field { margin: 0 0 14px; }
+.field:last-child { margin-bottom: 0; }
+
+.field label {
+  display: block;
+  font-size: 13px; font-weight: 700;
+  margin-bottom: 7px; color: var(--text); letter-spacing: 0.1px;
+}
+
+.field input[type=text],
+.field input[type=url],
+.field input[type=tel],
+.field input[type=email],
+.field input[type=number],
+.field textarea,
+.field select {
+  width: 100%; min-height: 48px;
+  padding: 12px 14px;
+  border: 1.5px solid var(--border-strong);
+  border-radius: var(--r-sm);
+  font: inherit; font-size: 16px; line-height: 1.4;
+  color: var(--text); background: var(--surface); outline: none;
+  transition: border-color var(--dur-fast) var(--ease),
+              box-shadow var(--dur-fast) var(--ease),
+              background-color var(--dur-slow) var(--ease);
+}
+
+.field select {
+  appearance: none; -webkit-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+  background-repeat: no-repeat; background-position: right 14px center;
+  padding-right: 40px; cursor: pointer;
+}
+
+.field input:focus, .field textarea:focus, .field select:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3.5px var(--accent-ring);
+}
+
+.field textarea { min-height: 92px; resize: vertical; line-height: 1.55; }
+
+.field input[type=color] {
+  width: 100%; height: 48px; padding: 5px;
+  border: 1.5px solid var(--border-strong); border-radius: var(--r-sm);
+  background: var(--surface); cursor: pointer;
+}
+.field input[type=color]::-webkit-color-swatch-wrapper { padding: 0; }
+.field input[type=color]::-webkit-color-swatch { border: none; border-radius: 7px; }
+
+.field input[type=range] {
+  width: 100%; margin: 14px 0 6px; height: 6px;
+  accent-color: var(--accent); cursor: pointer;
+}
+
+.field input[type=file] { width: 100%; font-size: 13px; color: var(--text-muted); }
+
+.hidden { display: none !important; }
+
+/* input actions (clear/paste) */
+.input-wrap { position: relative; display: block; }
+.input-wrap > input,
+.input-wrap > textarea { padding-right: 48px !important; }
+.input-wrap.has-paste > input,
+.input-wrap.has-paste > textarea { padding-right: 84px !important; }
+
+.input-btn {
+  position: absolute;
+  top: 50%; right: 8px;
+  transform: translateY(-50%);
+  width: 32px; height: 32px;
+  border: 0; border-radius: 8px;
+  background: var(--surface-3);
+  color: var(--text-muted);
+  display: grid; place-items: center;
+  cursor: pointer;
+  transition: background-color var(--dur-fast) var(--ease), color var(--dur-fast) var(--ease);
+}
+.input-btn:hover { background: var(--accent-soft); color: var(--accent); }
+.input-btn:active { transform: translateY(-50%) scale(0.94); }
+.input-btn[hidden] { display: none; }
+.input-btn.input-paste { right: 44px; }
+
+.input-wrap > textarea + .input-btn { top: 12px; transform: none; }
+.input-wrap > textarea + .input-paste { top: 12px; }
+
+.helper {
+  margin-top: 14px;
+  border-top: 1px dashed var(--border);
+  padding-top: 6px;
+}
+.helper summary {
+  display: flex; align-items: center; gap: 8px;
+  min-height: 44px; padding: 4px 0;
+  font-size: 13px; font-weight: 700; color: var(--text-muted);
+  list-style: none; cursor: pointer;
+  transition: color var(--dur-fast) var(--ease);
+}
+.helper summary::-webkit-details-marker { display: none; }
+.helper summary:hover { color: var(--accent); }
+.helper summary::before { content: "＋"; color: var(--accent); font-weight: 800; font-size: 15px; }
+.helper[open] summary::before { content: "−"; }
+.helper .inner { padding-top: 10px; }
+
+.note {
+  margin: 12px 0 0;
+  font-size: 12px; line-height: 1.55;
+  color: var(--text-muted);
+}
+.note b { color: var(--text); font-weight: 700; }
+
+/* Smart paste button */
+.smart-paste {
+  width: 100%;
+  margin: 0 0 16px;
+  min-height: 46px;
+  font-size: 13px;
+  gap: 8px;
+}
+.smart-paste svg { width: 16px; height: 16px; }
+
+/* ============================================================
+   9. BUTTONS
+   ============================================================ */
+.btn {
+  appearance: none; border: 0;
+  min-height: 48px; padding: 0 18px;
+  border-radius: var(--r-sm);
+  display: inline-flex; align-items: center; justify-content: center; gap: 7px;
+  font: inherit; font-size: 14px; font-weight: 700;
+  color: #fff; background: var(--accent);
+  cursor: pointer; user-select: none;
+  transition: background-color var(--dur-fast) var(--ease),
+              transform var(--dur-fast) var(--ease),
+              box-shadow var(--dur-fast) var(--ease);
+}
+.btn:hover { background: var(--accent-hover); }
+.btn:active { transform: translateY(1px) scale(0.99); }
+.btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.btn svg { width: 16px; height: 16px; flex-shrink: 0; }
+
+.btn.secondary {
+  background: var(--surface-2);
+  color: var(--text);
+  border: 1px solid var(--border);
+}
+.btn.secondary:hover { background: var(--surface-3); border-color: var(--border-strong); }
+
+/* Tombol Generate (CTA) */
+.generate-btn {
+  width: 100%;
+  margin-top: 18px;
+  min-height: 52px;
+  font-size: 15px;
+  font-weight: 800;
+  letter-spacing: 0.3px;
+  background: linear-gradient(135deg, var(--accent), #7c3aed);
+  box-shadow: 0 10px 26px -12px var(--accent);
+}
+.generate-btn:hover {
+  background: linear-gradient(135deg, var(--accent-hover), #6d28d9);
+}
+.generate-btn svg { width: 18px; height: 18px; }
+
+/* ============================================================
+   10. DESIGN SECTION
+   ============================================================ */
+.design {
+  margin-top: 18px;
+  border-top: 1px solid var(--border);
+  padding-top: 4px;
+}
+.design > summary {
+  display: flex; align-items: center; gap: 9px;
+  min-height: 48px; padding: 6px 0;
+  font-size: 14.5px; font-weight: 800; color: var(--text);
+  list-style: none; cursor: pointer; user-select: none;
+}
+.design > summary::-webkit-details-marker { display: none; }
+.design > summary::after {
+  content: "▾"; margin-left: auto; font-size: 12px; color: var(--text-subtle);
+  transition: transform var(--dur) var(--ease);
+}
+.design[open] > summary::after { transform: rotate(180deg); }
+.design .inner { padding-top: 14px; }
+
+.presets { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 18px; }
+.chip {
+  display: inline-flex; align-items: center; gap: 7px;
+  min-height: 40px; padding: 6px 13px 6px 8px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--r-full);
+  background: var(--surface);
+  font: inherit; font-size: 12.5px; font-weight: 600;
+  color: var(--text-muted); cursor: pointer;
+  transition: all var(--dur-fast) var(--ease);
+}
+.chip:hover { border-color: var(--accent); background: var(--surface-2); color: var(--text); }
+.chip:active { transform: scale(0.96); }
+.chip.active {
+  border-color: var(--accent); color: var(--text);
+  box-shadow: 0 0 0 3px var(--accent-ring);
+}
+.sw {
+  width: 16px; height: 16px; flex-shrink: 0;
+  display: block; border-radius: 50%;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.dgrid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.span2 { grid-column: 1 / -1; }
+
+.switch {
+  display: flex; align-items: center; gap: 10px;
+  min-height: 48px; padding: 10px 14px;
+  border: 1.5px solid var(--border-strong);
+  border-radius: var(--r-sm);
+  background: var(--surface);
+  font-size: 13.5px; font-weight: 600; color: var(--text);
+  cursor: pointer; user-select: none;
+  transition: border-color var(--dur-fast) var(--ease);
+}
+.switch:hover { border-color: var(--accent); }
+.switch input {
+  width: 19px; height: 19px; flex-shrink: 0;
+  accent-color: var(--accent); cursor: pointer;
+}
+
+/* Logo drag & drop */
+#uploadWrap.dragover {
+  border: 2px dashed var(--accent);
+  background: var(--accent-soft);
+  border-radius: var(--r-sm);
+  padding: 10px;
+}
+
+/* ============================================================
+   11. PREVIEW CARD
+   ============================================================ */
+.preview-card { scroll-margin-top: calc(var(--header-h) + 14px); }
+
+.preview-card:focus { outline: none; }
+.preview-card.flash {
+  animation: previewFlash 1.2s var(--ease);
+}
+@keyframes previewFlash {
+  0%, 100% { box-shadow: var(--shadow-sm); border-color: var(--border); }
+  35%      { box-shadow: 0 0 0 4px var(--accent-ring), var(--shadow-lg); border-color: var(--accent); }
+}
+
+.preview-head {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 10px; margin-bottom: 14px;
+}
+.preview-head h2 { margin: 0; font-size: 15px; display: flex; align-items: center; gap: 7px; }
+.badge {
+  padding: 5px 11px; border-radius: var(--r-full);
+  background: var(--surface-3); color: var(--text-muted);
+  font-size: 11px; font-weight: 700; letter-spacing: 0.2px;
+  transition: all var(--dur) var(--ease);
+}
+.badge.ok  { background: var(--success-soft); color: var(--success); }
+.badge.err { background: var(--error-soft);   color: var(--error); }
+
+.qrbox {
+  width: 100%; max-width: 260px;
+  aspect-ratio: 1 / 1;
+  margin: 0 auto 14px; padding: 12px;
+  display: grid; place-items: center;
+  border: 1px solid var(--border);
+  border-radius: var(--r-xl);
+  background: var(--surface-2);
+  box-shadow: inset 0 0 0 1px var(--surface), 0 8px 24px -16px rgba(15, 23, 42, 0.55);
+  overflow: hidden;
+}
+.qrbox canvas, .qrbox svg {
+  display: block; width: 100%; height: auto;
+  border-radius: 10px;
+  animation: fade var(--dur) var(--ease);
+}
+.ph {
+  padding: 0 16px;
+  font-size: 12.5px; line-height: 1.6;
+  text-align: center; color: var(--text-muted);
+}
+
+.status {
+  min-height: 18px; margin: 0 0 14px;
+  font-size: 12.5px; line-height: 1.4;
+  text-align: center; color: var(--text-muted);
+}
+.status.ok  { color: var(--success); }
+.status.err { color: var(--error); }
+
+.dl { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.dl .btn { min-height: 46px; padding: 0 8px; font-size: 12.5px; letter-spacing: 0.4px; }
+
+/* Raw data */
+.raw-wrap { margin-top: 4px; }
+.raw-wrap textarea {
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  min-height: 76px;
+  resize: vertical;
+  line-height: 1.5;
+  word-break: break-all;
+}
+
+/* ============================================================
+   12. BOTTOM ACTION BAR
+   ============================================================ */
+.action-bar {
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 70;
+  display: flex; gap: 8px;
+  padding: 10px 14px calc(10px + env(safe-area-inset-bottom));
+  background: var(--glass);
+  backdrop-filter: saturate(180%) blur(18px);
+  -webkit-backdrop-filter: saturate(180%) blur(18px);
+  border-top: 1px solid var(--border);
+  box-shadow: 0 -8px 28px -16px rgba(15, 23, 42, 0.28);
+}
+.action-bar .btn {
+  flex: 1; min-width: 0;
+  padding: 0 6px; font-size: 12.5px; letter-spacing: 0.4px;
+}
+
+/* ============================================================
+   13. TOAST
+   ============================================================ */
+.toast {
+  position: fixed; left: 50%;
+  bottom: calc(var(--action-h) + env(safe-area-inset-bottom) + 16px);
+  z-index: 200; max-width: calc(100% - 32px);
+  padding: 13px 20px; border-radius: var(--r-full);
+  background: var(--text); color: var(--bg);
+  font-size: 13px; font-weight: 600; text-align: center;
+  box-shadow: var(--shadow-lg);
+  opacity: 0; pointer-events: none;
+  transform: translate(-50%, 16px);
+  transition: all var(--dur) var(--ease);
+}
+.toast.show { opacity: 1; transform: translate(-50%, 0); }
+.toast.success { background: var(--success); color: #fff; }
+.toast.error   { background: var(--error);   color: #fff; }
+
+/* ============================================================
+   14. FOOTER
+   ============================================================ */
+.footer {
+  margin: 26px 0 0; padding: 0 4px;
+  font-size: 11.5px; line-height: 1.6;
+  text-align: center; color: var(--text-subtle);
+}
+.footer a {
+  color: var(--accent);
+  font-weight: 700;
+  text-decoration: none;
+}
+.footer a:hover { text-decoration: underline; }
+
+/* ============================================================
+   15. TABLET
+   ============================================================ */
+@media (min-width: 700px) {
+  .wrap { padding: 18px 18px 0; }
+  .layout { gap: 18px; }
+  .card { padding: 20px; border-radius: var(--r-xl); }
+  .dgrid { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; }
+  .span2 { grid-column: span 2; }
+  .qrbox { max-width: 300px; }
+  .dl { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+}
+
+/* ============================================================
+   16. DESKTOP
+   ============================================================ */
+@media (min-width: 1024px) {
+  :root { --header-h: 66px; }
+  body { padding-bottom: 24px; }
+  .app-header { padding: 10px 26px; }
+  .brand h1 { font-size: 18px; }
+  .wrap { padding: 22px 24px 0; }
+  .layout {
+    grid-template-columns: minmax(0, 1fr) 384px;
+    gap: 22px;
+    align-items: start;
+  }
+  .preview-card { position: sticky; top: calc(var(--header-h) + 16px); }
+  .action-bar { display: none; }
+  .toast { bottom: 32px; }
+  .mini-btn { display: none; }
+}
+
+/* ============================================================
+   17. MOTION PREFERENCES
+   ============================================================ */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+</style>
+</head>
+<body>
+
+<header class="app-header">
+  <div class="brand">
+    <div class="brand-mark" aria-hidden="true">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="3" y="3" width="7" height="7" rx="1.5"/>
+        <rect x="14" y="3" width="7" height="7" rx="1.5"/>
+        <rect x="3" y="14" width="7" height="7" rx="1.5"/>
+        <rect x="14" y="14" width="3" height="3" rx="0.5"/>
+        <rect x="18" y="18" width="3" height="3" rx="0.5"/>
+      </svg>
+    </div>
+    <div class="brand-text">
+      <h1>QR Code Generator</h1>
+      <p>Serbaguna · Cepat · Profesional</p>
+    </div>
+  </div>
+
+  <div class="header-actions">
+    <a class="blog-link" href="https://blog.v-dey.com" target="_blank" rel="noopener noreferrer">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/>
+        <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
+      </svg>
+      Visit Our Blog
+    </a>
+
+    <button class="mini-btn is-empty" id="miniBtn" type="button" aria-label="Lihat pratinjau QR">
+      <div class="mini-inner" id="qrMini"></div>
+    </button>
+  </div>
+</header>
+
+<div class="wrap">
+  <div class="layout">
+
+    <main class="card form-card" id="form">
+
+      <div class="tabs" id="typeTabs" role="tablist" aria-label="Jenis konten QR"></div>
+
+      <button type="button" class="btn secondary smart-paste" id="smartPaste">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/>
+          <rect x="8" y="2" width="8" height="4" rx="1"/>
+        </svg>
+        Tempel dari clipboard &amp; deteksi otomatis
+      </button>
+
+      <!-- URL -->
+      <div class="panel active" data-type="url">
+        <div class="field">
+          <label for="f-url">URL Website</label>
+          <input id="f-url" type="url" inputmode="url" placeholder="https://contoh.com/video"
+                 autocomplete="off" spellcheck="false">
+        </div>
+        <p class="note">Ketik domain tanpa <b>https://</b> juga bisa — akan dilengkapi otomatis.</p>
+      </div>
+
+      <!-- WHATSAPP -->
+      <div class="panel" data-type="wa">
+        <div class="field">
+          <label for="f-wa">Tautan WhatsApp</label>
+          <input id="f-wa" type="url" inputmode="url" placeholder="https://wa.me/628123456789?text=Halo"
+                 autocomplete="off" spellcheck="false">
+        </div>
+        <details class="helper">
+          <summary>Bantu buat tautan dari nomor</summary>
+          <div class="inner">
+            <div class="field">
+              <label for="f-wa-num">Nomor WhatsApp</label>
+              <input id="f-wa-num" type="tel" inputmode="tel" placeholder="081234567890" autocomplete="off">
+            </div>
+            <div class="field">
+              <label for="f-wa-msg">Pesan otomatis (opsional)</label>
+              <textarea id="f-wa-msg">Halo, saya ingin bertanya.</textarea>
+            </div>
+            <button type="button" class="btn secondary" id="buildWa">Isi Tautan Otomatis</button>
+          </div>
+        </details>
+        <p class="note">Nomor <b>08…</b> otomatis diubah menjadi <b>62…</b>.</p>
+      </div>
+
+      <!-- TEKS -->
+      <div class="panel" data-type="text">
+        <div class="field">
+          <label for="f-text">Teks / Catatan</label>
+          <textarea id="f-text" style="min-height:120px">Halo dunia!</textarea>
+        </div>
+        <p class="note">Cocok untuk catatan, kupon, atau pesan singkat.</p>
+      </div>
+
+      <!-- EMAIL -->
+      <div class="panel" data-type="email">
+        <div class="field">
+          <label for="f-email-to">Alamat email tujuan</label>
+          <input id="f-email-to" type="email" inputmode="email" placeholder="nama@contoh.com"
+                 autocomplete="off" spellcheck="false">
+        </div>
+        <div class="field">
+          <label for="f-email-sub">Subjek (opsional)</label>
+          <input id="f-email-sub" type="text" placeholder="Halo" autocomplete="off">
+        </div>
+        <div class="field">
+          <label for="f-email-body">Isi pesan (opsional)</label>
+          <textarea id="f-email-body" placeholder="Tulis pesan…"></textarea>
+        </div>
+      </div>
+
+      <!-- TELEPON -->
+      <div class="panel" data-type="tel">
+        <div class="field">
+          <label for="f-tel">Nomor telepon</label>
+          <input id="f-tel" type="tel" inputmode="tel" placeholder="+628123456789" autocomplete="off">
+        </div>
+        <p class="note">Pemindai akan langsung menawarkan panggilan.</p>
+      </div>
+
+      <!-- SMS -->
+      <div class="panel" data-type="sms">
+        <div class="field">
+          <label for="f-sms-num">Nomor tujuan</label>
+          <input id="f-sms-num" type="tel" inputmode="tel" placeholder="+628123456789" autocomplete="off">
+        </div>
+        <div class="field">
+          <label for="f-sms-msg">Isi SMS (opsional)</label>
+          <textarea id="f-sms-msg" placeholder="Tulis pesan…"></textarea>
+        </div>
+      </div>
+
+      <!-- WIFI -->
+      <div class="panel" data-type="wifi">
+        <div class="field">
+          <label for="f-wifi-ssid">Nama WiFi (SSID)</label>
+          <input id="f-wifi-ssid" type="text" placeholder="WiFi Rumah" autocomplete="off" spellcheck="false">
+        </div>
+        <div class="field">
+          <label for="f-wifi-pass">Kata sandi</label>
+          <input id="f-wifi-pass" type="text" placeholder="••••••••" autocomplete="off" spellcheck="false">
+        </div>
+        <div class="field">
+          <label for="f-wifi-enc">Keamanan</label>
+          <select id="f-wifi-enc">
+            <option value="WPA" selected>WPA / WPA2 / WPA3</option>
+            <option value="WEP">WEP</option>
+            <option value="nopass">Tanpa kata sandi</option>
+          </select>
+        </div>
+        <label class="switch"><input type="checkbox" id="f-wifi-hidden"><span>Jaringan tersembunyi</span></label>
+      </div>
+
+      <!-- VCARD -->
+      <div class="panel" data-type="vcard">
+        <div class="field">
+          <label for="f-vc-name">Nama lengkap *</label>
+          <input id="f-vc-name" type="text" placeholder="Budi Santoso" autocomplete="off">
+        </div>
+        <div class="field">
+          <label for="f-vc-tel">Telepon</label>
+          <input id="f-vc-tel" type="tel" inputmode="tel" placeholder="+628123456789" autocomplete="off">
+        </div>
+        <div class="field">
+          <label for="f-vc-email">Email</label>
+          <input id="f-vc-email" type="email" inputmode="email" placeholder="budi@contoh.com"
+                 autocomplete="off" spellcheck="false">
+        </div>
+        <div class="field">
+          <label for="f-vc-org">Organisasi / Perusahaan</label>
+          <input id="f-vc-org" type="text" placeholder="PT Contoh Jaya" autocomplete="off">
+        </div>
+        <div class="field">
+          <label for="f-vc-title">Jabatan</label>
+          <input id="f-vc-title" type="text" placeholder="Manajer" autocomplete="off">
+        </div>
+        <div class="field">
+          <label for="f-vc-url">Website</label>
+          <input id="f-vc-url" type="url" inputmode="url" placeholder="https://contoh.com"
+                 autocomplete="off" spellcheck="false">
+        </div>
+        <div class="field">
+          <label for="f-vc-addr">Alamat</label>
+          <textarea id="f-vc-addr" placeholder="Jl. Contoh No. 1, Jakarta"></textarea>
+        </div>
+      </div>
+
+      <!-- LOKASI -->
+      <div class="panel" data-type="loc">
+        <div class="field">
+          <label for="f-lat">Latitude</label>
+          <input id="f-lat" type="text" inputmode="decimal" placeholder="-6.200000" autocomplete="off" spellcheck="false">
+        </div>
+        <div class="field">
+          <label for="f-lng">Longitude</label>
+          <input id="f-lng" type="text" inputmode="decimal" placeholder="106.816666" autocomplete="off" spellcheck="false">
+        </div>
+        <p class="note">Koordinat bisa disalin dari Google Maps (klik kanan → salin angka).</p>
+      </div>
+
+      <!-- DESAIN -->
+      <details class="design" open>
+        <summary>🎨 Gaya, Warna &amp; Logo</summary>
+        <div class="inner">
+          <div class="presets" id="presets"></div>
+
+          <div class="dgrid">
+            <div class="field">
+              <label for="c1">Warna QR</label>
+              <input type="color" id="c1" value="#2563eb">
+            </div>
+            <div class="field">
+              <label for="c2">Warna latar</label>
+              <input type="color" id="c2" value="#ffffff">
+            </div>
+            <div class="field">
+              <label for="c3">Gradien (warna ke-2)</label>
+              <input type="color" id="c3" value="#7c3aed" disabled>
+            </div>
+            <div class="field">
+              <label>Gradien</label>
+              <label class="switch"><input type="checkbox" id="gradOn"><span>Aktifkan</span></label>
+            </div>
+
+            <div class="field">
+              <label for="dotStyle">Gaya titik</label>
+              <select id="dotStyle">
+                <option value="square">Kotak</option>
+                <option value="rounded" selected>Membulat</option>
+                <option value="dots">Titik bulat</option>
+                <option value="classy">Classy</option>
+                <option value="classy-rounded">Classy rounded</option>
+                <option value="extra-rounded">Sangat bulat</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="cornerSq">Sudut luar</label>
+              <select id="cornerSq">
+                <option value="square">Kotak</option>
+                <option value="extra-rounded" selected>Membulat</option>
+                <option value="dot">Bulat</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="cornerDot">Sudut dalam</label>
+              <select id="cornerDot">
+                <option value="square">Kotak</option>
+                <option value="dot" selected>Bulat</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="logoSize">Ukuran logo — <span id="logoSizeVal">40%</span></label>
+              <input type="range" id="logoSize" min="25" max="50" step="1" value="40">
+            </div>
+
+            <div class="field span2">
+              <label for="logo">Logo di tengah</label>
+              <select id="logo">
+                <option value="auto" selected>Otomatis (sesuai jenis)</option>
+                <option value="globe">Globe / Website</option>
+                <option value="whatsapp">WhatsApp</option>
+                <option value="instagram">Instagram</option>
+                <option value="shop">Toko / Belanja</option>
+                <option value="play">Tombol Play</option>
+                <option value="mail">Email</option>
+                <option value="phone">Telepon</option>
+                <option value="wifi">WiFi</option>
+                <option value="pin">Lokasi</option>
+                <option value="heart">Hati</option>
+                <option value="star">Bintang</option>
+                <option value="custom">Unggah logo sendiri…</option>
+                <option value="none">Tanpa logo</option>
+              </select>
+            </div>
+
+            <div class="field span2 hidden" id="uploadWrap">
+              <label for="logoFile">Berkas logo (PNG/JPG — latar transparan lebih baik)</label>
+              <input id="logoFile" type="file" accept="image/*">
+              <p class="note" style="margin-top:6px">💡 Bisa juga <b>tarik &amp; lepas</b> gambar ke area ini.</p>
+            </div>
+          </div>
+
+          <p class="note">Tips: logo di atas <b>40%</b> bisa menyulitkan pemindaian. Selalu uji pindai sebelum dicetak.</p>
+        </div>
+      </details>
+
+      <button type="button" class="btn generate-btn" id="generateBtn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="3" width="7" height="7" rx="1.5"/>
+          <rect x="14" y="3" width="7" height="7" rx="1.5"/>
+          <rect x="3" y="14" width="7" height="7" rx="1.5"/>
+          <path d="M14 14h3v3h-3zM18 18h3v3h-3z"/>
+        </svg>
+        Generate QR Code
+      </button>
+
+    </main>
+
+    <aside class="card preview-card" id="preview" tabindex="-1">
+      <div class="preview-head">
+        <h2>👁️ Pratinjau</h2>
+        <span class="badge" id="statusBadge">Menunggu</span>
+      </div>
+
+      <div class="qrbox"><div id="qr"><div class="ph">Memuat…</div></div></div>
+      <div class="status" id="status"></div>
+
+      <div class="field">
+        <label for="dlSize">Ukuran unduhan</label>
+        <select id="dlSize">
+          <option value="256">256 × 256 px</option>
+          <option value="512" selected>512 × 512 px</option>
+          <option value="1024">1024 × 1024 px</option>
+          <option value="2048">2048 × 2048 px (cetak)</option>
+        </select>
+      </div>
+
+      <div class="dl">
+        <button type="button" class="btn fmt"           data-fmt="png">PNG</button>
+        <button type="button" class="btn secondary fmt" data-fmt="jpeg">JPG</button>
+        <button type="button" class="btn secondary fmt" data-fmt="webp">WEBP</button>
+        <button type="button" class="btn secondary fmt" data-fmt="svg">SVG</button>
+      </div>
+
+      <p class="note"><b>SVG</b> paling tajam untuk cetak besar. <b>PNG</b> untuk media sosial &amp; dokumen.</p>
+
+      <details class="helper">
+        <summary>Lihat isi QR (teks terenkode)</summary>
+        <div class="inner">
+          <div class="input-wrap raw-wrap">
+            <textarea id="rawData" readonly rows="3" placeholder="Isi QR akan muncul di sini…"></textarea>
+            <button type="button" class="input-btn" id="copyRaw" aria-label="Salin isi QR">
+              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="9" y="9" width="13" height="13" rx="2"/>
+                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+      </details>
+    </aside>
+
+  </div>
+
+  <p class="footer">
+    QR Code Generator • dibuat dengan qr-code-styling •
+    <a href="https://blog.v-dey.com" target="_blank" rel="noopener noreferrer">Visit Our Blog</a>
+  </p>
+</div>
+
+<div class="action-bar" id="actionBar">
+  <button type="button" class="btn"           data-fmt="png">PNG</button>
+  <button type="button" class="btn secondary" data-fmt="jpeg">JPG</button>
+  <button type="button" class="btn secondary" data-fmt="webp">WEBP</button>
+  <button type="button" class="btn secondary" data-fmt="svg">SVG</button>
+</div>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/qr-code-styling@1.6.0-rc.1/lib/qr-code-styling.js"></script>
+<script>
+/* ================================================================== */
+/*  Util                                                              */
+/* ================================================================== */
+const $  = id => document.getElementById(id);
+const $$ = sel => Array.from(document.querySelectorAll(sel));
+
+const BLOG_URL = 'https://blog.v-dey.com';
+
+function isHttpUrl(v){
+  if(!v) return false;
+  try{
+    const u = new URL(v);
+    return u.protocol === 'http:' || u.protocol === 'https:';
+  }catch(e){ return false; }
+}
+
+const escWifi  = s => String(s).replace(/([\\;,:"])/g, '\\$1');
+const escVCard = s => String(s)
+  .replace(/\\/g,'\\\\')
+  .replace(/\r/g,'')
+  .replace(/\n/g,'\\n')
+  .replace(/,/g,'\\,')
+  .replace(/;/g,'\\;');
+
+/* ================================================================== */
+/*  SVG logo → PNG data URL                                           */
+/* ================================================================== */
+function svgToPngDataURL(svg, size){
+  return new Promise(resolve => {
+    const img = new Image();
+    img.onload = () => {
+      try{
+        const c = document.createElement('canvas');
+        c.width = c.height = size;
+        const ctx = c.getContext('2d');
+        ctx.drawImage(img, 0, 0, size, size);
+        resolve(c.toDataURL('image/png'));
+      }catch(e){ resolve(null); }
+    };
+    img.onerror = () => resolve(null);
+    img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
+  });
+}
+
+/* ================================================================== */
+/*  Katalog logo                                                      */
+/* ================================================================== */
+const M = (bg, fill, path) => `<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256" viewBox="0 0 40 40">
+    <circle cx="20" cy="20" r="19.5" fill="${bg}"/>
+    <circle cx="20" cy="20" r="13" fill="${fill}"/>
+    <g transform="translate(8,8)"><path fill="#ffffff" d="${path}"/></g>
+  </svg>`;
+
+const LOGO_SVGS = {
+  play: bg => `<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256" viewBox="0 0 40 40">
+      <circle cx="20" cy="20" r="19.5" fill="${bg}"/>
+      <rect x="6.5" y="11" width="27" height="18" rx="4.5" fill="#ef4444"/>
+      <path d="M17.2 15.6 25.8 20 17.2 24.4Z" fill="#ffffff"/>
+    </svg>`,
+  whatsapp: bg => `<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256" viewBox="0 0 40 40">
+      <circle cx="20" cy="20" r="19.5" fill="${bg}"/>
+      <path fill="#25D366" d="M20 4.2A15.8 15.8 0 0 0 6.4 27.9L4.2 36l8.3-2.1A15.8 15.8 0 1 0 20 4.2Z"/>
+      <path fill="#ffffff" d="M27.9 23.5c-.4-.2-2.4-1.2-2.8-1.3-.4-.1-.7-.2-.9.2-.3.4-1.1 1.3-1.3 1.5-.2.3-.5.3-.9.1-.4-.2-1.7-.6-3.2-2-1.2-1-2-2.3-2.2-2.7-.2-.4 0-.6.2-.8l.6-.7c.2-.2.3-.4.4-.6.1-.3 0-.5 0-.7-.1-.2-.9-2.1-1.2-2.9-.3-.7-.6-.6-.9-.6h-.8c-.3 0-.7.1-1 .5-.4.4-1.4 1.4-1.4 3.3s1.4 3.8 1.6 4.1c.2.3 2.8 4.3 6.8 6 .9.4 1.6.6 2.1.7.9.3 1.7.2 2.3.1.7-.1 2.4-1 2.7-1.9.3-.9.3-1.7.2-1.9-.1-.2-.4-.3-.8-.5Z"/>
+    </svg>`,
+  globe: bg => `<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256" viewBox="0 0 40 40">
+      <circle cx="20" cy="20" r="19.5" fill="${bg}"/>
+      <circle cx="20" cy="20" r="12.5" fill="#2563eb"/>
+      <g fill="none" stroke="#ffffff" stroke-width="1.5">
+        <circle cx="20" cy="20" r="12.5"/>
+        <ellipse cx="20" cy="20" rx="5.6" ry="12.5"/>
+        <path d="M7.5 20h25"/>
+        <path d="M9.2 14.6h21.6M9.2 25.4h21.6"/>
+      </g>
+    </svg>`,
+  instagram: bg => `<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256" viewBox="0 0 40 40">
+      <defs><linearGradient id="ig" x1="0" y1="1" x2="1" y2="0">
+        <stop offset="0" stop-color="#feda75"/>
+        <stop offset="0.5" stop-color="#d62976"/>
+        <stop offset="1" stop-color="#4f5bd5"/>
+      </linearGradient></defs>
+      <circle cx="20" cy="20" r="19.5" fill="${bg}"/>
+      <rect x="7.5" y="7.5" width="25" height="25" rx="7.5" fill="url(#ig)"/>
+      <circle cx="20" cy="20" r="6.2" fill="none" stroke="#ffffff" stroke-width="1.9"/>
+      <circle cx="26.6" cy="13.4" r="1.7" fill="#ffffff"/>
+    </svg>`,
+  shop: bg => `<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256" viewBox="0 0 40 40">
+      <circle cx="20" cy="20" r="19.5" fill="${bg}"/>
+      <circle cx="20" cy="20" r="12.5" fill="#f59e0b"/>
+      <path d="M14 17.5h12l-1.1 8.2H15.1Z" fill="#ffffff"/>
+      <path d="M17.1 17.5v-1.8a2.9 2.9 0 0 1 5.8 0v1.8" fill="none"
+            stroke="#ffffff" stroke-width="1.7" stroke-linecap="round"/>
+    </svg>`,
+  heart: bg => `<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256" viewBox="0 0 40 40">
+      <circle cx="20" cy="20" r="19.5" fill="${bg}"/>
+      <g transform="translate(4,4) scale(1.333)">
+        <path fill="#ef4444" d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+      </g>
+    </svg>`,
+  star: bg => `<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256" viewBox="0 0 40 40">
+      <circle cx="20" cy="20" r="19.5" fill="${bg}"/>
+      <g transform="translate(4,4) scale(1.333)">
+        <path fill="#f59e0b" d="M12 2l2.9 6.3 6.9.8-5.1 4.7 1.4 6.8L12 17.2 5.9 20.6l1.4-6.8L2.2 9.1l6.9-.8z"/>
+      </g>
+    </svg>`,
+  mail: bg => M(bg, '#2563eb',
+    'M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z'),
+  phone: bg => M(bg, '#16a34a',
+    'M6.62 10.79c1.44 2.83 3.76 5.14 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z'),
+  wifi: bg => M(bg, '#0ea5e9',
+    'M1 9l2 2c4.97-4.97 13.03-4.97 18 0l2-2C16.93 2.93 7.08 2.93 1 9zm8 8l3 3 3-3c-1.65-1.66-4.34-1.66-6 0zm-4-4l2 2c2.76-2.76 7.24-2.76 10 0l2-2C15.14 9.14 8.87 9.14 5 13z'),
+  pin: bg => M(bg, '#ef4444',
+    'M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z')
+};
+
+const AUTO_LOGO = {
+  url:'play', wa:'whatsapp', text:'star', email:'mail', tel:'phone',
+  sms:'whatsapp', wifi:'wifi', vcard:'globe', loc:'pin'
+};
+
+const logoCache = new Map();
+
+async function getLogoDataURL(key, bg, customSrc){
+  if(!key || key === 'none') return null;
+  if(key === 'custom') return customSrc || null;
+  const builder = LOGO_SVGS[key];
+  if(!builder) return null;
+  const cacheKey = key + '|' + bg;
+  if(logoCache.has(cacheKey)) return logoCache.get(cacheKey);
+  const url = await svgToPngDataURL(builder(bg), 512);
+  logoCache.set(cacheKey, url);
+  return url;
+}
+
+/* ================================================================== */
+/*  Preset tema                                                       */
+/* ================================================================== */
+const PRESETS = [
+  { name:'Biru',   dark:'#2563eb', light:'#ffffff', c3:'#60a5fa', grad:false, dots:'rounded',        sq:'extra-rounded', dot:'dot' },
+  { name:'Klasik', dark:'#111827', light:'#ffffff', c3:'#475569', grad:false, dots:'square',         sq:'square',        dot:'square' },
+  { name:'WA',     dark:'#128c7e', light:'#ffffff', c3:'#25d366', grad:false, dots:'dots',           sq:'dot',           dot:'dot' },
+  { name:'Ungu',   dark:'#7c3aed', light:'#ffffff', c3:'#db2777', grad:true,  dots:'classy-rounded', sq:'extra-rounded', dot:'dot' },
+  { name:'Sunset', dark:'#f97316', light:'#fff7ed', c3:'#ef4444', grad:true,  dots:'rounded',        sq:'extra-rounded', dot:'dot' },
+  { name:'Gelap',  dark:'#f8fafc', light:'#0f172a', c3:'#93c5fd', grad:false, dots:'classy',         sq:'extra-rounded', dot:'dot' },
+  { name:'Pink',   dark:'#db2777', light:'#fdf2f8', c3:'#f472b6', grad:false, dots:'extra-rounded',  sq:'extra-rounded', dot:'dot' },
+  { name:'Tosca',  dark:'#0d9488', light:'#ecfeff', c3:'#22d3ee', grad:false, dots:'dots',           sq:'dot',           dot:'dot' }
+];
+
+/* ================================================================== */
+/*  Tipe konten                                                       */
+/* ================================================================== */
+const TYPES = [
+  { id:'url',   label:'🌐 Website'  },
+  { id:'wa',    label:'🟢 WhatsApp' },
+  { id:'text',  label:'📝 Teks'     },
+  { id:'email', label:'✉️ Email'    },
+  { id:'tel',   label:'📞 Telepon'  },
+  { id:'sms',   label:'💬 SMS'      },
+  { id:'wifi',  label:'📶 WiFi'     },
+  { id:'vcard', label:'👤 vCard'    },
+  { id:'loc',   label:'📍 Lokasi'   }
+];
+
+/* ================================================================== */
+/*  State                                                             */
+/* ================================================================== */
+const STORAGE_KEY = 'qr-generator-state-v1';
+const state = { type: 'url', customLogo: null, cfg: null };
+let renderSeq = 0;
+let timer = null;
+let mainQR = null;
+let miniQR = null;
+let saveTimer = null;
+let flashTimer = null;
+
+/* ================================================================== */
+/*  Toast + badge                                                     */
+/* ================================================================== */
+let toastTimer = null;
+function toast(message, type){
+  const el = $('toast');
+  el.textContent = message;
+  el.className = 'toast show ' + (type || '');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.remove('show'), 2600);
+}
+
+function setBadge(text, kind){
+  const el = $('statusBadge');
+  el.textContent = text;
+  el.className = 'badge' + (kind ? ' ' + kind : '');
+}
+
+function setStatus(text, kind){
+  const el = $('status');
+  el.textContent = text || '';
+  el.className = 'status' + (kind ? ' ' + kind : '');
+}
+
+/* ================================================================== */
+/*  INPUT ENHANCEMENT (clear + paste buttons)                         */
+/* ================================================================== */
+function enhanceInput(input, opts){
+  if(!input || input.dataset.enhanced) return;
+  input.dataset.enhanced = '1';
+
+  const wrap = document.createElement('div');
+  wrap.className = 'input-wrap' + (opts && opts.paste ? ' has-paste' : '');
+  input.parentNode.insertBefore(wrap, input);
+  wrap.appendChild(input);
+
+  // Clear button
+  const clearBtn = document.createElement('button');
+  clearBtn.type = 'button';
+  clearBtn.className = 'input-btn input-clear';
+  clearBtn.setAttribute('aria-label', 'Hapus isi');
+  clearBtn.tabIndex = -1;
+  clearBtn.innerHTML = '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>';
+  clearBtn.addEventListener('click', () => {
+    input.value = '';
+    input.dispatchEvent(new Event('input', { bubbles: true }));
+    input.dispatchEvent(new Event('change', { bubbles: true }));
+    input.focus();
+  });
+  wrap.appendChild(clearBtn);
+
+  // Paste button (opt-in)
+  if(opts && opts.paste){
+    const pasteBtn = document.createElement('button');
+    pasteBtn.type = 'button';
+    pasteBtn.className = 'input-btn input-paste';
+    pasteBtn.setAttribute('aria-label', 'Tempel dari papan klip');
+    pasteBtn.tabIndex = -1;
+    pasteBtn.innerHTML = '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1"/></svg>';
+    pasteBtn.addEventListener('click', async () => {
+      try{
+        const text = await navigator.clipboard.readText();
+        if(text){
+          input.value = text.trim();
+          input.dispatchEvent(new Event('input', { bubbles: true }));
+        }
+      }catch(e){
+        toast('Akses clipboard ditolak — tempel manual (Ctrl+V)', 'error');
+      }
+    });
+    wrap.appendChild(pasteBtn);
+  }
+
+  const updateClear = () => { clearBtn.hidden = !input.value; };
+  input.addEventListener('input', updateClear);
+  updateClear();
+}
+
+function enhanceAllInputs(){
+  const ids = [
+    'f-url','f-wa','f-wa-num','f-text','f-email-to','f-email-sub','f-email-body',
+    'f-tel','f-sms-num','f-sms-msg','f-wifi-ssid','f-wifi-pass',
+    'f-vc-name','f-vc-tel','f-vc-email','f-vc-org','f-vc-title','f-vc-url','f-vc-addr',
+    'f-lat','f-lng'
+  ];
+  ids.forEach(id => {
+    const input = $(id);
+    if(!input) return;
+    enhanceInput(input, { paste: id === 'f-url' || id === 'f-wa-num' || id === 'f-wa' });
+  });
+}
+
+/* ================================================================== */
+/*  SMART PASTE (deteksi jenis + auto-fill)                           */
+/* ================================================================== */
+function detectPasteType(text){
+  const t = String(text || '').trim();
+  if(!t) return null;
+  if(/^WIFI:/i.test(t)) return 'wifi';
+  if(/^BEGIN:VCARD/i.test(t)) return 'vcard';
+  if(/^geo:/i.test(t)) return 'loc';
+  if(/^tel:/i.test(t)) return 'tel';
+  if(/^sms:/i.test(t)) return 'sms';
+  if(/^mailto:/i.test(t)) return 'email';
+  if(/wa\.me\//i.test(t) || /api\.whatsapp\.com/i.test(t)) return 'wa';
+  if(/^https?:\/\//i.test(t)) return 'url';
+  if(/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(t)) return 'email';
+  if(/^\+?[\d\s\-()]{7,}$/.test(t) && /\d{7,}/.test(t.replace(/\D/g, ''))) return 'tel';
+  if(/^[\w-]+(\.[\w-]+)+/.test(t)) return 'url';
+  return null;
+}
+
+function parseVCard(text){
+  const fields = {};
+  let inVcard = false;
+  text.split(/\r?\n/).forEach(line => {
+    if(/^BEGIN:VCARD/i.test(line)){ inVcard = true; return; }
+    if(/^END:VCARD/i.test(line)){ inVcard = false; return; }
+    if(!inVcard) return;
+    const m = line.match(/^([A-Z0-9-]+)(?:;[^:]*)?:(.*)$/i);
+    if(!m) return;
+    const k = m[1].toUpperCase();
+    let v = m[2];
+    if(v.includes('\\')) v = v.replace(/\\(.)/g, '$1');
+    if(!fields[k]) fields[k] = v;
+  });
+  return fields;
+}
+
+function parseWifi(text){
+  const m = text.match(/^WIFI:(.*)$/is);
+  if(!m) return null;
+  const params = {};
+  m[1].split(';').forEach(part => {
+    if(!part) return;
+    const idx = part.indexOf(':');
+    if(idx === -1) return;
+    const k = part.slice(0, idx).toUpperCase();
+    const v = part.slice(idx + 1).replace(/\\(.)/g, '$1');
+    if(k) params[k] = v;
+  });
+  return params;
+}
+
+function fillSmartPaste(type, text){
+  let filled = true;
+  switch(type){
+    case 'url':
+      if(!/^https?:\/\//i.test(text)) text = 'https://' + text.replace(/^\/+/, '');
+      $('f-url').value = text;
+      break;
+    case 'wa':
+      $('f-wa').value = text;
+      break;
+    case 'email':
+      $('f-email-to').value = text.replace(/^mailto:/i, '').split('?')[0];
+      break;
+    case 'tel': {
+      const n = text.replace(/^tel:/i, '');
+      $('f-tel').value = n;
+      break;
+    }
+    case 'sms': {
+      const n = text.replace(/^sms:/i, '');
+      const [num, query] = n.split('?');
+      $('f-sms-num').value = num;
+      if(query){
+        const p = new URLSearchParams(query);
+        if(p.get('body')) $('f-sms-msg').value = p.get('body');
+      }
+      break;
+    }
+    case 'wifi': {
+      const params = parseWifi(text);
+      if(!params){ filled = false; break; }
+      if(params.S) $('f-wifi-ssid').value = params.S;
+      if(params.P) $('f-wifi-pass').value = params.P;
+      if(params.T) $('f-wifi-enc').value = params.T;
+      if(String(params.H).toLowerCase() === 'true') $('f-wifi-hidden').checked = true;
+      break;
+    }
+    case 'vcard': {
+      const v = parseVCard(text);
+      if(v.FN) $('f-vc-name').value = v.FN;
+      if(v.TEL) $('f-vc-tel').value = v.TEL.replace(/[^\d+\s\-()]/g, '');
+      if(v.EMAIL) $('f-vc-email').value = v.EMAIL;
+      if(v.ORG) $('f-vc-org').value = v.ORG;
+      if(v.TITLE) $('f-vc-title').value = v.TITLE;
+      if(v.URL) $('f-vc-url').value = v.URL;
+      if(v.ADR) $('f-vc-addr').value = v.ADR.replace(/^;+|;+$/g, '').replace(/;+/g, ', ');
+      break;
+    }
+    case 'loc': {
+      const parts = text.replace(/^geo:/i, '').split(',');
+      if(parts.length >= 2){
+        $('f-lat').value = parts[0].trim();
+        $('f-lng').value = parts[1].trim();
+      } else {
+        filled = false;
+      }
+      break;
+    }
+    default:
+      filled = false;
+  }
+  return filled;
+}
+
+async function smartPaste(){
+  try{
+    if(!navigator.clipboard || !navigator.clipboard.readText){
+      toast('Clipboard tidak didukung — tempel manual (Ctrl+V)', 'error');
+      return;
+    }
+    const text = (await navigator.clipboard.readText()).trim();
+    if(!text){
+      toast('Clipboard kosong', 'error');
+      return;
+    }
+    const type = detectPasteType(text);
+    if(!type){
+      $('f-text').value = text;
+      selectType('text');
+      toast('Dimasukkan sebagai teks', 'success');
+      return;
+    }
+    const ok = fillSmartPaste(type, text);
+    if(!ok){
+      toast('Format tidak dikenali', 'error');
+      return;
+    }
+    selectType(type);
+    const label = { url:'URL', wa:'WhatsApp', email:'Email', tel:'Telepon', sms:'SMS', wifi:'WiFi', vcard:'vCard', loc:'Lokasi', text:'Teks' }[type] || type;
+    toast('✓ Terdeteksi: ' + label, 'success');
+  }catch(e){
+    toast('Tidak bisa akses clipboard — tempel manual (Ctrl+V)', 'error');
+  }
+}
+
+/* ================================================================== */
+/*  Auto https:// untuk domain                                        */
+/* ================================================================== */
+function autoProtocol(input){
+  const v = input.value.trim();
+  if(!v) return;
+  if(/^[a-z][a-z0-9+.-]*:/i.test(v)) return; // sudah ada skema
+  if(/^[\w-]+(\.[\w-]+)+/.test(v)){
+    input.value = 'https://' + v;
+    input.dispatchEvent(new Event('input', { bubbles: true }));
+    input.dispatchEvent(new Event('change', { bubbles: true }));
+  }
+}
+
+/* ================================================================== */
+/*  Persistence                                                        */
+/* ================================================================== */
+function collectFormData(){
+  const ids = [
+    'f-url','f-wa','f-wa-num','f-wa-msg','f-text','f-email-to','f-email-sub','f-email-body',
+    'f-tel','f-sms-num','f-sms-msg','f-wifi-ssid','f-wifi-pass','f-wifi-enc',
+    'f-vc-name','f-vc-tel','f-vc-email','f-vc-org','f-vc-title','f-vc-url','f-vc-addr',
+    'f-lat','f-lng'
+  ];
+  const data = {};
+  ids.forEach(id => { const el = $(id); if(el) data[id] = el.value; });
+  data['f-wifi-hidden'] = $('f-wifi-hidden').checked;
+  return data;
+}
+
+function applyFormData(data){
+  if(!data) return;
+  Object.keys(data).forEach(id => {
+    if(id === 'f-wifi-hidden') return;
+    const el = $(id);
+    if(el) el.value = data[id];
+  });
+  if(typeof data['f-wifi-hidden'] === 'boolean') $('f-wifi-hidden').checked = data['f-wifi-hidden'];
+}
+
+function saveState(){
+  try{
+    const payload = {
+      type: state.type,
+      design: {
+        c1: $('c1').value, c2: $('c2').value, c3: $('c3').value,
+        gradOn: $('gradOn').checked,
+        dotStyle: $('dotStyle').value,
+        cornerSq: $('cornerSq').value,
+        cornerDot: $('cornerDot').value,
+        logo: $('logo').value,
+        logoSize: $('logoSize').value,
+        dlSize: $('dlSize').value
+      },
+      form: collectFormData()
+    };
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
+  }catch(e){ /* ignore quota errors */ }
+}
+
+function scheduleSave(){
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(saveState, 500);
+}
+
+function loadState(){
+  try{
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if(!raw) return;
+    const st = JSON.parse(raw);
+    if(st.type && TYPES.some(t => t.id === st.type)) state.type = st.type;
+    if(st.design){
+      const d = st.design;
+      if(d.c1) $('c1').value = d.c1;
+      if(d.c2) $('c2').value = d.c2;
+      if(d.c3) $('c3').value = d.c3;
+      if(typeof d.gradOn === 'boolean') $('gradOn').checked = d.gradOn;
+      if(d.dotStyle) $('dotStyle').value = d.dotStyle;
+      if(d.cornerSq) $('cornerSq').value = d.cornerSq;
+      if(d.cornerDot) $('cornerDot').value = d.cornerDot;
+      if(d.logo) $('logo').value = d.logo;
+      if(d.logoSize) $('logoSize').value = d.logoSize;
+      if(d.dlSize) $('dlSize').value = d.dlSize;
+    }
+    if(st.form) applyFormData(st.form);
+  }catch(e){ /* ignore */ }
+}
+
+/* ================================================================== */
+/*  Baca pengaturan desain                                            */
+/* ================================================================== */
+function readStyle(){
+  const dark  = $('c1').value;
+  const light = $('c2').value;
+  const c3    = $('c3').value;
+  const grad  = $('gradOn').checked;
+  return {
+    dark, light,
+    gradient: grad ? {
+      type: 'linear',
+      rotation: Math.PI / 4,
+      colorStops: [{ offset: 0, color: dark }, { offset: 1, color: c3 }]
+    } : null,
+    dots:      $('dotStyle').value,
+    cornerSq:  $('cornerSq').value,
+    cornerDot: $('cornerDot').value,
+    logoSize:  parseInt($('logoSize').value, 10) / 100
+  };
+}
+
+/* ================================================================== */
+/*  Bangun data QR                                                    */
+/* ================================================================== */
+function buildData(){
+  const v = id => ($(id) ? $(id).value.trim() : '');
+
+  switch(state.type){
+    case 'url': {
+      const u = v('f-url');
+      if(!u)             return { ok:false, msg:'Masukkan URL website.' };
+      if(!isHttpUrl(u))  return { ok:false, msg:'URL harus diawali http:// atau https://' };
+      return { ok:true, data:u };
+    }
+    case 'wa': {
+      const u = v('f-wa');
+      if(!u)             return { ok:false, msg:'Masukkan tautan WhatsApp.' };
+      if(!isHttpUrl(u))  return { ok:false, msg:'Tautan harus diawali http:// atau https://' };
+      return { ok:true, data:u };
+    }
+    case 'text': {
+      const s = $('f-text').value;
+      if(!s.trim()) return { ok:false, msg:'Tulis teks terlebih dahulu.' };
+      return { ok:true, data:s };
+    }
+    case 'email': {
+      const to = v('f-email-to');
+      if(!to) return { ok:false, msg:'Masukkan alamat email tujuan.' };
+      const sub = v('f-email-sub'), body = v('f-email-body');
+      const p = [];
+      if(sub)  p.push('subject=' + encodeURIComponent(sub));
+      if(body) p.push('body=' + encodeURIComponent(body));
+      return { ok:true, data:'mailto:' + to + (p.length ? '?' + p.join('&') : '') };
+    }
+    case 'tel': {
+      const n = $('f-tel').value.replace(/[^\d+]/g, '');
+      if(!n) return { ok:false, msg:'Masukkan nomor telepon.' };
+      return { ok:true, data:'tel:' + n };
+    }
+    case 'sms': {
+      const n = $('f-sms-num').value.replace(/[^\d+]/g, '');
+      if(!n) return { ok:false, msg:'Masukkan nomor tujuan SMS.' };
+      const m = v('f-sms-msg');
+      return { ok:true, data:'sms:' + n + (m ? '?body=' + encodeURIComponent(m) : '') };
+    }
+    case 'wifi': {
+      const ssid = $('f-wifi-ssid').value;
+      if(!ssid) return { ok:false, msg:'Masukkan nama WiFi (SSID).' };
+      const enc = $('f-wifi-enc').value;
+      const pass = $('f-wifi-pass').value;
+      const hidden = $('f-wifi-hidden').checked;
+      let s = 'WIFI:T:' + enc + ';S:' + escWifi(ssid) + ';';
+      if(enc !== 'nopass') s += 'P:' + escWifi(pass) + ';';
+      if(hidden)           s += 'H:true;';
+      s += ';';
+      return { ok:true, data:s };
+    }
+    case 'vcard': {
+      const name = v('f-vc-name');
+      if(!name) return { ok:false, msg:'Masukkan nama lengkap.' };
+      const lines = [
+        'BEGIN:VCARD','VERSION:3.0',
+        'FN:' + escVCard(name),
+        'N:'  + escVCard(name) + ';;;;'
+      ];
+      const tel = v('f-vc-tel');    if(tel)   lines.push('TEL;TYPE=CELL:' + escVCard(tel));
+      const mail = v('f-vc-email'); if(mail)  lines.push('EMAIL:' + escVCard(mail));
+      const org = v('f-vc-org');    if(org)   lines.push('ORG:' + escVCard(org));
+      const title = v('f-vc-title');if(title) lines.push('TITLE:' + escVCard(title));
+      const url = v('f-vc-url');    if(url)   lines.push('URL:' + escVCard(url));
+      const addr = v('f-vc-addr');  if(addr)  lines.push('ADR:;;' + escVCard(addr) + ';;;;');
+      lines.push('END:VCARD');
+      return { ok:true, data:lines.join('\r\n') };
+    }
+    case 'loc': {
+      const lat = v('f-lat'), lng = v('f-lng');
+      if(!lat || !lng) return { ok:false, msg:'Masukkan latitude dan longitude.' };
+      if(isNaN(Number(lat)) || isNaN(Number(lng)))
+        return { ok:false, msg:'Koordinat harus berupa angka.' };
+      return { ok:true, data:'geo:' + lat + ',' + lng };
+    }
+  }
+  return { ok:false, msg:'Jenis QR tidak dikenal.' };
+}
+
+/* ================================================================== */
+/*  Opsi QR                                                           */
+/* ================================================================== */
+function makeOptions(cfg, size, type){
+  const st = cfg.st;
+  const scale = size / 300;
+  const opts = {
+    width: size, height: size,
+    type: type || 'canvas',
+    data: cfg.data,
+    margin: Math.round(9 * scale),
+    qrOptions: { errorCorrectionLevel:'H' },
+    backgroundOptions: { color: st.light },
+    dotsOptions: {
+      type: st.dots,
+      color: st.dark,
+      ...(st.gradient ? { gradient: st.gradient } : {})
+    },
+    cornersSquareOptions: { type: st.cornerSq,  color: st.dark },
+    cornersDotOptions:    { type: st.cornerDot, color: st.dark }
+  };
+  if(cfg.img){
+    opts.image = cfg.img;
+    opts.imageOptions = {
+      hideBackgroundDots: true,
+      imageSize: st.logoSize,
+      margin: Math.round(4 * scale),
+      crossOrigin: 'anonymous'
+    };
+  }
+  return opts;
+}
+
+/* ================================================================== */
+/*  Render                                                            */
+/* ================================================================== */
+function clearQR(msg){
+  state.cfg = null;
+  mainQR = null;
+  miniQR = null;
+  $('qr').innerHTML = '<div class="ph">' + msg + '</div>';
+  $('qrMini').innerHTML = '';
+  $('miniBtn').classList.add('is-empty');
+  if($('rawData')) $('rawData').value = '';
+}
+
+function paint(cfg){
+  try{
+    const mainOpts = makeOptions(cfg, 420, 'canvas');
+    if(!mainQR){
+      $('qr').innerHTML = '';
+      mainQR = new QRCodeStyling(mainOpts);
+      mainQR.append($('qr'));
+    }else{
+      mainQR.update(mainOpts);
+    }
+  }catch(err){
+    console.error('Paint (main) error:', err);
+    $('qr').innerHTML = '<div class="ph">Gagal membuat QR.</div>';
+  }
+
+  try{
+    const miniOpts = makeOptions(cfg, 160, 'canvas');
+    if(!miniQR){
+      $('qrMini').innerHTML = '';
+      miniQR = new QRCodeStyling(miniOpts);
+      miniQR.append($('qrMini'));
+    }else{
+      miniQR.update(miniOpts);
+    }
+    $('miniBtn').classList.remove('is-empty');
+  }catch(err){
+    console.error('Paint (mini) error:', err);
+  }
+
+  if($('rawData')) $('rawData').value = cfg.data || '';
+}
+
+async function render(){
+  const mySeq = ++renderSeq;
+
+  if(!window.QRCodeStyling){
+    clearQR('Pustaka QR belum siap…');
+    setStatus('Pustaka QR belum siap.', 'err');
+    setBadge('Gagal', 'err');
+    return;
+  }
+
+  const st  = readStyle();
+  const res = buildData();
+
+  if(!res.ok){
+    clearQR(res.msg);
+    setStatus(res.msg, 'err');
+    setBadge('Error', 'err');
+    return;
+  }
+
+  let key = $('logo').value;
+  if(key === 'auto') key = AUTO_LOGO[state.type] || 'globe';
+
+  const img = await getLogoDataURL(key, st.light, state.customLogo);
+  if(mySeq !== renderSeq) return;
+
+  const cfg = { data: res.data, img, st };
+  state.cfg = cfg;
+  paint(cfg);
+  setStatus('✓ QR siap dipindai', 'ok');
+  setBadge('Siap', 'ok');
+}
+
+function schedule(){
+  clearTimeout(timer);
+  timer = setTimeout(() => { saveState(); render(); }, 200);
+}
+
+/* Tombol Generate: render → scroll & fokus ke area hasil */
+async function generateAndFocus(){
+  clearTimeout(timer);
+  await render();
+
+  if(!state.cfg){
+    toast('Lengkapi data QR terlebih dahulu', 'error');
+    return;
+  }
+
+  const preview = $('preview');
+  preview.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  preview.focus({ preventScroll: true });
+
+  preview.classList.add('flash');
+  clearTimeout(flashTimer);
+  flashTimer = setTimeout(() => preview.classList.remove('flash'), 1400);
+
+  toast('QR Code siap dipindai', 'success');
+}
+
+/* ================================================================== */
+/*  Unduh                                                             */
+/* ================================================================== */
+/* Setelah unduhan berhasil → buka blog di tab baru (_blank) */
+function openBlogAfterDownload(){
+  try{
+    const win = window.open(BLOG_URL, '_blank', 'noopener');
+    if(win) win.opener = null;
+    else toast('Aktifkan pop-up untuk membuka blog', 'error');
+  }catch(e){
+    console.warn('Tidak bisa membuka blog:', e);
+  }
+}
+
+async function download(fmt){
+  if(!window.QRCodeStyling){
+    toast('Pustaka QR belum siap', 'error');
+    return;
+  }
+
+  await render();
+
+  if(!state.cfg){
+    toast('Lengkapi data QR terlebih dahulu', 'error');
+    return;
+  }
+
+  const size  = parseInt($('dlSize').value, 10) || 512;
+  const label = fmt === 'jpeg' ? 'JPG' : fmt.toUpperCase();
+
+  setStatus('Menyiapkan ' + label + '…');
+  setBadge('Menyiapkan', '');
+
+  try{
+    const type = (fmt === 'svg') ? 'svg' : 'canvas';
+    const inst = new QRCodeStyling(makeOptions(state.cfg, size, type));
+    const blob = await inst.getRawData(fmt);
+    if(!blob) throw new Error('blob kosong');
+
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'qr-' + state.type + '.' + (fmt === 'jpeg' ? 'jpg' : fmt);
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 3000);
+
+    setStatus('✓ ' + label + ' berhasil diunduh', 'ok');
+    setBadge('Siap', 'ok');
+    toast(label + ' berhasil diunduh', 'success');
+
+    /* Buka blog.v-dey.com di tab baru setelah unduhan berhasil */
+    openBlogAfterDownload();
+  }catch(err){
+    console.error(err);
+    setStatus('Gagal mengunduh, coba lagi.', 'err');
+    setBadge('Error', 'err');
+    toast('Gagal mengunduh, coba lagi', 'error');
+  }
+}
+
+/* ================================================================== */
+/*  Helper WhatsApp                                                   */
+/* ================================================================== */
+function buildWaLink(){
+  let n = $('f-wa-num').value.replace(/\D/g, '');
+  if(!n) return;
+  if(n.startsWith('0'))      n = '62' + n.slice(1);
+  else if(n.startsWith('8')) n = '62' + n;
+  if(n.length < 9 || n.length > 15){
+    $('f-wa').value = '';
+    setStatus('Nomor tidak valid.', 'err');
+    schedule();
+    return;
+  }
+  const msg = $('f-wa-msg').value.trim();
+  $('f-wa').value = 'https://wa.me/' + n + (msg ? '?text=' + encodeURIComponent(msg) : '');
+  schedule();
+}
+
+/* ================================================================== */
+/*  UI: tabs, preset, sync                                            */
+/* ================================================================== */
+function buildTabs(){
+  const wrap = $('typeTabs');
+  wrap.innerHTML = '';
+  TYPES.forEach(t => {
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'tab' + (t.id === state.type ? ' active' : '');
+    b.dataset.type = t.id;
+    b.setAttribute('role', 'tab');
+    b.setAttribute('aria-selected', t.id === state.type ? 'true' : 'false');
+    b.textContent = t.label;
+    b.addEventListener('click', () => selectType(t.id));
+    wrap.appendChild(b);
+  });
+}
+
+function selectType(id){
+  state.type = id;
+  $$('.tab').forEach(b => {
+    const on = b.dataset.type === id;
+    b.classList.toggle('active', on);
+    b.setAttribute('aria-selected', on ? 'true' : 'false');
+    if(on) b.scrollIntoView({ behavior:'smooth', inline:'center', block:'nearest' });
+  });
+  $$('.panel').forEach(p => p.classList.toggle('active', p.dataset.type === id));
+  saveState();
+  render();
+
+  // Fokus field pertama (desktop saja, hindari keyboard mobile)
+  if(window.matchMedia('(min-width: 1024px)').matches){
+    const panel = document.querySelector('.panel.active');
+    if(panel){
+      const input = panel.querySelector('input:not([type=color]):not([type=checkbox]):not([type=range]):not([type=file]), textarea');
+      if(input) input.focus({ preventScroll: true });
+    }
+  }
+}
+
+function findActivePreset(){
+  const c1 = $('c1').value.toLowerCase();
+  const c2 = $('c2').value.toLowerCase();
+  const c3 = $('c3').value.toLowerCase();
+  const grad = $('gradOn').checked;
+  const dots = $('dotStyle').value;
+  const sq = $('cornerSq').value;
+  const dot = $('cornerDot').value;
+  return PRESETS.findIndex(p =>
+    p.dark.toLowerCase() === c1 &&
+    p.light.toLowerCase() === c2 &&
+    p.c3.toLowerCase() === c3 &&
+    p.grad === grad &&
+    p.dots === dots &&
+    p.sq === sq &&
+    p.dot === dot
+  );
+}
+
+function buildPresets(){
+  const wrap = $('presets');
+  wrap.innerHTML = '';
+  const activeIdx = findActivePreset();
+  PRESETS.forEach((p, i) => {
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'chip' + (i === activeIdx ? ' active' : '');
+    const swBg = p.grad
+      ? `linear-gradient(135deg, ${p.dark}, ${p.c3})`
+      : `linear-gradient(135deg, ${p.dark}, ${p.light})`;
+    b.innerHTML = `<span class="sw" style="background:${swBg}"></span>${p.name}`;
+    b.addEventListener('click', () => {
+      $$('#presets .chip').forEach(c => c.classList.remove('active'));
+      b.classList.add('active');
+      applyPreset(p);
+    });
+    wrap.appendChild(b);
+  });
+}
+
+function applyPreset(p){
+  $('c1').value = p.dark;
+  $('c2').value = p.light;
+  $('c3').value = p.c3;
+  $('gradOn').checked = p.grad;
+  $('dotStyle').value  = p.dots;
+  $('cornerSq').value  = p.sq;
+  $('cornerDot').value = p.dot;
+  syncGradient();
+  schedule();
+}
+
+function syncGradient(){ $('c3').disabled = !$('gradOn').checked; }
+function syncUploads(){ $('uploadWrap').classList.toggle('hidden', $('logo').value !== 'custom'); }
+
+function readFileInto(file){
+  if(!file) return;
+  if(!file.type.startsWith('image/')){
+    toast('Hanya file gambar yang didukung', 'error');
+    return;
+  }
+  const reader = new FileReader();
+  reader.onload = () => { state.customLogo = reader.result; schedule(); };
+  reader.readAsDataURL(file);
+}
+
+/* ================================================================== */
+/*  Event                                                             */
+/* ================================================================== */
+function bindEvents(){
+  const form = $('form');
+  form.addEventListener('input',  () => { schedule(); scheduleSave(); });
+  form.addEventListener('change', () => { schedule(); scheduleSave(); });
+
+  $('logoSize').addEventListener('input', e => {
+    $('logoSizeVal').textContent = e.target.value + '%';
+  });
+  $('gradOn').addEventListener('change', syncGradient);
+  $('logo').addEventListener('change', syncUploads);
+  $('logoFile').addEventListener('change', e => readFileInto(e.target.files[0]));
+  $('buildWa').addEventListener('click', buildWaLink);
+  $('smartPaste').addEventListener('click', smartPaste);
+  $('generateBtn').addEventListener('click', generateAndFocus);
+
+  // Auto protocol untuk URL
+  $('f-url').addEventListener('blur', e => autoProtocol(e.target));
+
+  $$('.fmt').forEach(b => {
+    b.addEventListener('click', () => download(b.dataset.fmt));
+  });
+
+  $('actionBar').addEventListener('click', e => {
+    const btn = e.target.closest('button[data-fmt]');
+    if(btn) download(btn.dataset.fmt);
+  });
+
+  $('miniBtn').addEventListener('click', () => {
+    $('preview').scrollIntoView({ behavior:'smooth', block:'start' });
+  });
+
+  // Copy raw data
+  if($('copyRaw')){
+    $('copyRaw').addEventListener('click', async () => {
+      const raw = $('rawData').value;
+      if(!raw) return;
+      try{
+        await navigator.clipboard.writeText(raw);
+        toast('Isi QR disalin', 'success');
+      }catch(e){
+        $('rawData').select();
+        document.execCommand('copy');
+        toast('Isi QR disalin', 'success');
+      }
+    });
+  }
+
+  // Logo drag & drop
+  const uploadWrap = $('uploadWrap');
+  if(uploadWrap){
+    ['dragover','dragenter'].forEach(ev => uploadWrap.addEventListener(ev, e => {
+      e.preventDefault(); uploadWrap.classList.add('dragover');
+    }));
+    ['dragleave','drop'].forEach(ev => uploadWrap.addEventListener(ev, e => {
+      e.preventDefault(); uploadWrap.classList.remove('dragover');
+    }));
+    uploadWrap.addEventListener('drop', e => {
+      const f = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
+      if(f) readFileInto(f);
+    });
+  }
+
+  // Persistence events untuk kontrol desain & unduhan
+  ['c1','c2','c3','gradOn','dotStyle','cornerSq','cornerDot','logo','logoSize','dlSize']
+    .forEach(id => {
+      const el = $(id);
+      if(!el) return;
+      el.addEventListener('change', scheduleSave);
+      if(el.type === 'range' || el.type === 'color') el.addEventListener('input', scheduleSave);
+    });
+}
+
+/* ================================================================== */
+/*  Loader cadangan                                                   */
+/* ================================================================== */
+function loadScript(src, timeout){
+  return new Promise((resolve, reject) => {
+    const s = document.createElement('script');
+    s.src = src;
+    const t = setTimeout(() => { s.remove(); reject(new Error('timeout')); }, timeout || 6000);
+    s.onload  = () => { clearTimeout(t); resolve(); };
+    s.onerror = () => { clearTimeout(t); s.remove(); reject(new Error('error')); };
+    document.head.appendChild(s);
+  });
+}
+
+/* ================================================================== */
+/*  Init                                                              */
+/* ================================================================== */
+(async function init(){
+  try{
+    loadState();
+    buildTabs();
+    buildPresets();
+    enhanceAllInputs();
+    bindEvents();
+    syncGradient();
+    syncUploads();
+    $('logoSizeVal').textContent = $('logoSize').value + '%';
+
+    if(!window.QRCodeStyling){
+      try{
+        await loadScript('https://unpkg.com/qr-code-styling@1.6.0-rc.1/lib/qr-code-styling.js', 6000);
+      }catch(e){ console.warn('CDN cadangan gagal:', e); }
+    }
+
+    if(!window.QRCodeStyling){
+      clearQR('Gagal memuat pustaka QR.<br>Periksa koneksi internet lalu muat ulang halaman.');
+      setStatus('Pustaka QR tidak tersedia.', 'err');
+      setBadge('Gagal', 'err');
+      return;
+    }
+
+    render();
+  }catch(err){
+    console.error('Init error:', err);
+    clearQR('Terjadi kesalahan saat memuat.');
+    setStatus('Terjadi kesalahan saat memuat.', 'err');
+    setBadge('Gagal', 'err');
+  }
+})();
+</script>
+</body>
+</html>

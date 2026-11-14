@@ -877,6 +877,9 @@ a { text-underline-offset: 3px; }
 .prose hr { border-top: var(--amp-hairline); }
 .prose iframe,
 .prose video { border-radius: var(--t-radius); }
+/* TMDB trailer embed: the player keeps its 16:9 shape and never overflows the
+   article column, even though the markup carries fixed width/height hints. */
+.prose .tmd-video iframe { width: 100%; height: auto; aspect-ratio: 16 / 9; display: block; }
 
 /* ---------- 11. Komentar ------------------------------------------------ */
 .comments {

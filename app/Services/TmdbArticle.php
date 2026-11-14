@@ -323,34 +323,82 @@ final class TmdbArticle
         return '<h2>Rating &amp; Popularitas</h2><p>' . implode(', ', $parts) . '.</p>';
     }
 
+    /**
+     * Pick the trailer to embed, following the TMDB video rules:
+     * YouTube only, type Trailer, official uploads, English first, newest
+     * first. Falls back to an official teaser, and to nothing at all when the
+     * title has no official YouTube video.
+     *
+     * @param array<int, mixed> $videos `videos.results` from TMDB
+     * @return array<string, mixed>|null
+     */
+    private static function pickVideo(array $videos, string $type): ?array
+    {
+        $candidates = [];
+        foreach ($videos as $video) {
+            if (!is_array($video)) {
+                continue;
+            }
+            if (strcasecmp((string)($video['site'] ?? ''), 'YouTube') !== 0) {
+                continue;
+            }
+            if (strcasecmp((string)($video['type'] ?? ''), $type) !== 0) {
+                continue;
+            }
+            if (!filter_var($video['official'] ?? false, FILTER_VALIDATE_BOOLEAN)) {
+                continue;
+            }
+            if (self::videoKey($video) === '') {
+                continue;
+            }
+            $candidates[] = $video;
+        }
+        if ($candidates === []) {
+            return null;
+        }
+
+        usort($candidates, static function (array $a, array $b): int {
+            $englishA = strcasecmp((string)($a['iso_639_1'] ?? ''), 'en') === 0 ? 1 : 0;
+            $englishB = strcasecmp((string)($b['iso_639_1'] ?? ''), 'en') === 0 ? 1 : 0;
+            if ($englishA !== $englishB) {
+                return $englishB <=> $englishA;
+            }
+            return strcmp((string)($b['published_at'] ?? ''), (string)($a['published_at'] ?? ''));
+        });
+
+        return $candidates[0];
+    }
+
+    /** @param array<string, mixed> $video */
+    private static function videoKey(array $video): string
+    {
+        return (string)preg_replace('/[^A-Za-z0-9_-]/', '', (string)($video['key'] ?? ''));
+    }
+
     private static function trailerBlock(array $details): string
     {
         $videos = (array)($details['videos']['results'] ?? []);
-        $pick = null;
-        foreach (['Trailer', 'Teaser', 'Clip'] as $want) {
-            foreach ($videos as $video) {
-                if (!is_array($video)) {
-                    continue;
-                }
-                if (strcasecmp((string)($video['site'] ?? ''), 'YouTube') !== 0) {
-                    continue;
-                }
-                if (strcasecmp((string)($video['type'] ?? ''), $want) === 0) {
-                    $pick = $video;
-                    break 2;
-                }
-            }
-        }
+        $pick = self::pickVideo($videos, 'Trailer') ?? self::pickVideo($videos, 'Teaser');
         if ($pick === null) {
             return '';
         }
-        $key = preg_replace('/[^A-Za-z0-9_-]/', '', (string)($pick['key'] ?? ''));
+        $key = self::videoKey($pick);
         if ($key === '') {
             return '';
         }
-        $label = strcasecmp((string)($pick['type'] ?? ''), 'Trailer') === 0 ? 'Trailer' : 'Cuplikan';
-        return '<h2>' . $label . '</h2><div class="tmd-video"><iframe src="https://www.youtube.com/embed/' . $key
-            . '" width="560" height="315" loading="lazy" frameborder="0" allowfullscreen></iframe></div>';
+
+        $isTrailer = strcasecmp((string)($pick['type'] ?? ''), 'Trailer') === 0;
+        $label = $isTrailer ? 'Official Trailer' : 'Official Teaser';
+        $name = trim((string)($pick['name'] ?? ''));
+        $title = $name !== '' ? $name : $label;
+
+        return '<div class="post-trailer"><h2>' . $label . '</h2>'
+            . '<div class="tmd-video trailer-wrapper">'
+            . '<iframe src="https://www.youtube.com/embed/' . $key . '" title="' . self::esc($title) . '"'
+            . ' width="560" height="315" loading="lazy" frameborder="0"'
+            . ' allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"'
+            . ' allowfullscreen></iframe>'
+            . '</div></div>';
     }
 
     private static function providersBlock(array $details): string
