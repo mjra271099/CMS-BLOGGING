@@ -118,6 +118,6 @@ return [
     'featured_carousel' => 'Featured posts',
     'carousel_prev' => 'Scroll left',
     'carousel_next' => 'Scroll right',
-    'featured_more' => 'See all',
-    'featured_more_category' => 'See all :category',
+    'featured_more' => 'More',
+    'featured_more_label' => 'More in :category',
 ];

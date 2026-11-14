@@ -531,15 +531,15 @@ final class Widget
         // and the widget's flex layout lets the grid wrap onto its own line.
         $button = '';
         if ($more !== null) {
-            $name = (string)($more['name'] ?? '');
-            $label = $name !== ''
-                ? __('featured_more_category', ['category' => $name])
-                : __('featured_more');
-            $button = '<a class="featured-more" href="' . e(category_url($more)) . '">'
-                . '<span>' . e($label) . '</span>'
-                . '<svg viewBox="0 0 20 20" width="16" height="16" aria-hidden="true" focusable="false">'
-                . '<path d="M4 10h11M11 5l5 5-5 5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>'
-                . '</svg></a>';
+            // Visible text stays a short "More"; the aria-label carries the
+            // category so the link is not ambiguous when read out of context.
+            $name = trim((string)($more['name'] ?? ''));
+            $aria = $name !== ''
+                ? __('featured_more_label', ['category' => $name])
+                : '';
+            $button = '<a class="featured-more" href="' . e(category_url($more)) . '"'
+                . ($aria !== '' ? ' aria-label="' . e($aria) . '"' : '') . '>'
+                . '<span aria-hidden="true">' . e(__('featured_more')) . '</span></a>';
         }
         $output = $button . '<div class="widget-content featured-posts featured-' . e($layout) . '">';
         foreach ($posts as $post) {
