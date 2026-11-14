@@ -255,6 +255,7 @@ try { if (localStorage.getItem('cms-sidebar') === 'collapsed') document.body.cla
 <script>document.body.dataset.adminBase = <?= json_encode($adminBase) ?>;</script>
 <?php if ($isEditor): ?>
     <script src="<?= e(asset_url('assets/vendor/tiptap/editor.js')) ?>" defer></script>
+    <script src="<?= e(asset_url('assets/admin-embed.js')) ?>" defer></script>
 <?php endif; ?>
 <script src="<?= e(asset_url('assets/admin-app.js')) ?>" defer></script>
 </body>

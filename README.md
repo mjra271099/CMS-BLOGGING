@@ -80,6 +80,7 @@ assets/
   front/app.js                     skrip front-end
   admin.css, admin-app.css/js      dashboard
   admin-editor.css                 lapisan tampilan editor kaya (Tiptap)
+  admin-embed.js                   dukungan embed iframe di editor (token + pemulihan saat simpan)
 themes/<slug>/   theme.json, layout.php, style.css, screenshot.svg, functions.php
 resources/editor/editor.js         sumber editor; dibundel ke assets/vendor/tiptap/editor.js
 database/        schema.sql, migrations/
@@ -153,6 +154,8 @@ npm run build    # menulis assets/vendor/tiptap/editor.js
 ```
 
 `node_modules/` tidak ikut di-commit; hasil bundel (`assets/vendor/tiptap/editor.js`) ikut agar hosting tanpa Node tetap berjalan. Toolbar dirender dari `AdminUi::editorToolbar()` memakai ikon SVG yang sama dengan sisa dashboard.
+
+Tiptap tidak punya node `iframe`, jadi embed video ditangani `assets/admin-embed.js`: setiap `<iframe>` di body ditukar dengan token `[[embed:N]]` selama disunting, lalu dikembalikan utuh (atribut asli dipertahankan) baik saat form dikirim maupun saat autosave berjalan. Tombol **Sisipkan video / embed** di toolbar menerima URL atau potongan `<iframe>` yang ditempel.
 
 ## Pengujian
 

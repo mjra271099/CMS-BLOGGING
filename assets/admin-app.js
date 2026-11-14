@@ -178,7 +178,7 @@
           csrf: csrfToken(),
           id: idField.value,
           title: ($('#title', postForm) || {}).value || '',
-          body: bodyField.value,
+          body: window.CMSEmbed ? window.CMSEmbed.expand(postForm, bodyField.value) : bodyField.value,
           excerpt: ($('#excerpt', postForm) || {}).value || ''
         });
         try {

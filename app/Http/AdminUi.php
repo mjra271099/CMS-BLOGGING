@@ -183,6 +183,8 @@ final class AdminUi
             . '</div></details>';
 
         $insert = $button('link', 'link', 'Sisipkan tautan')
+            . '<button type="button" class="rt-btn" data-editor-embed title="Sisipkan video / embed" aria-label="Sisipkan video atau embed">'
+            . self::icon('clapper', 17) . '</button>'
             . $tableMenu
             . '<button type="button" class="rt-btn" data-media-open data-media-target="body" title="Sisipkan gambar" aria-label="Sisipkan gambar">'
             . self::icon('image', 17) . '</button>';
