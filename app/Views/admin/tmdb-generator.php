@@ -52,14 +52,41 @@ $postedMap = is_array($postedMap ?? null) ? $postedMap : [];
 $alreadyPosted = (bool)($alreadyPosted ?? false);
 $language = (string)($language ?? 'id-ID');
 $region = (string)($region ?? 'ID');
+$page = max(1, (int)($page ?? 1));
+$totalPages = max(1, (int)($totalPages ?? 1));
+$totalResults = max(0, (int)($totalResults ?? 0));
+$maxPage = max(1, (int)($maxPage ?? 500));
+$genre = max(0, (int)($genre ?? 0));
+$sort = (string)($sort ?? 'popularity.desc');
+$genres = is_array($genres ?? null) ? $genres : [];
+$sorts = is_array($sorts ?? null) ? $sorts : [];
+$movieLists = is_array($movieLists ?? null) ? $movieLists : [];
+$tvLists = is_array($tvLists ?? null) ? $tvLists : [];
 
-$lists = [
-    'popular' => 'Populer',
-    'now_playing' => 'Sedang tayang',
-    'upcoming' => 'Akan datang',
-    'top_rated' => 'Rating tertinggi',
-    'trending' => 'Trending',
-];
+/**
+ * Build a link back to this page with the listing state preserved. Any key
+ * passed in overrides the current value, which keeps every tab, filter and
+ * page link consistent without repeating the query by hand.
+ */
+$stateUrl = static function (array $overrides = []) use ($self, $mode, $type, $query, $list, $window, $page, $genre, $sort, $selectedId, $selectedType): string {
+    $params = array_merge([
+        'mode' => $mode,
+        'type' => $type,
+        'q' => $query,
+        'list' => $list,
+        'window' => $window,
+        'page' => $page,
+        'genre' => $genre,
+        'sort' => $sort,
+        'id' => $selectedId,
+        'media' => $selectedType,
+    ], $overrides);
+    $params = array_filter($params, static fn($value): bool => $value !== '' && $value !== 0 && $value !== '0' && $value !== null);
+    return $self . '?' . http_build_query($params);
+};
+$pager = static function (int $target) use ($stateUrl): string {
+    return $stateUrl(['page' => $target]);
+};
 ?>
 
 <style>
@@ -174,6 +201,99 @@ $lists = [
     flex: 0 0 auto;
     margin: 0 3px;
     background: var(--admin-border);
+}
+
+/* Mode switcher: Cari / Daftar / Jelajah genre. A segmented control, so it is
+   visually distinct from the list pills below it. */
+.tmdb-mode {
+    display: inline-flex;
+    flex-wrap: wrap;
+    gap: 3px;
+    padding: 3px;
+    margin: 0 0 16px;
+    border: 1px solid var(--admin-border);
+    border-radius: var(--admin-radius-sm);
+    background: var(--admin-surface-hover);
+}
+.tmdb-mode__item {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    border-radius: 5px;
+    font-size: 12.5px;
+    font-weight: 600;
+    color: var(--admin-text-secondary);
+    text-decoration: none;
+    transition: background var(--admin-transition), color var(--admin-transition);
+}
+.tmdb-mode__item svg { flex: 0 0 auto; }
+.tmdb-mode__item:hover { color: var(--admin-text); background: var(--admin-surface); }
+.tmdb-mode__item.on {
+    background: var(--admin-surface);
+    color: var(--admin-primary);
+    box-shadow: var(--admin-shadow-sm);
+}
+
+/* Pagination */
+.tmdb-pager {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px 16px;
+    margin: 18px 0 0;
+    padding: 12px 0 0;
+    border-top: 1px solid var(--admin-border-light);
+}
+.tmdb-pager__info { font-size: 12.5px; color: var(--admin-text-secondary); }
+.tmdb-pager__info strong { color: var(--admin-text); }
+.tmdb-pager__links { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 4px; }
+.tmdb-pager__num,
+.tmdb-pager__step {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 32px;
+    min-height: 32px;
+    padding: 4px 9px;
+    border: 1px solid var(--admin-border);
+    border-radius: 5px;
+    background: var(--admin-surface);
+    font-size: 12.5px;
+    font-weight: 550;
+    color: var(--admin-text-secondary);
+    text-decoration: none;
+    transition: border-color var(--admin-transition), color var(--admin-transition), background var(--admin-transition);
+}
+.tmdb-pager__num:hover,
+.tmdb-pager__step:hover { border-color: var(--admin-primary); color: var(--admin-primary); }
+.tmdb-pager__num.is-current {
+    background: var(--admin-primary);
+    border-color: var(--admin-primary);
+    color: var(--admin-primary-contrast, #fff);
+    cursor: default;
+}
+.tmdb-pager__step { padding: 4px 12px; }
+.tmdb-pager__step.is-disabled { opacity: .45; cursor: not-allowed; }
+.tmdb-pager__step.is-disabled:hover { border-color: var(--admin-border); color: var(--admin-text-secondary); }
+.tmdb-pager__gap { padding: 0 2px; color: var(--admin-text-muted); font-size: 12.5px; }
+.tmdb-pager__jump {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    margin-left: auto;
+    font-size: 12.5px;
+    color: var(--admin-text-secondary);
+}
+.tmdb-pager__jump input {
+    width: 68px;
+    min-height: 32px;
+    padding: 4px 8px;
+    text-align: center;
+}
+.tmdb-pager__jump button { min-height: 32px; padding: 4px 12px; font-size: 12.5px; }
+@media (max-width: 620px) {
+    .tmdb-pager__jump { margin-left: 0; }
 }
 
 .tmdb-results {
@@ -494,37 +614,95 @@ $lists = [
     <div class="card">
         <h2><?= AdminUi::icon('search', 16) ?> Sumber Data</h2>
 
-        <form method="get" action="<?= e($self) ?>" class="tmdb-search">
-            <input type="hidden" name="mode" value="search">
-            <div class="tmdb-search__query">
-                <label for="q">Cari film / serial</label>
-                <input id="q" type="search" name="q" value="<?= e($query) ?>" placeholder="Mis. Fight Club, Breaking Bad…" autocomplete="off">
-            </div>
-            <div class="tmdb-search__type">
-                <label for="type">Tipe</label>
-                <select id="type" name="type">
-                    <option value="movie"<?= $type === 'movie' ? ' selected' : '' ?>>Film</option>
-                    <option value="tv"<?= $type === 'tv' ? ' selected' : '' ?>>Serial TV</option>
-                </select>
-            </div>
-            <button type="submit"><?= AdminUi::icon('search', 16) ?> Cari</button>
-        </form>
-
-        <div class="tmdb-tabs">
-            <?php foreach ($lists as $key => $label): ?>
-                <?php
-                $params = ['mode' => 'list', 'list' => $key, 'type' => $type];
-                if ($key === 'trending') {
-                    $params['window'] = $window;
+        <div class="tmdb-mode" role="tablist" aria-label="Mode pencarian">
+            <?php
+            $modes = [
+                'search' => ['Cari', 'search'],
+                'list' => ['Daftar', 'layers'],
+                'discover' => ['Jelajah genre', 'blocks'],
+            ];
+            foreach ($modes as $modeKey => [$modeLabel, $modeIcon]):
+                $params = ['mode' => $modeKey, 'type' => $type];
+                if ($modeKey === 'search' && $query !== '') {
+                    $params['q'] = $query;
                 }
-                $isOn = $mode === 'list' && $list === $key;
+                if ($modeKey === 'list') {
+                    $params['list'] = $type === 'tv' ? ($tvLists[$list] ?? null ? $list : 'tv_popular') : ($movieLists[$list] ?? null ? $list : 'popular');
+                }
+                if ($modeKey === 'discover') {
+                    $params['sort'] = $sort;
+                    if ($genre > 0) {
+                        $params['genre'] = $genre;
+                    }
+                }
                 ?>
-                <a href="<?= e($self . '?' . http_build_query($params)) ?>" class="<?= $isOn ? 'on' : '' ?>"><?= e($label) ?></a>
+                <a href="<?= e($self . '?' . http_build_query($params)) ?>" class="tmdb-mode__item<?= $mode === $modeKey ? ' on' : '' ?>" role="tab" aria-selected="<?= $mode === $modeKey ? 'true' : 'false' ?>">
+                    <?= AdminUi::icon($modeIcon, 15) ?> <?= e($modeLabel) ?>
+                </a>
+            <?php endforeach; ?>
+        </div>
+
+        <?php if ($mode === 'search'): ?>
+            <form method="get" action="<?= e($self) ?>" class="tmdb-search">
+                <input type="hidden" name="mode" value="search">
+                <div class="tmdb-search__query">
+                    <label for="q">Cari film / serial</label>
+                    <input id="q" type="search" name="q" value="<?= e($query) ?>" placeholder="Mis. Fight Club, Breaking Bad…" autocomplete="off">
+                </div>
+                <div class="tmdb-search__type">
+                    <label for="type">Tipe</label>
+                    <select id="type" name="type">
+                        <option value="movie"<?= $type === 'movie' ? ' selected' : '' ?>>Film</option>
+                        <option value="tv"<?= $type === 'tv' ? ' selected' : '' ?>>Serial TV</option>
+                    </select>
+                </div>
+                <button type="submit"><?= AdminUi::icon('search', 16) ?> Cari</button>
+            </form>
+        <?php elseif ($mode === 'discover'): ?>
+            <form method="get" action="<?= e($self) ?>" class="tmdb-search">
+                <input type="hidden" name="mode" value="discover">
+                <div class="tmdb-search__type">
+                    <label for="type">Tipe</label>
+                    <select id="type" name="type">
+                        <option value="movie"<?= $type === 'movie' ? ' selected' : '' ?>>Film</option>
+                        <option value="tv"<?= $type === 'tv' ? ' selected' : '' ?>>Serial TV</option>
+                    </select>
+                </div>
+                <div class="tmdb-search__query">
+                    <label for="genre">Genre</label>
+                    <select id="genre" name="genre">
+                        <option value="0">Semua genre</option>
+                        <?php foreach ($genres as $genreItem): ?>
+                            <option value="<?= (int)$genreItem['id'] ?>"<?= $genre === (int)$genreItem['id'] ? ' selected' : '' ?>><?= e($genreItem['name']) ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+                <div class="tmdb-search__type">
+                    <label for="sort">Urutkan</label>
+                    <select id="sort" name="sort">
+                        <?php foreach ($sorts as $sortKey => $sortLabel): ?>
+                            <option value="<?= e($sortKey) ?>"<?= $sort === $sortKey ? ' selected' : '' ?>><?= e($sortLabel) ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+                <button type="submit"><?= AdminUi::icon('blocks', 16) ?> Jelajah</button>
+            </form>
+        <?php endif; ?>
+
+        <?php
+        // Quick lists depend on the selected media type, so the tabs always
+        // describe what will actually be fetched.
+        $activeLists = $type === 'tv' ? $tvLists : $movieLists;
+        ?>
+        <div class="tmdb-tabs" role="tablist" aria-label="Daftar cepat">
+            <a href="<?= e($self . '?' . http_build_query(['mode' => 'list', 'list' => 'trending', 'type' => $type, 'window' => $window])) ?>" class="<?= $mode === 'list' && $list === 'trending' ? 'on' : '' ?>">Trending</a>
+            <?php foreach ($activeLists as $listKey => $listLabel): ?>
+                <a href="<?= e($self . '?' . http_build_query(['mode' => 'list', 'list' => $listKey, 'type' => $type])) ?>" class="<?= $mode === 'list' && $list === $listKey ? 'on' : '' ?>"><?= e($listLabel) ?></a>
             <?php endforeach; ?>
             <?php if ($mode === 'list' && $list === 'trending'): ?>
                 <span class="tmdb-tabs-sep" aria-hidden="true"></span>
-                <?php foreach (['day' => 'Hari ini', 'week' => 'Minggu ini'] as $key => $label): ?>
-                    <a href="<?= e($self . '?' . http_build_query(['mode' => 'list', 'list' => 'trending', 'type' => $type, 'window' => $key])) ?>" class="<?= $window === $key ? 'on' : '' ?>"><?= e($label) ?></a>
+                <?php foreach (['day' => 'Hari ini', 'week' => 'Minggu ini'] as $windowKey => $windowLabel): ?>
+                    <a href="<?= e($self . '?' . http_build_query(['mode' => 'list', 'list' => 'trending', 'type' => $type, 'window' => $windowKey])) ?>" class="<?= $window === $windowKey ? 'on' : '' ?>"><?= e($windowLabel) ?></a>
                 <?php endforeach; ?>
             <?php endif; ?>
         </div>
@@ -549,7 +727,8 @@ $lists = [
                 <?= \App\Core\Csrf::field() ?>
                 <?php
                 $carry = ['mode' => $mode, 'type' => $type, 'q' => $query, 'list' => $list,
-                    'window' => $window, 'id' => $selectedId, 'media' => $selectedType];
+                    'window' => $window, 'page' => $page, 'genre' => $genre, 'sort' => $sort,
+                    'id' => $selectedId, 'media' => $selectedType];
                 foreach ($carry as $keepKey => $keepValue):
                     ?>
                     <input type="hidden" name="<?= e($keepKey) ?>" value="<?= e((string)$keepValue) ?>">
@@ -576,10 +755,7 @@ $lists = [
                         $isSelected = $itemId === $selectedId && $itemType === $selectedType;
                         $key = $itemType . ':' . $itemId;
                         $postedPostId = $postedMap[$key] ?? null;
-                        $selectUrl = $self . '?' . http_build_query([
-                            'mode' => $mode, 'type' => $type, 'q' => $query, 'list' => $list,
-                            'window' => $window, 'id' => $itemId, 'media' => $itemType,
-                        ]);
+                        $selectUrl = $stateUrl(['id' => $itemId, 'media' => $itemType]);
                         ?>
                         <label class="tmdb-result tmdb-result--bulk<?= $isSelected ? ' is-selected' : '' ?><?= $postedPostId !== null ? ' tmdb-result--done' : '' ?>">
                             <span class="tmdb-result__check">
@@ -617,6 +793,66 @@ $lists = [
                     </span>
                 </div>
             </form>
+
+            <?php if ($totalPages > 1): ?>
+                <?php
+                // Window of page links around the current page, TMDB caps at 500.
+                $windowSize = 2;
+                $first = max(1, $page - $windowSize);
+                $last = min($totalPages, $page + $windowSize);
+                ?>
+                <nav class="tmdb-pager" aria-label="Navigasi halaman hasil">
+                    <span class="tmdb-pager__info">
+                        Halaman <strong><?= (int)$page ?></strong> dari <strong><?= (int)$totalPages ?></strong>
+                        <?php if ($totalResults > 0): ?>
+                            · <?= e(number_format($totalResults)) ?> judul
+                        <?php endif; ?>
+                    </span>
+                    <div class="tmdb-pager__links">
+                        <?php if ($page > 1): ?>
+                            <a class="tmdb-pager__step" href="<?= e($pager($page - 1)) ?>" rel="prev" aria-label="Halaman sebelumnya">‹ Sebelumnya</a>
+                        <?php else: ?>
+                            <span class="tmdb-pager__step is-disabled" aria-hidden="true">‹ Sebelumnya</span>
+                        <?php endif; ?>
+
+                        <?php if ($first > 1): ?>
+                            <a class="tmdb-pager__num" href="<?= e($pager(1)) ?>">1</a>
+                            <?php if ($first > 2): ?><span class="tmdb-pager__gap">…</span><?php endif; ?>
+                        <?php endif; ?>
+
+                        <?php for ($p = $first; $p <= $last; $p++): ?>
+                            <?php if ($p === $page): ?>
+                                <span class="tmdb-pager__num is-current" aria-current="page"><?= (int)$p ?></span>
+                            <?php else: ?>
+                                <a class="tmdb-pager__num" href="<?= e($pager($p)) ?>"><?= (int)$p ?></a>
+                            <?php endif; ?>
+                        <?php endfor; ?>
+
+                        <?php if ($last < $totalPages): ?>
+                            <?php if ($last < $totalPages - 1): ?><span class="tmdb-pager__gap">…</span><?php endif; ?>
+                            <a class="tmdb-pager__num" href="<?= e($pager($totalPages)) ?>"><?= (int)$totalPages ?></a>
+                        <?php endif; ?>
+
+                        <?php if ($page < $totalPages): ?>
+                            <a class="tmdb-pager__step" href="<?= e($pager($page + 1)) ?>" rel="next" aria-label="Halaman berikutnya">Berikutnya ›</a>
+                        <?php else: ?>
+                            <span class="tmdb-pager__step is-disabled" aria-hidden="true">Berikutnya ›</span>
+                        <?php endif; ?>
+                    </div>
+                    <form method="get" action="<?= e($self) ?>" class="tmdb-pager__jump">
+                        <?php foreach (['mode' => $mode, 'type' => $type, 'q' => $query, 'list' => $list, 'window' => $window, 'genre' => $genre, 'sort' => $sort] as $jumpKey => $jumpValue): ?>
+                            <?php if ($jumpValue !== '' && $jumpValue !== 0 && $jumpValue !== '0'): ?>
+                                <input type="hidden" name="<?= e($jumpKey) ?>" value="<?= e((string)$jumpValue) ?>">
+                            <?php endif; ?>
+                        <?php endforeach; ?>
+                        <label for="page-jump">Ke halaman</label>
+                        <input id="page-jump" type="number" name="page" min="1" max="<?= (int)$totalPages ?>" value="<?= (int)$page ?>" inputmode="numeric">
+                        <button type="submit" class="secondary">Buka</button>
+                    </form>
+                </nav>
+            <?php elseif ($totalResults > count($results)): ?>
+                <p class="help">Menampilkan <?= count($results) ?> dari <?= e(number_format($totalResults)) ?> judul.</p>
+            <?php endif; ?>
         <?php endif; ?>
     </div>
 

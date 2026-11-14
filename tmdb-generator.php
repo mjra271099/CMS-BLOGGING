@@ -387,41 +387,74 @@ final class TmdbGeneratorPage
     // GET state
     // ------------------------------------------------------------------
 
+    /** List kinds grouped by media type, so TV never appears under "movie". */
+    private const MOVIE_LISTS = [
+        'popular' => 'Populer',
+        'now_playing' => 'Sedang tayang',
+        'upcoming' => 'Akan datang',
+        'top_rated' => 'Rating tertinggi',
+    ];
+    private const TV_LISTS = [
+        'tv_popular' => 'Serial populer',
+        'tv_airing_today' => 'Tayang hari ini',
+        'tv_on_the_air' => 'Sedang tayang',
+        'tv_top_rated' => 'Serial rating tertinggi',
+    ];
+
     private function state(): array
     {
         $token = Tmdb::storedToken();
         $hasCredentials = $token !== '';
         $mode = (string)($_GET['mode'] ?? 'search');
+        if (!in_array($mode, ['search', 'list', 'discover'], true)) {
+            $mode = 'search';
+        }
         $type = ($_GET['type'] ?? 'movie') === 'tv' ? 'tv' : 'movie';
         $query = trim((string)($_GET['q'] ?? ''));
         $list = (string)($_GET['list'] ?? 'popular');
         $window = ($_GET['window'] ?? 'week') === 'day' ? 'day' : 'week';
+        $page = max(1, min(Tmdb::MAX_PAGE, (int)($_GET['page'] ?? 1)));
+        $genre = max(0, (int)($_GET['genre'] ?? 0));
+        $sort = (string)($_GET['sort'] ?? 'popularity.desc');
         $selectedId = (int)($_GET['id'] ?? 0);
         $selectedType = ($_GET['media'] ?? $type) === 'tv' ? 'tv' : 'movie';
         $error = '';
 
-        $results = [];
+        $listing = ['page' => 1, 'total_pages' => 1, 'total_results' => 0, 'results' => []];
+        $genres = [];
         $details = null;
         $client = new Tmdb();
 
         if ($hasCredentials) {
             try {
-                if ($mode === 'list') {
-                    // Trending follows the media picker so a "movies" blog gets
-                    // movie-only trends while "tv" still works.
-                    $results = $list === 'trending'
-                        ? $client->trending($window, 1, $type)
-                        : $client->list($list);
-                } elseif ($query !== '') {
-                    $results = $client->search($query, $type);
-                } elseif ($selectedId === 0) {
-                    // Landing state: show trending so the page is never empty.
-                    $results = $client->trending($window, 1, $type);
+                if ($selectedId === 0 && $mode === 'search' && $query === '') {
+                    // Landing state: show a movie list so the page is never empty.
                     $mode = 'list';
-                    $list = 'trending';
+                    $list = 'popular';
+                }
+                if ($mode === 'list') {
+                    if ($list === 'trending') {
+                        $listing = $client->trending($window, $page, $type);
+                    } else {
+                        // A list kind belongs to one media type; a stale kind
+                        // after switching type falls back to the default list.
+                        $known = $type === 'tv' ? self::TV_LISTS : self::MOVIE_LISTS;
+                        if (!isset($known[$list])) {
+                            $list = $type === 'tv' ? 'tv_popular' : 'popular';
+                        }
+                        $listing = $client->browse($list, $page);
+                    }
+                } elseif ($mode === 'discover') {
+                    $genres = $client->genres($type);
+                    $listing = $client->discover($type, $page, $genre, $sort);
+                } elseif ($query !== '') {
+                    $listing = $client->search($query, $type, $page);
                 }
                 if ($selectedId > 0) {
                     $details = $client->details($selectedId, $selectedType);
+                    if ($genres === []) {
+                        $genres = $client->genres($type);
+                    }
                 }
             } catch (\Throwable $exception) {
                 $error = $exception->getMessage();
@@ -438,7 +471,23 @@ final class TmdbGeneratorPage
             'query' => $query,
             'list' => $list,
             'window' => $window,
-            'results' => $results,
+            'page' => $listing['page'],
+            'totalPages' => $listing['total_pages'],
+            'totalResults' => $listing['total_results'],
+            'genre' => $genre,
+            'sort' => Tmdb::sortFor($sort, $type),
+            'genres' => $genres,
+            // Only offer the date sort that matches the chosen media type.
+            'sorts' => array_filter(
+                Tmdb::SORTS,
+                static fn(string $key): bool => $key !== 'primary_release_date.desc' && $key !== 'first_air_date.desc'
+                    || ($type === 'tv' ? $key === 'first_air_date.desc' : $key === 'primary_release_date.desc'),
+                ARRAY_FILTER_USE_KEY
+            ),
+            'movieLists' => self::MOVIE_LISTS,
+            'tvLists' => self::TV_LISTS,
+            'maxPage' => Tmdb::MAX_PAGE,
+            'results' => $listing['results'],
             'details' => $details,
             'selectedId' => $selectedId,
             'selectedType' => $selectedType,
@@ -448,7 +497,7 @@ final class TmdbGeneratorPage
             'defaultCategory' => TmdbArticle::DEFAULT_CATEGORY,
             'preview' => $details ? TmdbArticle::preview($details) : null,
             'generated' => $details ? TmdbArticle::build($details, array_keys(TmdbArticle::SECTIONS)) : null,
-            'postedMap' => $this->postedMap($results),
+            'postedMap' => $this->postedMap($listing['results']),
             'alreadyPosted' => $selectedId > 0 ? $this->alreadyPosted($selectedId, $selectedType) : false,
         ];
     }
@@ -457,7 +506,7 @@ final class TmdbGeneratorPage
     private function stateQuery(): string
     {
         $keep = [];
-        foreach (['mode', 'type', 'q', 'list', 'window', 'id', 'media'] as $key) {
+        foreach (['mode', 'type', 'q', 'list', 'window', 'page', 'genre', 'sort', 'id', 'media'] as $key) {
             $value = (string)($_POST[$key] ?? '');
             if ($value !== '') {
                 $keep[$key] = $value;

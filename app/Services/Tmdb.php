@@ -91,13 +91,131 @@ final class Tmdb
     }
 
     // ------------------------------------------------------------------
-    // Endpoints
+    // Catalog: paginated lists for movies and TV
     // ------------------------------------------------------------------
+
+    /** Hard limit imposed by TMDB: no list endpoint serves past page 500. */
+    public const MAX_PAGE = 500;
+
+    /** Ordering options accepted by /discover/{movie,tv}. */
+    public const SORTS = [
+        'popularity.desc' => 'Paling populer',
+        'vote_average.desc' => 'Rating tertinggi',
+        'vote_count.desc' => 'Paling banyak diulas',
+        'revenue.desc' => 'Pendapatan tertinggi',
+        'primary_release_date.desc' => 'Terbaru (film)',
+        'first_air_date.desc' => 'Terbaru (serial)',
+    ];
+
+    /**
+     * One page of a curated list. `$kind` is a movie list (popular,
+     * now_playing, upcoming, top_rated) or a TV list (tv_popular,
+     * tv_airing_today, tv_on_the_air, tv_top_rated).
+     *
+     * @return array{page:int,total_pages:int,total_results:int,results:array<int,array<string,mixed>>}
+     */
+    public function browse(string $kind = 'popular', int $page = 1): array
+    {
+        $page = $this->clampPage($page);
+        $map = [
+            'popular' => ['/movie/popular', []],
+            'now_playing' => ['/movie/now_playing', ['region' => $this->region]],
+            'upcoming' => ['/movie/upcoming', ['region' => $this->region]],
+            'top_rated' => ['/movie/top_rated', []],
+            'tv_popular' => ['/tv/popular', []],
+            'tv_airing_today' => ['/tv/airing_today', []],
+            'tv_on_the_air' => ['/tv/on_the_air', []],
+            'tv_top_rated' => ['/tv/top_rated', []],
+        ];
+        [$path, $extra] = $map[$kind] ?? $map['popular'];
+        // TV list endpoints do not accept `region`; strip it defensively.
+        $query = ['page' => $page] + $extra;
+        return $this->paginated($this->get($path, $query), str_starts_with($kind, 'tv_') ? 'tv' : 'movie');
+    }
+
+    /**
+     * Trending titles for a day/week window. When $mediaType is "movie" or
+     * "tv" only that kind is returned; otherwise movies and TV are mixed.
+     *
+     * @return array{page:int,total_pages:int,total_results:int,results:array<int,array<string,mixed>>}
+     */
+    public function trending(string $window = 'week', int $page = 1, string $mediaType = 'all'): array
+    {
+        $window = $window === 'day' ? 'day' : 'week';
+        $kind = in_array($mediaType, ['movie', 'tv'], true) ? $mediaType : 'all';
+        $data = $this->get('/trending/' . $kind . '/' . $window, ['page' => $this->clampPage($page)]);
+        return $this->paginated($data, $kind);
+    }
+
+    /**
+     * /discover with an optional genre filter — the way to walk the whole
+     * catalogue (a genre can be browsed far past page 500 of "popular").
+     *
+     * @return array{page:int,total_pages:int,total_results:int,results:array<int,array<string,mixed>>}
+     */
+    public function discover(string $type = 'movie', int $page = 1, int $genreId = 0, string $sort = 'popularity.desc'): array
+    {
+        $kind = $type === 'tv' ? 'tv' : 'movie';
+        $sort = self::sortFor($sort, $kind);
+        $query = [
+            'page' => $this->clampPage($page),
+            'sort_by' => $sort,
+            'include_adult' => 'false',
+        ];
+        if ($genreId > 0) {
+            $query['with_genres'] = $genreId;
+        }
+        // Discover honours a vote floor; without one the tail is full of
+        // titles with a single vote that make poor articles.
+        if ($sort === 'vote_average.desc') {
+            $query['vote_count.gte'] = 200;
+        }
+        return $this->paginated($this->get('/discover/' . $kind, $query), $kind);
+    }
+
+    /**
+     * Resolve a sort key for a media type. The date sorts only exist on one
+     * side of the catalogue, so a mismatched key is swapped for the equivalent
+     * field rather than sent as-is (TMDB rejects unknown sort_by values).
+     */
+    public static function sortFor(string $sort, string $type): string
+    {
+        $kind = $type === 'tv' ? 'tv' : 'movie';
+        $aliases = ['primary_release_date.desc', 'first_air_date.desc'];
+        if (in_array($sort, $aliases, true)) {
+            return $kind === 'tv' ? 'first_air_date.desc' : 'primary_release_date.desc';
+        }
+        return isset(self::SORTS[$sort]) ? $sort : 'popularity.desc';
+    }
+
+    /**
+     * Genre list for movies or TV, cached by TMDB's normal response cache.
+     *
+     * @return array<int, array{id:int, name:string}>
+     */
+    public function genres(string $type = 'movie'): array
+    {
+        $kind = $type === 'tv' ? 'tv' : 'movie';
+        $data = $this->get('/genre/' . $kind . '/list', []);
+        $out = [];
+        foreach ((array)($data['genres'] ?? []) as $genre) {
+            if (!is_array($genre)) {
+                continue;
+            }
+            $id = (int)($genre['id'] ?? 0);
+            $name = trim((string)($genre['name'] ?? ''));
+            if ($id > 0 && $name !== '') {
+                $out[] = ['id' => $id, 'name' => $name];
+            }
+        }
+        usort($out, static fn(array $a, array $b): int => strcasecmp($a['name'], $b['name']));
+        return $out;
+    }
 
     /**
      * Text search across movies or TV shows.
      *
-     * @return array<int, array<string, mixed>>
+     * @return array{page:int,total_pages:int,total_results:int,results:array<int,array<string,mixed>>}
      */
     public function search(string $query, string $type = 'movie', int $page = 1): array
     {
@@ -108,43 +226,59 @@ final class Tmdb
         $kind = $type === 'tv' ? 'tv' : 'movie';
         $data = $this->get('/search/' . $kind, [
             'query' => $query,
-            'page' => max(1, $page),
+            'page' => $this->clampPage($page),
             'include_adult' => 'false',
         ]);
-        return array_values(array_filter((array)($data['results'] ?? []), 'is_array'));
+        return $this->paginated($data, $kind);
     }
 
     /**
-     * Trending titles for a day/week window. When $mediaType is "movie" or
-     * "tv" only that kind is returned; otherwise movies and TV are mixed.
+     * Normalise a TMDB list response into a stable envelope and tag each item
+     * with its media type so the UI never has to guess.
      *
-     * @return array<int, array<string, mixed>>
+     * @param array<string, mixed> $data
+     * @return array{page:int,total_pages:int,total_results:int,results:array<int,array<string,mixed>>}
      */
-    public function trending(string $window = 'week', int $page = 1, string $mediaType = 'all'): array
+    private function paginated(array $data, string $fallbackType): array
     {
-        $window = $window === 'day' ? 'day' : 'week';
-        $kind = in_array($mediaType, ['movie', 'tv'], true) ? $mediaType : 'all';
-        $data = $this->get('/trending/' . $kind . '/' . $window, ['page' => max(1, $page)]);
-        return array_values(array_filter((array)($data['results'] ?? []), 'is_array'));
+        $results = [];
+        foreach ((array)($data['results'] ?? []) as $item) {
+            if (!is_array($item)) {
+                continue;
+            }
+            // Trending/all already carries media_type; lists do not.
+            $media = (string)($item['media_type'] ?? '');
+            if (!in_array($media, ['movie', 'tv', 'person'], true)) {
+                $media = $fallbackType === 'tv' ? 'tv' : 'movie';
+            }
+            $item['media_type'] = $media;
+            $results[] = $item;
+        }
+        $totalPages = min(self::MAX_PAGE, max(1, (int)($data['total_pages'] ?? 1)));
+        return [
+            // Keep the reported page inside the window so a request past the
+            // end (or past TMDB's 500 cap) still yields a usable pager.
+            'page' => min($totalPages, max(1, (int)($data['page'] ?? 1))),
+            'total_pages' => $totalPages,
+            'total_results' => max(0, (int)($data['total_results'] ?? count($results))),
+            'results' => $results,
+        ];
+    }
+
+    private function clampPage(int $page): int
+    {
+        return max(1, min(self::MAX_PAGE, $page));
     }
 
     /**
-     * Curated lists used as quick sources: popular, now playing, upcoming.
+     * Curated list kept for backwards compatibility with earlier callers;
+     * delegates to browse() and returns just the items.
      *
      * @return array<int, array<string, mixed>>
      */
     public function list(string $kind = 'popular', int $page = 1): array
     {
-        $allowed = ['popular', 'now_playing', 'upcoming', 'top_rated'];
-        $kind = in_array($kind, $allowed, true) ? $kind : 'popular';
-        $query = ['page' => max(1, $page)];
-        // `region` is only honoured by now_playing; sending it elsewhere is
-        // harmless but pointless, so keep the request minimal.
-        if ($kind === 'now_playing') {
-            $query['region'] = $this->region;
-        }
-        $data = $this->get('/movie/' . $kind, $query);
-        return array_values(array_filter((array)($data['results'] ?? []), 'is_array'));
+        return $this->browse($kind, $page)['results'];
     }
 
     /**
