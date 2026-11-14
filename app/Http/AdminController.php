@@ -286,6 +286,7 @@ final class AdminController
     private function flashMessage(string $action): string
     {
         return match (true) {
+            $action === 'post.restore-revision' => 'Revisi dipulihkan.',
             str_starts_with($action, 'post.') => 'Perubahan postingan disimpan.',
             str_starts_with($action, 'page.') => 'Perubahan halaman disimpan.',
             str_starts_with($action, 'media.') => 'Media diperbarui.',
@@ -313,6 +314,7 @@ final class AdminController
             'post.delete' => Post::purge((int)($_POST['id'] ?? 0)),
             'post.duplicate' => Post::duplicate((int)($_POST['id'] ?? 0)),
             'post.bulk' => Post::bulk((string)($_POST['operation'] ?? ''), (array)($_POST['ids'] ?? [])),
+            'post.restore-revision' => $this->restoreRevision((int)($_POST['id'] ?? 0)),
             'page.save' => $this->savePage($user),
             'page.delete' => Page::delete((int)($_POST['id'] ?? 0)),
             'page.duplicate' => $this->duplicatePage(),
@@ -471,6 +473,29 @@ final class AdminController
         }
         Post::flushCaches();
         log_activity('post.' . $status, 'ID ' . $id);
+    }
+
+    /**
+     * Restore a stored revision onto its post. The form only carries the
+     * revision id, so the owning post is resolved from the revision itself.
+     */
+    private function restoreRevision(int $postId): void
+    {
+        Auth::requirePermission('post.edit');
+        $revisionId = (int)($_POST['revision_id'] ?? 0);
+        if ($revisionId <= 0) {
+            throw new ValidationException('Revisi tidak ditemukan.');
+        }
+        if ($postId <= 0) {
+            // The edit form posts the revision only; take the owner from it.
+            $revision = Post::findRevision($revisionId);
+            $postId = $revision ? (int)$revision['entity_id'] : 0;
+        }
+        if ($postId <= 0) {
+            throw new ValidationException('Revisi tidak ditemukan.');
+        }
+        Post::restoreRevision($postId, $revisionId);
+        log_activity('post.restore-revision', 'ID ' . $postId . ' revisi #' . $revisionId);
     }
 
     private function savePage(array $user): void

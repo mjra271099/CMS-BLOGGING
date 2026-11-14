@@ -306,6 +306,50 @@ final class Post
         );
     }
 
+    /**
+     * Restore the title/body/content_json of one revision back onto its post.
+     *
+     * The post as it stands is snapshotted first, so restoring a revision is
+     * itself undoable. Only content fields travel back — status, slug,
+     * taxonomies and SEO meta stay as the editor last left them.
+     */
+    public static function restoreRevision(int $postId, int $revisionId): int
+    {
+        $post = self::find($postId);
+        if (!$post) {
+            throw new ValidationException('Postingan tidak ditemukan.');
+        }
+        $revision = self::findRevision($revisionId);
+        if (!$revision || (int)$revision['entity_id'] !== $postId) {
+            throw new ValidationException('Revisi tidak ditemukan.');
+        }
+        self::snapshot($post, 'sebelum memulihkan revisi #' . $revisionId);
+        Database::update('posts', [
+            'title' => (string)$revision['title'],
+            'body' => (string)$revision['body'],
+            'content_json' => $revision['content_json'] ?? null,
+        ], 'id = ? AND blog_id = ?', [$postId, Context::blogId()]);
+        self::flushCaches();
+        return $revisionId;
+    }
+
+    /**
+     * One revision of this blog, scoped so an id from another blog is invisible.
+     *
+     * @return array<string, mixed>|null
+     */
+    public static function findRevision(int $revisionId): ?array
+    {
+        if ($revisionId <= 0) {
+            return null;
+        }
+        return Database::fetch(
+            'SELECT * FROM revisions
+             WHERE id = ? AND blog_id = ? AND entity_type = "post" LIMIT 1',
+            [$revisionId, Context::blogId()]
+        );
+    }
+
     public static function trash(int $id): void
     {
         $post = self::find($id);

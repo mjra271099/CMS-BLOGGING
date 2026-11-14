@@ -208,32 +208,46 @@ $categoriesFlat = array_merge($categoryNames);
                 <input id="og_image" type="text" name="og_image" value="<?= e((string)($post['og_image'] ?? '')) ?>" placeholder="Default: gambar unggulan">
             </div>
 
-            <?php if ($isEdit): ?>
+            <?php if ($isEdit && $revisions): ?>
             <div class="card">
                 <h2>Riwayat Revisi</h2>
-                <?php if ($revisions): ?>
-                    <ul class="revision-list">
-                        <?php foreach ($revisions as $revision): ?>
-                            <li>
-                                <strong><?= e(AdminUi::dateTime((string)$revision['created_at'])) ?></strong>
-                                <span class="muted"><?= e((string)($revision['title'] ?? '')) ?></span>
-                                <form method="post" action="<?= e($adminBase . '?view=post-edit&id=' . (int)$post['id']) ?>" class="inline">
-                                    <input type="hidden" name="action" value="post.restore-revision">
-                                    <?= \App\Core\Csrf::field() ?>
-                                    <input type="hidden" name="revision_id" value="<?= (int)$revision['id'] ?>">
-                                    <button type="submit" class="secondary small">Pulihkan</button>
-                                </form>
-                            </li>
-                        <?php endforeach; ?>
-                    </ul>
-                <?php else: ?>
-                    <p class="muted">Belum ada revisi tersimpan.</p>
-                <?php endif; ?>
+                <ul class="revision-list">
+                    <?php foreach ($revisions as $revision): ?>
+                        <li>
+                            <strong><?= e(AdminUi::dateTime((string)$revision['created_at'])) ?></strong>
+                            <span class="muted"><?= e((string)($revision['title'] ?? '')) ?></span>
+                            <?php
+                            // The restore form lives after the main edit form: HTML
+                            // forbids nested forms, so the button binds to it by id.
+                            $restoreFormId = 'revision-restore-' . (int)$revision['id'];
+                            ?>
+                            <button type="submit" form="<?= e($restoreFormId) ?>" class="secondary small">Pulihkan</button>
+                        </li>
+                    <?php endforeach; ?>
+                </ul>
+            </div>
+            <?php elseif ($isEdit): ?>
+            <div class="card">
+                <h2>Riwayat Revisi</h2>
+                <p class="muted">Belum ada revisi tersimpan.</p>
             </div>
             <?php endif; ?>
         </div>
     </div>
 </form>
+
+<?php if ($isEdit && $revisions): ?>
+    <?php foreach ($revisions as $revision): ?>
+        <form method="post" id="revision-restore-<?= (int)$revision['id'] ?>"
+              action="<?= e($adminBase . '?view=post-edit&id=' . (int)$post['id']) ?>" hidden>
+            <input type="hidden" name="action" value="post.restore-revision">
+            <?= \App\Core\Csrf::field() ?>
+            <input type="hidden" name="id" value="<?= (int)$post['id'] ?>">
+            <input type="hidden" name="revision_id" value="<?= (int)$revision['id'] ?>">
+            <input type="hidden" name="_redirect" value="admin/index.php?view=post-edit&id=<?= (int)$post['id'] ?>">
+        </form>
+    <?php endforeach; ?>
+<?php endif; ?>
 
 <div class="media-modal" data-media-modal hidden>
     <div class="media-modal-inner">
