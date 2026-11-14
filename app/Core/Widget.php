@@ -532,14 +532,19 @@ final class Widget
         $image = post_image_url($post);
         $url = e(post_url($post));
         $title = (string)$post['title'];
-        $initial = e(mb_strtoupper(mb_substr(trim($title), 0, 1)));
         $output = '<article class="featured-item">';
-        $output .= '<a class="featured-thumb' . ($image === '' ? ' is-placeholder' : '') . '"'
-            . ' href="' . $url . '"' . ($image === '' ? ' tabindex="-1" aria-hidden="true"' : '') . '>';
-        $output .= $image !== ''
-            ? '<img src="' . e($image) . '" alt="' . e($title) . '" loading="lazy" decoding="async">'
-            : '<span class="featured-initial" aria-hidden="true">' . $initial . '</span>';
-        $output .= '</a>';
+        if ($image !== '') {
+            $output .= '<a class="featured-thumb" href="' . $url . '">'
+                . '<img src="' . e($image) . '" alt="' . e($title) . '" loading="lazy" decoding="async"></a>';
+        } else {
+            // No image: show the initial in a non-interactive block. It must
+            // not be an <a>, because a link inside aria-hidden would still be
+            // focusable and breaks screen readers. The title link below is
+            // the single affordance, so nothing is lost.
+            $initial = mb_strtoupper(mb_substr(trim($title), 0, 1));
+            $output .= '<div class="featured-thumb is-placeholder" aria-hidden="true">'
+                . '<span class="featured-initial">' . e($initial) . '</span></div>';
+        }
         $output .= '<div class="featured-body"><h3><a href="' . $url . '">' . e($title) . '</a></h3>'
             . '<p>' . e(excerpt($post, 110)) . '</p></div></article>';
         return $output;
@@ -739,14 +744,39 @@ final class Widget
     {
         $body = (string)($context['body'] ?? '');
         $depth = max(1, min(6, (int)($config['depth'] ?? 3)));
-        if ($body === '' || !preg_match_all('/<h([1-' . $depth . '])[^>]*>(.*?)</h[1-' . $depth . ']>/is', $body, $matches, PREG_SET_ORDER)) {
+        // The closing tag used to be written as `</h...`, whose slash ended
+        // the pattern early and made preg_match_all() fail with "Unknown
+        // modifier 'h'". Escaping it keeps the whole tag inside the regex.
+        if ($body === '' || !preg_match_all(
+            '/<h([1-' . $depth . '])[^>]*>(.*?)<\/h[1-' . $depth . ']>/is',
+            $body,
+            $matches,
+            PREG_SET_ORDER
+        )) {
             return '';
         }
         $output = '<nav class="widget-content toc"><ul>';
-        foreach ($matches as $index => $match) {
-            $label = Html::plain($match[2]);
-            $id = 'toc-' . ($index + 1);
-            $output .= '<li><a href="#' . $id . '">' . e($label) . '</a></li>';
+        $seen = [];
+        foreach ($matches as $match) {
+            $label = trim(Html::plain($match[2]));
+            if ($label === '') {
+                continue;
+            }
+            // Mirror the slug the front-end builds from the heading text so
+            // both produce the same anchor. Duplicates get a numeric suffix to
+            // stay unique, again matching the front-end behaviour.
+            $slug = 'h-' . trim(preg_replace('/[^a-z0-9]+/', '-', mb_strtolower($label)) ?? '', '-');
+            $slug = substr($slug, 0, 60) ?: 'h-section';
+            if (isset($seen[$slug])) {
+                $seen[$slug]++;
+                $slug .= '-' . $seen[$slug];
+            } else {
+                $seen[$slug] = 1;
+            }
+            $output .= '<li><a href="#' . e($slug) . '">' . e($label) . '</a></li>';
+        }
+        if ($output === '<nav class="widget-content toc"><ul>') {
+            return '';
         }
         return $output . '</ul></nav>';
     }

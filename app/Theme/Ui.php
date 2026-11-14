@@ -451,11 +451,13 @@ final class Ui
         $variant = $variant ?? $this->theme->setting('card_style', 'card');
         $classes = 'post-card card-' . $variant . (((string)($post['sticky'] ?? '0') === '1') ? ' is-sticky' : '');
         $out = '<article class="' . e($classes) . '">';
-        $out .= '<a class="card-media" href="' . e(post_url($post)) . '" aria-hidden="true">';
+        // Decorative cover: the title link below is the real affordance, so
+        // this must not be a focusable link inside aria-hidden.
+        $out .= '<div class="card-media" aria-hidden="true">';
         $out .= $image !== ''
-            ? '<img src="' . e($image) . '" alt="' . e($post['title']) . '" loading="lazy" decoding="async">'
+            ? '<img src="' . e($image) . '" alt="" loading="lazy" decoding="async">'
             : '<span class="media-fallback"><span>' . e(mb_substr((string)$post['title'], 0, 1)) . '</span></span>';
-        $out .= '</a>';
+        $out .= '</div>';
         $out .= '<div class="card-body">';
         if ($categories) {
             $out .= '<div class="card-labels">';

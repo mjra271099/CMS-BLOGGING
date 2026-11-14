@@ -166,7 +166,10 @@ table { border-collapse: collapse; width: 100%; }
 .lang-option {
   min-width: 30px; padding: .28rem .5rem; border-radius: 999px; text-align: center;
   font-size: .72rem; font-weight: 700; letter-spacing: .04em;
-  color: var(--t-muted); background: transparent; border: 1px solid transparent;
+  /* Slightly darker than --t-muted: the pill's tinted background drops the
+     contrast of plain muted text to 4.25, just under the 4.5 minimum. */
+  color: color-mix(in srgb, var(--t-text) 68%, var(--t-surface));
+  background: transparent; border: 1px solid transparent;
 }
 .lang-option:hover { color: var(--t-primary); }
 .lang-option.is-active {
@@ -232,7 +235,11 @@ table { border-collapse: collapse; width: 100%; }
 .label {
   display: inline-block; padding: .18rem .6rem; border-radius: 999px;
   background: color-mix(in srgb, var(--t-primary) 10%, transparent);
-  color: var(--t-primary); font-size: .72rem; font-weight: 700; letter-spacing: .04em; text-transform: uppercase;
+  /* Darkened primary: the raw colour lands right on the 4.5 contrast edge
+     against the tinted chip, which fails on some themes. Mixing in text
+     colour keeps it readable without hard-coding a blue. */
+  color: color-mix(in srgb, var(--t-primary) 78%, var(--t-text));
+  font-size: .72rem; font-weight: 700; letter-spacing: .04em; text-transform: uppercase;
 }
 .label:hover { background: var(--t-primary); color: #fff; }
 .card-title { font-size: clamp(1.1rem, .6vw + 1rem, 1.32rem); margin: 0; letter-spacing: -.02em; }

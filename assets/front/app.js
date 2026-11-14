@@ -236,13 +236,23 @@
   });
 
   // ---------------------------------------------------------------
-  // Table of contents offset for sticky headers
+  // Table of contents anchors
+  //
+  // The TOC widget links to `#h-<slug>`, so headings need matching ids.
+  // Duplicate titles get a numeric suffix on both sides to stay unique.
   // ---------------------------------------------------------------
   if (doc.querySelector('.toc')) {
+    const seen = new Map();
     doc.querySelectorAll('.article-body h2, .article-body h3').forEach((heading) => {
       if (!heading.id) {
-        heading.id = 'h-' + heading.textContent.trim().toLowerCase()
+        let slug = 'h-' + heading.textContent.trim().toLowerCase()
           .replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 60);
+        if (slug === 'h-') slug = 'h-section';
+        // First heading keeps the bare slug; later duplicates get -2, -3, …
+        // matching what Widget::renderToc() links to.
+        const count = seen.get(slug) || 0;
+        seen.set(slug, count + 1);
+        heading.id = count === 0 ? slug : slug + '-' + (count + 1);
       }
     });
   }
