@@ -443,6 +443,31 @@ final class Ui
     // ------------------------------------------------------------------
     // Post rendering
     // ------------------------------------------------------------------
+
+    /**
+     * Wrap every table in a horizontal scroll container.
+     *
+     * A wide table (many columns, or a cell min-width) can be wider than the
+     * article column; without a scroll wrapper it would push the whole page
+     * sideways on narrow screens. The wrapper keeps the table a real <table>
+     * while confining any overflow to the wrapper itself.
+     */
+    public static function wrapTables(string $html): string
+    {
+        if (stripos($html, '<table') === false) {
+            return $html;
+        }
+        // Tables do not nest, so a non-greedy match from <table> to </table>
+        // is safe. Wrap only tables that are not already wrapped.
+        return (string)preg_replace_callback(
+            '#(<table\b[^>]*>.*?</table>)#is',
+            static function (array $m): string {
+                return '<div class="table-scroll">' . $m[1] . '</div>';
+            },
+            $html
+        );
+    }
+
     public function postCard(array $post, ?string $variant = null): string
     {
         $image = post_image_url($post);
@@ -575,7 +600,7 @@ final class Ui
         if ($image !== '') {
             $out .= '<figure class="article-cover"><img src="' . e($image) . '" alt="' . e($post['title']) . '" loading="eager" decoding="async"></figure>';
         }
-        $out .= '<div class="article-body prose" id="article-body">' . (string)$post['body'] . '</div>';
+        $out .= '<div class="article-body prose" id="article-body">' . self::wrapTables((string)$post['body']) . '</div>';
         if ($tags) {
             $out .= '<div class="article-tags">';
             foreach ($tags as $tag) {

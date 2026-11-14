@@ -790,7 +790,10 @@ a { text-underline-offset: 3px; }
 .prose table { font-size: .9em; }
 .prose table th { background: color-mix(in srgb, var(--t-primary) 5%, var(--t-bg)); }
 .prose table th,
-.prose table td { border: var(--amp-hairline); }
+.prose table td { border: var(--amp-hairline); min-width: 4rem; }
+/* Wide tables (many columns, or the cell min-width above) scroll inside their
+   own box instead of stretching the article and the page. */
+.prose .table-scroll { max-width: 100%; overflow-x: auto; }
 
 .prose figcaption { font-size: .8rem; }
 .prose hr { border-top: var(--amp-hairline); }
