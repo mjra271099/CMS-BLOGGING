@@ -744,6 +744,7 @@ final class AdminController
             'title' => 'Tata Letak',
             'sections' => $sections,
             'types' => Widget::types(),
+            'categories' => Taxonomy::categories(),
             'themeAreas' => $active->areas(),
             'editId' => (int)($_GET['edit'] ?? 0),
             'previewTargets' => $targets,
@@ -766,6 +767,28 @@ final class AdminController
         $config = json_decode($configJson, true);
         if (!is_array($config)) {
             throw new \App\Core\ValidationException('Konfigurasi widget harus JSON yang valid.');
+        }
+        // The visible form fields are authoritative: merge their values over
+        // the JSON baseline so edits actually persist. Checkboxes are absent
+        // from the POST body when unchecked, hence the explicit reset.
+        $schema = (array)(Widget::types()[$type]['fields'] ?? []);
+        $posted = $_POST['config'] ?? [];
+        if (is_array($posted)) {
+            foreach ($schema as $fieldKey => $field) {
+                $fieldType = (string)($field['type'] ?? 'text');
+                if (!array_key_exists($fieldKey, $posted)) {
+                    if ($fieldType === 'checkbox') {
+                        $config[$fieldKey] = 0;
+                    }
+                    continue;
+                }
+                $value = $posted[$fieldKey];
+                $config[$fieldKey] = match ($fieldType) {
+                    'checkbox' => !empty($value) ? 1 : 0,
+                    'number' => (int)$value,
+                    default => is_scalar($value) ? (string)$value : '',
+                };
+            }
         }
         $payload = [
             'title' => trim((string)($_POST['title'] ?? '')),

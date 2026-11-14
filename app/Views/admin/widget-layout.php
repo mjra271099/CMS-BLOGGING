@@ -6,6 +6,7 @@ declare(strict_types=1);
  *
  * @var array $sections
  * @var array $types
+ * @var array $categories
  * @var array $themeAreas
  * @var int   $editId
  */
@@ -15,6 +16,7 @@ use App\Http\AdminUi;
 
 $sections = $sections ?? [];
 $types = $types ?? Widget::types();
+$categories = $categories ?? [];
 $themeAreas = $themeAreas ?? [];
 $editId = (int)($editId ?? 0);
 $previewTargets = $previewTargets ?? ['home' => ['label' => 'Beranda', 'url' => url()]];
@@ -165,9 +167,24 @@ $editingFields = (array)($types[$editingType]['fields'] ?? []);
                             <label class="checkbox"><input type="checkbox" name="config[<?= e((string)$fieldKey) ?>]" value="1"
                                 <?= !empty($fieldValue) ? ' checked' : '' ?>> <?= e((string)($field['label'] ?? $fieldKey)) ?></label>
                         <?php elseif ($fieldType === 'select'): ?>
+                            <?php
+                            // `source` lets a field pull its options from the
+                            // database instead of the static registry (used by
+                            // the category picker).
+                            $fieldOptions = (array)($field['options'] ?? []);
+                            if (($field['source'] ?? '') === 'categories') {
+                                $fieldOptions = [];
+                                foreach ($categories as $categoryRow) {
+                                    $fieldOptions[(string)$categoryRow['slug']] = (string)$categoryRow['name'];
+                                }
+                                if ($fieldOptions === []) {
+                                    $fieldOptions = ['' => 'Belum ada kategori'];
+                                }
+                            }
+                            ?>
                             <label for="<?= e($fieldId) ?>"><?= e((string)($field['label'] ?? $fieldKey)) ?></label>
                             <select id="<?= e($fieldId) ?>" name="config[<?= e((string)$fieldKey) ?>]">
-                                <?php foreach ((array)($field['options'] ?? []) as $optionKey => $optionLabel): ?>
+                                <?php foreach ($fieldOptions as $optionKey => $optionLabel): ?>
                                     <option value="<?= e((string)$optionKey) ?>"<?= (string)$fieldValue === (string)$optionKey ? ' selected' : '' ?>>
                                         <?= e((string)$optionLabel) ?>
                                     </option>

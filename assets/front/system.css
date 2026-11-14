@@ -365,6 +365,23 @@ a { text-underline-offset: 3px; }
 
 .featured-thumb img { width: 100%; height: 100%; object-fit: cover; }
 
+/* Posts with no image still get a full-size thumbnail slot, so cards keep
+   their alignment; the initial stands in for the missing cover. */
+.featured-thumb.is-placeholder {
+  display: grid;
+  place-items: center;
+  background: linear-gradient(135deg, color-mix(in srgb, var(--t-primary) 22%, var(--t-surface)), var(--t-surface));
+}
+
+.featured-initial {
+  font-family: var(--t-font-head);
+  font-size: clamp(2.2rem, 6vw, 3.4rem);
+  font-weight: 800;
+  line-height: 1;
+  color: color-mix(in srgb, var(--t-primary) 45%, var(--t-surface));
+  user-select: none;
+}
+
 .featured-body h3 { margin: 0 0 4px; font-size: 1rem; line-height: 1.34; }
 .featured-body h3 a { color: var(--t-text); }
 .featured-body h3 a:hover { color: var(--t-primary); }

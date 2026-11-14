@@ -3,6 +3,8 @@ declare(strict_types=1);
 
 namespace App\Core;
 
+use App\Models\Taxonomy;
+
 /**
  * Widget engine: registry, visibility resolution, ordering and rendering.
  * Widgets live in the `widgets` table per blog and per layout area.
@@ -44,6 +46,16 @@ final class Widget
                 'icon' => 'star',
                 'description' => 'Artikel bertanda unggulan.',
                 'fields' => [
+                    'numItemsToShow' => ['type' => 'number', 'label' => 'Jumlah item', 'default' => 3, 'min' => 1, 'max' => 12],
+                    'layout' => ['type' => 'select', 'label' => 'Gaya', 'default' => 'list', 'options' => ['list' => 'Daftar', 'cards' => 'Kartu', 'carousel' => 'Carousel horizontal']],
+                ],
+            ],
+            'FeaturedCategory' => [
+                'label' => 'Unggulan per Kategori',
+                'icon' => 'tag',
+                'description' => 'Artikel terbaru dari satu kategori.',
+                'fields' => [
+                    'category' => ['type' => 'select', 'label' => 'Kategori', 'source' => 'categories', 'default' => ''],
                     'numItemsToShow' => ['type' => 'number', 'label' => 'Jumlah item', 'default' => 3, 'min' => 1, 'max' => 12],
                     'layout' => ['type' => 'select', 'label' => 'Gaya', 'default' => 'list', 'options' => ['list' => 'Daftar', 'cards' => 'Kartu', 'carousel' => 'Carousel horizontal']],
                 ],
@@ -364,6 +376,7 @@ final class Widget
                 'PopularPosts' => self::renderPostList($config, 'views', $context),
                 'RecentPosts' => self::renderPostList($config, 'recent', $context),
                 'FeaturedPosts' => self::renderFeatured($config, $context),
+                'FeaturedCategory' => self::renderFeaturedCategory($config, $context),
                 'Label', 'Categories' => self::renderLabels($config),
                 'BlogSearch' => self::renderSearch($config),
                 'Archive' => self::renderArchive($config),
@@ -451,21 +464,85 @@ final class Widget
         if (!$posts) {
             return '';
         }
+        return self::renderFeaturedItems($posts, $config);
+    }
+
+    /**
+     * Featured-style block limited to one category.
+     *
+     * Unlike FeaturedPosts this ignores the `featured` flag: it lists the
+     * newest published posts filed under the chosen category, so it stays
+     * useful without anyone tagging posts by hand.
+     */
+    private static function renderFeaturedCategory(array $config, array $context): string
+    {
+        $slug = trim((string)($config['category'] ?? ''));
+        if ($slug === '') {
+            return '';
+        }
+        $category = Taxonomy::categoryBySlug($slug);
+        if (!$category) {
+            return '';
+        }
+        $limit = max(1, min(12, (int)($config['numItemsToShow'] ?? 3)));
+        $posts = Database::fetchAll(
+            "SELECT p.*, u.display_name AS author, u.username AS username FROM posts p
+             JOIN users u ON u.id = p.author_id
+             JOIN post_categories pc ON pc.post_id = p.id
+             WHERE p.blog_id = ? AND p.status = 'published' AND p.published_at <= NOW()
+               AND pc.category_id = ?
+             ORDER BY p.published_at DESC LIMIT {$limit}",
+            [Context::blogId(), (int)$category['id']]
+        );
+        if (!$posts) {
+            return '';
+        }
+        return self::renderFeaturedItems($posts, $config);
+    }
+
+    /**
+     * Shared markup for the featured-style blocks (posts + category).
+     *
+     * @param array<int, array<string, mixed>> $posts
+     * @param array<string, mixed> $config
+     */
+    private static function renderFeaturedItems(array $posts, array $config): string
+    {
         $layout = (string)($config['layout'] ?? 'list');
         if ($layout === 'carousel') {
             return self::renderFeaturedCarousel($posts);
         }
         $output = '<div class="widget-content featured-posts featured-' . e($layout) . '">';
         foreach ($posts as $post) {
-            $image = post_image_url($post);
-            $output .= '<article class="featured-item">';
-            if ($image !== '') {
-                $output .= '<a class="featured-thumb" href="' . e(post_url($post)) . '"><img src="' . e($image) . '" alt="' . e($post['title']) . '" loading="lazy"></a>';
-            }
-            $output .= '<div class="featured-body"><h3><a href="' . e(post_url($post)) . '">' . e($post['title']) . '</a></h3>'
-                . '<p>' . e(excerpt($post, 110)) . '</p></div></article>';
+            $output .= self::featuredItem($post);
         }
         return $output . '</div>';
+    }
+
+    /**
+     * One card of a featured-style block.
+     *
+     * Posts without an image get an initial placeholder instead of losing the
+     * whole thumbnail slot, so cards stay aligned and clickable.
+     *
+     * @param array<string, mixed> $post
+     */
+    private static function featuredItem(array $post): string
+    {
+        $image = post_image_url($post);
+        $url = e(post_url($post));
+        $title = (string)$post['title'];
+        $initial = e(mb_strtoupper(mb_substr(trim($title), 0, 1)));
+        $output = '<article class="featured-item">';
+        $output .= '<a class="featured-thumb' . ($image === '' ? ' is-placeholder' : '') . '"'
+            . ' href="' . $url . '"' . ($image === '' ? ' tabindex="-1" aria-hidden="true"' : '') . '>';
+        $output .= $image !== ''
+            ? '<img src="' . e($image) . '" alt="' . e($title) . '" loading="lazy" decoding="async">'
+            : '<span class="featured-initial" aria-hidden="true">' . $initial . '</span>';
+        $output .= '</a>';
+        $output .= '<div class="featured-body"><h3><a href="' . $url . '">' . e($title) . '</a></h3>'
+            . '<p>' . e(excerpt($post, 110)) . '</p></div></article>';
+        return $output;
     }
 
     /**
@@ -483,14 +560,7 @@ final class Widget
         $output .= '<div class="carousel-track" data-carousel-track tabindex="0"'
             . ' role="group" aria-label="' . e(__('featured_carousel')) . '">';
         foreach ($posts as $post) {
-            $image = post_image_url($post);
-            $output .= '<article class="featured-item">';
-            if ($image !== '') {
-                $output .= '<a class="featured-thumb" href="' . e(post_url($post)) . '">'
-                    . '<img src="' . e($image) . '" alt="' . e($post['title']) . '" loading="lazy" decoding="async"></a>';
-            }
-            $output .= '<div class="featured-body"><h3><a href="' . e(post_url($post)) . '">' . e($post['title']) . '</a></h3>'
-                . '<p>' . e(excerpt($post, 110)) . '</p></div></article>';
+            $output .= self::featuredItem($post);
         }
         $output .= '</div>';
         $output .= '<button type="button" class="carousel-nav carousel-nav--prev" data-carousel-prev'
