@@ -1,4 +1,4 @@
 ---
 deployment:
   tasks:
-    - /bin/echo "CPANEL DEPLOYMENT TEST"
+    - /bin/bash -c 'set -e; DEPLOYPATH=/home2/justpas1/blog.v-dey.com; cd /home2/justpas1/CMS-BLOGGING; /bin/tar --exclude="./.git" --exclude="./.env" --exclude="./.cpanel.yml" --exclude="./storage/*" --exclude="./uploads/*" -cf - . | /bin/tar -xf - -C "$DEPLOYPATH"'
