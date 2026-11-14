@@ -1,0 +1,6 @@
+---
+deployment:
+  tasks:
+    - export DEPLOYPATH=/home2/justpas1/blog.v-dey.com/
+    - /usr/bin/rsync -av --exclude='.git/' --exclude='.env' --exclude='.cpanel.yml' ./ $DEPLOYPATH
+
