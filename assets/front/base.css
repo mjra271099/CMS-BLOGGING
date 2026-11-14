@@ -223,8 +223,20 @@ table { border-collapse: collapse; width: 100%; }
   border: 1px solid var(--t-border); border-radius: var(--t-radius);
   overflow: hidden; box-shadow: var(--t-shadow);
   transition: transform var(--t-transition), box-shadow var(--t-transition);
+  /* Containing block for the stretched title link below. */
+  position: relative;
 }
 .post-card:hover { transform: translateY(-3px); box-shadow: var(--t-shadow-lg); }
+/* The whole card is clickable: the title link paints an invisible overlay
+   across it. Siblings meant to keep their own navigation (category chips)
+   are lifted above it with a z-index. */
+.post-card .card-title a::after {
+  content: ""; position: absolute; inset: 0; z-index: 0;
+}
+.post-card .card-labels { position: relative; z-index: 1; }
+/* The overlay makes the card a link target, but the underlying element is a
+   plain box, so set the cursor explicitly for the whole clickable area. */
+.post-card .card-title a, .post-card .card-title a::after { cursor: pointer; }
 .post-card.is-sticky { outline: 2px solid color-mix(in srgb, var(--t-primary) 45%, transparent); }
 .card-media { display: block; aspect-ratio: 16 / 10; overflow: hidden; background: linear-gradient(135deg, color-mix(in srgb, var(--t-primary) 18%, var(--t-bg)), var(--t-bg)); }
 .card-media img { width: 100%; height: 100%; object-fit: cover; transition: transform .5s ease; }

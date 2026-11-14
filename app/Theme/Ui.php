@@ -451,8 +451,9 @@ final class Ui
         $variant = $variant ?? $this->theme->setting('card_style', 'card');
         $classes = 'post-card card-' . $variant . (((string)($post['sticky'] ?? '0') === '1') ? ' is-sticky' : '');
         $out = '<article class="' . e($classes) . '">';
-        // Decorative cover: the title link below is the real affordance, so
-        // this must not be a focusable link inside aria-hidden.
+        // The cover is decorative in the a11y tree; the title link below is
+        // stretched over the whole card (see `.card-title a::after`), so the
+        // image and every empty area still open the post without nesting links.
         $out .= '<div class="card-media" aria-hidden="true">';
         $out .= $image !== ''
             ? '<img src="' . e($image) . '" alt="" loading="lazy" decoding="async">'
@@ -460,6 +461,8 @@ final class Ui
         $out .= '</div>';
         $out .= '<div class="card-body">';
         if ($categories) {
+            // Category chips sit above the stretched title link so they open
+            // the archive instead of the post.
             $out .= '<div class="card-labels">';
             foreach (array_slice($categories, 0, 2) as $category) {
                 $out .= '<a class="label" href="' . e(category_url($category)) . '">' . e($category['name']) . '</a>';
