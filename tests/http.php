@@ -64,6 +64,20 @@ function section(string $name): void
     echo "\n== {$name} ==\n";
 }
 
+/**
+ * Decode the JSON-LD graph embedded in a page, or false when missing/invalid.
+ *
+ * @return array<string, mixed>|false
+ */
+function jsonLd(string $html): array|false
+{
+    if (!preg_match('#<script type="application/ld\+json">(.*?)</script>#s', $html, $match)) {
+        return false;
+    }
+    $decoded = json_decode($match[1], true);
+    return is_array($decoded) ? $decoded : false;
+}
+
 echo "Testing {$base}\n";
 
 section('Public pages');
@@ -75,6 +89,9 @@ check('Home has canonical link', str_contains($home['body'], 'rel="canonical"'))
 check('Home has RSS alternate', str_contains($home['body'], 'application/rss+xml'));
 check('Home loads base.css', str_contains($home['body'], 'assets/front/base.css'));
 check('Home loads shared system.css', str_contains($home['body'], 'assets/front/system.css'));
+$homeJsonLd = jsonLd($home['body']);
+check('Home emits a decodable JSON-LD graph', is_array($homeJsonLd) && ($homeJsonLd['@context'] ?? '') === 'https://schema.org');
+check('Home JSON-LD has Organization and WebSite', is_array($homeJsonLd) && in_array('Organization', array_column((array)($homeJsonLd['@graph'] ?? []), '@type'), true) && in_array('WebSite', array_column((array)($homeJsonLd['@graph'] ?? []), '@type'), true));
 
 section('SEO endpoints');
 $sitemap = request($base . '/sitemap.xml');
@@ -99,6 +116,8 @@ if ($firstPostPath !== '') {
     check('Post permalink returns 200', $post['status'] === 200, 'status=' . $post['status']);
     check('Post has one <main>', substr_count(strtolower($post['body']), '<main') === 1);
     check('Post has article schema', str_contains($post['body'], '"@type":"BlogPosting"') || str_contains($post['body'], 'BlogPosting'));
+    $postJsonLd = jsonLd($post['body']);
+    check('Post emits a decodable JSON-LD graph', is_array($postJsonLd) && in_array('BlogPosting', array_column((array)($postJsonLd['@graph'] ?? []), '@type'), true));
 }
 $page = request($base . '/p/tentang-kami.html');
 check('Page permalink returns 200', $page['status'] === 200, 'status=' . $page['status']);

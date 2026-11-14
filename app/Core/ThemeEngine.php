@@ -39,7 +39,30 @@ final class ThemeEngine
                 $registered++;
             }
         }
-        return ['registered' => $registered, 'total' => count(Theme::bundledSlugs())];
+
+        // Prune rows for bundled themes whose folder is gone (the catalog is
+        // the source of truth). Themes still used by a blog are kept so the
+        // site never falls back to another design without a human decision,
+        // and uploaded themes are never touched.
+        $removed = 0;
+        $slugs = Theme::bundledSlugs();
+        if ($slugs !== []) {
+            $placeholders = implode(',', array_fill(0, count($slugs), '?'));
+            $stale = Database::run(
+                'SELECT id, slug FROM themes WHERE source = "bundled" AND slug NOT IN (' . $placeholders . ')',
+                $slugs
+            )->fetchAll();
+            foreach ($stale as $row) {
+                $inUse = (int)Database::value('SELECT COUNT(*) FROM blogs WHERE theme = ?', [(string)$row['slug']]);
+                if ($inUse > 0) {
+                    continue;
+                }
+                Database::delete('themes', 'id = ?', [(int)$row['id']]);
+                $removed++;
+            }
+        }
+
+        return ['registered' => $registered, 'removed' => $removed, 'total' => count($slugs)];
     }
 
     public static function activate(string $slug): void

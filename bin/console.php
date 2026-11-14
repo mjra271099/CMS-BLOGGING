@@ -107,7 +107,7 @@ try {
                     'name' => $name,
                     'slug' => Slug::make($name, 'blog'),
                     'description' => '',
-                    'theme' => 'aurora',
+                    'theme' => Theme::defaultSlug(),
                     'is_primary' => 1,
                     'status' => 'active',
                 ]);
@@ -127,7 +127,7 @@ try {
                 Settings::setMany([
                     'site_name' => $name,
                     'site_url' => $url,
-                    'theme' => 'aurora',
+                    'theme' => Theme::defaultSlug(),
                 ], $blogId);
                 log_activity('install', 'CMS dipasang melalui console');
             });
@@ -145,6 +145,9 @@ try {
             $prepare();
             $result = ThemeEngine::syncBundledThemes();
             $out(sprintf('%d tema terdaftar dari %d tema bawaan.', $result['registered'], $result['total']));
+            if (($result['removed'] ?? 0) > 0) {
+                $out(sprintf('%d entri tema usang dibersihkan.', (int)$result['removed']));
+            }
             break;
 
         case 'seed':

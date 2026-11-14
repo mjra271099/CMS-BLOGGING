@@ -46,7 +46,10 @@ final class Seo
             'author' => (string)($page['author'] ?? ''),
             'article' => $page['article'] ?? null,
             'breadcrumbs' => (array)($page['breadcrumbs'] ?? []),
-            'schema' => [],
+            // Extra structured data hints supplied by the controller (see
+            // App\Services\StructuredData): author profile, listed posts,
+            // post visibility, …
+            'schema' => (array)($page['schema'] ?? []),
         ];
         return $meta;
     }
@@ -74,82 +77,19 @@ final class Seo
         return mb_strlen($text) > $max ? rtrim(mb_substr($text, 0, $max - 1)) . '…' : $text;
     }
 
+    /**
+     * JSON-LD graph for a page. The node catalogue (all 25 Google Search
+     * Gallery entries) lives in App\Services\StructuredData; this method stays
+     * as the stable entry point for callers that already used it.
+     */
     public static function structuredData(array $page): array
     {
-        $siteUrl = url();
-        $siteName = Settings::get('site_name', (string)(Context::blog()['name'] ?? 'Blog'));
-        $graph = [];
-
-        $org = [
-            '@type' => 'Organization',
-            '@id' => $siteUrl . '#organization',
-            'name' => Settings::get('organization_name', $siteName),
-            'url' => $siteUrl,
-        ];
-        if (Settings::get('organization_logo') !== '') {
-            $org['logo'] = ['@type' => 'ImageObject', 'url' => Settings::get('organization_logo')];
+        // Callers used to pass the flat meta payload; keep them working by
+        // presenting it as the `meta` branch StructuredData reads from.
+        if (!isset($page['meta']) && (isset($page['type']) || isset($page['title']))) {
+            $page = ['meta' => $page] + $page;
         }
-        $graph[] = $org;
-
-        $website = [
-            '@type' => 'WebSite',
-            '@id' => $siteUrl . '#website',
-            'url' => $siteUrl,
-            'name' => $siteName,
-            'publisher' => ['@id' => $siteUrl . '#organization'],
-            'potentialAction' => [
-                '@type' => 'SearchAction',
-                'target' => ['@type' => 'EntryPoint', 'urlTemplate' => url('search?q={search_term_string}')],
-                'query-input' => 'required name=search_term_string',
-            ],
-        ];
-        $graph[] = $website;
-
-        if (($page['type'] ?? '') === 'article' && !empty($page['article'])) {
-            $article = $page['article'];
-            $graph[] = [
-                '@type' => 'BlogPosting',
-                '@id' => $page['canonical'] . '#article',
-                'headline' => html_entity_decode((string)$article['title']),
-                'description' => (string)$page['description'],
-                'mainEntityOfPage' => ['@type' => 'WebPage', '@id' => $page['canonical']],
-                'image' => $page['image'] !== '' ? [$page['image']] : [],
-                'datePublished' => $page['published'],
-                'dateModified' => $page['modified'] ?: $page['published'],
-                'author' => ['@type' => 'Person', 'name' => (string)$page['author']],
-                'publisher' => ['@id' => $siteUrl . '#organization'],
-                'wordCount' => str_word_count(strip_tags((string)$article['body'])),
-                'articleSection' => array_values((array)($article['categories'] ?? [])),
-            ];
-            $graph[] = [
-                '@type' => 'BreadcrumbList',
-                'itemListElement' => array_values(array_map(
-                    static fn(array $crumb, int $i): array => [
-                        '@type' => 'ListItem',
-                        'position' => $i + 1,
-                        'name' => (string)($crumb['name'] ?? ''),
-                        'item' => (string)($crumb['url'] ?? url()),
-                    ],
-                    $page['breadcrumbs'] ?? [],
-                    array_keys($page['breadcrumbs'] ?? [])
-                )),
-            ];
-        } elseif (!empty($page['breadcrumbs'])) {
-            $graph[] = [
-                '@type' => 'BreadcrumbList',
-                'itemListElement' => array_values(array_map(
-                    static fn(array $crumb, int $i): array => [
-                        '@type' => 'ListItem',
-                        'position' => $i + 1,
-                        'name' => (string)($crumb['name'] ?? ''),
-                        'item' => (string)($crumb['url'] ?? url()),
-                    ],
-                    $page['breadcrumbs'],
-                    array_keys($page['breadcrumbs'])
-                )),
-            ];
-        }
-        return ['@context' => 'https://schema.org', '@graph' => $graph];
+        return StructuredData::graph($page);
     }
 
     /**

@@ -7,12 +7,12 @@ Aset Blogger asli (`assets/template-source.xml`) tidak diubah; CSS template lama
 ## Fitur
 
 - **Multi-blog & multi-user** — tabel `blogs`, `blog_users`, dan `Context` per-blog; setiap posting, halaman, kategori, tag, komentar, media, widget, dan pengaturan ter-scope `blog_id`. Pengguna bisa punya peran berbeda di tiap blog (`owner`, `admin`, `editor`, `author`, `contributor`).
-- **23 tema (termasuk AMP Theme) dengan satu bahasa desain** — tema folder-based dengan layout, CSS, screenshot, dan `functions.php` opsional. Palet, radius 5px, tipografi (Inter / Plus Jakarta Sans), spasi, dan gaya komponen berasal dari `assets/front/system.css`, jadi setiap tema identik secara visual dengan AMP Theme; yang berbeda hanya tata letak. Aktifkan, duplikat, ekspor, atau impor ZIP dari Admin → Tema.
+- **Dua tema bawaan: AMP Theme dan Schema Theme** — tema folder-based dengan layout, CSS, screenshot, dan `functions.php` opsional. Palet, radius, tipografi, spasi, dan gaya komponen berasal dari `assets/front/system.css`, jadi keduanya berbagi satu bahasa desain; yang berbeda token warna/radius dan tata letaknya. Aktifkan, duplikat, ekspor, atau impor ZIP dari Admin → Tema.
 - **Kustomisasi tema** — skema pengaturan per tema (`color`, `select`, `checkbox`, `text`), disimpan per blog di `theme_settings`, dan dipancarkan sebagai CSS variable (`--t-*`) tanpa menimpa file tema.
 - **Widget engine** — 20+ tipe widget dengan visibilitas (per halaman, perangkat, peran), urutan drag-and-drop, duplikasi, serta area widget per tema (`header`, `sidebar`, `footer-1..3`, `before-content`, `ad-top`, dan lainnya).
 - **Page builder** — 18 tipe blok (hero, heading, teks, gambar, galeri, tombol, CTA, kolom, fitur, video, kutipan, pemisah, spacer, HTML, postingan, FAQ, testimoni, newsletter) yang dikembalikan sebagai JSON tervalidasi lalu dirender sebagai HTML tersanitasi. Pratinjau iframe langsung (WYSIWYG) memakai tema aktif, lengkap dengan kontrol latar/jarak/lebar per bagian, tombol lebar perangkat, dan mode pratinjau besar.
 - **Dua bahasa antarmuka** — Bahasa Indonesia dan English untuk seluruh halaman depan (navigasi, arsip, pencarian, artikel, komentar, 404, tanggal/bulan, waktu relatif). Bahasa default diatur di Admin → Pengaturan; pengunjung dapat berganti lewat tombol ID/EN di header (disimpan di cookie `site_language`). Katalog string ada di `app/Lang/id.php` dan `app/Lang/en.php`, dipakai melalui helper global `__()`.
-- **SEO** — meta title/description, canonical, Open Graph/Twitter, Schema.org (`BlogPosting`, `BreadcrumbList`, `WebSite`), sitemap XML, robots.txt, RSS feed, redirect manager, dan audit SEO dengan skor.
+- **SEO** — meta title/description, canonical, Open Graph/Twitter, sitemap XML, robots.txt, RSS feed, redirect manager, dan audit SEO dengan skor. Mesin JSON-LD `App\Services\StructuredData` mendukung seluruh **25 jenis Structured Data Google Search Gallery** (Article, Breadcrumb, Carousel, Course list, Dataset, Discussion Forum, Education Q&A, Employer Aggregate Rating, Event, Image Metadata, Job Posting, Local Business, Math Solver, Movie, Organization, Product, Profile Page, Q&A Page, Recipe, Review Snippet, Software App, Speakable, Subscription, Vacation Rental, Video) dan hanya memancarkan node yang datanya benar-benar ada.
 - **Media library** — unggah gambar (JPG/PNG/GIF/WebP) dengan thumbnail otomatis, metadata alt/caption/folder, resize, dan penggantian file.
 - **Dashboard admin baru** — MVC (`AdminController` + `app/Views/admin/*`) menggantikan `admin/index.php` satu-file. Ringkasan, editor dengan autosave, kustomizer live preview, builder, moderasi komentar, pengaturan, backup, dan log aktivitas.
 - **Keamanan** — CSRF pada semua form, escaping output, sanitasi HTML pada konten/kustom HTML, password hash `PASSWORD_DEFAULT`, cookie `HttpOnly`/`SameSite`, security headers, folder implementasi (`app/`, `database/`, `storage/`, `tests/`, `bin/`) dan berkas kredensial diblokir dari HTTP, serta eksekusi PHP di `uploads/` dilarang.
@@ -32,7 +32,7 @@ Aset Blogger asli (`assets/template-source.xml`) tidak diubah; CSS template lama
 1. Unggah seluruh folder ke hosting.
 2. Buat database dan pengguna database, lalu beri hak akses penuh.
 3. Buka `https://domain-anda/install.php` dan isi host, port, nama database, pengguna, password, URL situs, serta akun administrator (password minimal 12 karakter).
-4. Installer menulis `config.php`, membuat skema v2 (25 tabel), mendaftarkan 22 tema, mengaktifkan tema `aurora`, lalu mengarahkan ke `admin/index.php`.
+4. Installer menulis `config.php`, membuat skema v2 (25 tabel), mendaftarkan 2 tema bawaan (AMP Theme dan Schema Theme), mengaktifkan `amp-theme`, lalu mengarahkan ke `admin/index.php`.
 5. Setelah selesai, hapus atau kunci kembali `install.php`.
 
 ### CLI
@@ -114,17 +114,23 @@ Tema adalah folder di `themes/<slug>/`:
 
 ```
 theme.json     metadata: slug, name, version, author, category, supports,
-               layouts, dan skema settings untuk kustomizer
+               layouts, dan skema settings untuk kustomizer; blok opsional
+               `structured_data` menyalakan grafik JSON-LD lanjutan
 layout.php     struktur halaman; memanggil method kit UI ($ui->head(), $ui->header(),
                $ui->content()/contentInner(), $ui->sidebar(), $ui->footer(), dll.)
-style.css      tata letak khusus tema. Gaya visual (warna, radius, tipografi,
-               bayangan) berasal dari assets/front/system.css + token
-               --t-* yang dihasilkan theme.json, jadi semua tema seragam.
+style.css      token identitas tema (--t-*). Gaya visual dasar (warna, radius,
+               tipografi, bayangan) berasal dari assets/front/system.css, jadi
+               semua tema seragam; aksen khas tema ditulis dengan awalan
+               `.theme-<slug>` agar tidak bocor ke tema lain (lihat
+               themes/schema-theme/style.css).
 screenshot.svg pratinjau di galeri tema
+structured-data.md  (opsional) pemetaan jenis Structured Data untuk tema
 functions.php  opsional; hook PHP tema
 ```
 
 Semua data diakses lewat kit `App\Theme\Ui`, sehingga tema pihak ketiga tidak pernah menyentuh database secara langsung dan aman dipasang dari ZIP.
+
+Tema yang tidak mendeklarasikan `structured_data` tetap memancarkan grafik minimal (Organization, WebSite, artikel, breadcrumb) sehingga outputnya tidak berubah. Schema Theme menyalakan seluruh 25 jenis galeri Google: node otomatis dari data halaman, node dari setelan tema (alamat bisnis, rating, kategori film, paywall), dan node manual lewat `schema_site`/`schema_pages`. Rincian dan contoh JSON ada di `themes/schema-theme/structured-data.md`.
 
 ## Bahasa
 
@@ -168,7 +174,7 @@ php -S 127.0.0.1:8090 -t . router.php
 php tests/http.php http://127.0.0.1:8090
 ```
 
-`tests/run.php` menguji utilitas inti, Settings/Cache, CRUD posting/halaman/taksonomi/komentar, widget & reorder, page builder, SEO, tema, dan hak akses. `tests/http.php` menguji routing, header keamanan, sitemap/feed, URL Blogger, shim legacy, dan bahwa berkas privat tidak dapat diakses.
+`tests/run.php` menguji utilitas inti, Settings/Cache, CRUD posting/halaman/taksonomi/komentar, widget & reorder, page builder, SEO, Structured Data (25 jenis galeri, node per rute, node manual, escape JSON), tema, dan hak akses. `tests/http.php` menguji routing, header keamanan, sitemap/feed, URL Blogger, shim legacy, dan bahwa berkas privat tidak dapat diakses.
 
 ## Catatan operasional
 

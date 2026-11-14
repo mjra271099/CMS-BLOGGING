@@ -1,0 +1,280 @@
+/* ==========================================================================
+   Schema Theme — token identitas + aksen visual.
+
+   Seperti tema bawaan lain, gaya dasar hidup di `assets/front/system.css`,
+   jadi struktur halaman tetap sama dan tema tidak pernah "rusak" ketika UI kit
+   berubah. Berkas ini menambahkan dua hal:
+
+     1. Token bawaan (:root) — indigo data-first + radius sedikit lebih besar.
+     2. Aksen identitas yang di-scope ke `.theme-schema-theme`, sehingga TIDAK
+        memengaruhi tema lain. Semuanya memakai var(--t-*) / color-mix agar
+        tetap benar di mode gelap dan tetap ikut Kustomisasi Tema.
+
+   Nilai token tetap dapat ditimpa dari Kustomisasi Tema (theme.json → CSS
+   inline di <head> yang dimuat setelah berkas ini).
+   ========================================================================== */
+
+:root {
+  --t-primary: #4338ca;
+  --t-primary-dark: #312e81;
+  --t-accent: #059669;
+
+  --t-bg: #f5f6fb;
+  --t-surface: #ffffff;
+  --t-text: #141a33;
+  --t-muted: #5b6478;
+  --t-border: #e3e6f3;
+
+  --t-radius: 8px;
+  --t-radius-sm: max(3px, calc(var(--t-radius) - 3px));
+
+  --t-font: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --t-font-head: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --t-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+
+  --t-base-size: 17px;
+  --t-width: 1160px;
+  --t-space: 24px;
+
+  --t-header-bg: #ffffff;
+  --t-header-fg: #141a33;
+  --t-footer-bg: #0c1027;
+  --t-footer-fg: #c4cbe4;
+  --t-body-bg: #f5f6fb;
+}
+
+/* Identitas tema: biru indigo + sorotan hijau "valid", seperti panel data. */
+.theme-schema-theme { accent-color: var(--t-primary); }
+
+.theme-schema-theme ::selection {
+  background: color-mix(in srgb, var(--t-primary) 22%, transparent);
+  color: var(--t-text);
+}
+
+/* ---------- 1. Header: garis grafik di tepi atas ----------------------- */
+
+.theme-schema-theme .site-header { position: relative; }
+
+.theme-schema-theme .site-header::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto;
+  height: 3px;
+  background: linear-gradient(90deg,
+    var(--t-primary) 0%,
+    var(--t-primary) 42%,
+    var(--t-accent) 42%,
+    var(--t-accent) 100%);
+  opacity: .95;
+}
+
+/* Marka: kotak tajam, bukan pil, supaya terasa "kotak data". */
+.theme-schema-theme .brand-mark {
+  border-radius: 10px;
+  background: linear-gradient(140deg, var(--t-primary), var(--t-primary-dark));
+  box-shadow: 0 6px 16px -12px color-mix(in srgb, var(--t-primary) 90%, transparent);
+}
+
+.theme-schema-theme .brand-name { letter-spacing: -.03em; }
+
+.theme-schema-theme .menu-list > li > a::after { height: 3px; border-radius: 3px; }
+
+.theme-schema-theme .menu-list > li > a:hover,
+.theme-schema-theme .menu-list > li > a[aria-current] {
+  background: color-mix(in srgb, var(--t-primary) 9%, transparent);
+}
+
+/* ---------- 2. Hero & blok unggulan ----------------------------------- */
+
+.theme-schema-theme .hero-area .widget {
+  border-top: 3px solid var(--t-primary);
+  border-radius: var(--t-radius) var(--t-radius) var(--t-radius-sm) var(--t-radius-sm);
+  background:
+    radial-gradient(120% 90% at 100% 0,
+      color-mix(in srgb, var(--t-accent) 12%, transparent), transparent 58%),
+    linear-gradient(180deg,
+      color-mix(in srgb, var(--t-primary) 6%, var(--t-surface)), var(--t-surface));
+}
+
+.theme-schema-theme .hero-area .widget-title {
+  font-family: var(--t-mono);
+  letter-spacing: .14em;
+}
+
+.theme-schema-theme .hero-area .widget-title::after {
+  content: "";
+  display: block;
+  width: 26px;
+  height: 2px;
+  margin-top: 8px;
+  border-radius: 2px;
+  background: linear-gradient(90deg, var(--t-accent), transparent);
+}
+
+/* ---------- 2b. Judul bagian ----------------------------------------- */
+
+.theme-schema-theme .section-heading {
+  border-bottom: 2px solid color-mix(in srgb, var(--t-primary) 22%, var(--t-border));
+}
+
+.theme-schema-theme .section-heading h2::before {
+  top: .1em;
+  bottom: .1em;
+  background: linear-gradient(180deg, var(--t-primary), var(--t-accent));
+}
+
+.theme-schema-theme .section-link {
+  font-family: var(--t-mono);
+  letter-spacing: .05em;
+  border-radius: var(--t-radius-sm);
+}
+
+/* ---------- 3. Kartu artikel ------------------------------------------ */
+
+.theme-schema-theme .post-card {
+  border-radius: var(--t-radius);
+  box-shadow: 0 1px 2px color-mix(in srgb, var(--t-text) 6%, transparent);
+}
+
+.theme-schema-theme .post-card:hover {
+  transform: translateY(-3px);
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, var(--t-primary) 20%, transparent),
+    0 18px 34px -26px color-mix(in srgb, var(--t-primary) 70%, transparent);
+}
+
+.theme-schema-theme .card-body { gap: 10px; }
+
+.theme-schema-theme .card-title { letter-spacing: -.02em; }
+
+.theme-schema-theme .card-labels .label {
+  background: color-mix(in srgb, var(--t-accent) 12%, transparent);
+  color: color-mix(in srgb, var(--t-accent) 78%, var(--t-text));
+  border-radius: var(--t-radius-sm);
+}
+
+.theme-schema-theme .featured-more { border-radius: var(--t-radius-sm); }
+
+/* ---------- 4. Sidebar & widget --------------------------------------- */
+
+.theme-schema-theme .widget {
+  border-radius: var(--t-radius);
+  box-shadow: 0 1px 2px color-mix(in srgb, var(--t-text) 5%, transparent);
+}
+
+.theme-schema-theme .widget-title::before {
+  width: 3px;
+  height: 13px;
+  background: linear-gradient(180deg, var(--t-primary), var(--t-accent));
+}
+
+.theme-schema-theme .tag-cloud a { border-radius: var(--t-radius-sm); }
+
+.theme-schema-theme .tag-cloud a:hover {
+  border-color: color-mix(in srgb, var(--t-primary) 40%, var(--t-border));
+  background: color-mix(in srgb, var(--t-primary) 7%, transparent);
+  color: var(--t-primary);
+}
+
+/* ---------- 5. Halaman artikel: penanda terstruktur ------------------- */
+
+.theme-schema-theme .article-title { letter-spacing: -.035em; }
+
+.theme-schema-theme .article-meta {
+  background: color-mix(in srgb, var(--t-primary) 4%, transparent);
+  border-radius: var(--t-radius);
+  padding-inline: 14px;
+}
+
+.theme-schema-theme .avatar-initial {
+  border-radius: var(--t-radius-sm);
+  background: linear-gradient(140deg, var(--t-primary), var(--t-primary-dark));
+}
+
+.theme-schema-theme .entry-meta,
+.theme-schema-theme .post-card time,
+.theme-schema-theme .article-meta .meta-block span,
+.theme-schema-theme .article-body table {
+  font-variant-numeric: tabular-nums;
+}
+
+.theme-schema-theme .article-body code,
+.theme-schema-theme .article-body pre,
+.theme-schema-theme .article-body kbd {
+  font-family: var(--t-mono);
+}
+
+.theme-schema-theme .article-body h2 {
+  padding-left: .6rem;
+  border-left: 3px solid var(--t-accent);
+}
+
+.theme-schema-theme .article-body h3 { letter-spacing: -.015em; }
+
+.theme-schema-theme .article-body a {
+  text-underline-offset: .22em;
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-decoration-color: color-mix(in srgb, var(--t-primary) 35%, transparent);
+}
+
+.theme-schema-theme .article-body a:hover { text-decoration-color: var(--t-primary); }
+
+.theme-schema-theme .article-tags .tag { border-radius: var(--t-radius-sm); }
+
+/* ---------- 6. Tabel data ------------------------------------------- */
+
+.theme-schema-theme .prose table { border-radius: var(--t-radius); overflow: hidden; }
+.theme-schema-theme .prose table th {
+  background: color-mix(in srgb, var(--t-primary) 8%, var(--t-surface));
+}
+
+/* ---------- 7. Paginasi ---------------------------------------------- */
+
+.theme-schema-theme .pagination a,
+.theme-schema-theme .pagination span { border-radius: var(--t-radius-sm); }
+
+.theme-schema-theme .pagination .current {
+  background: var(--t-primary);
+  border-color: var(--t-primary);
+  color: #fff;
+}
+
+/* ---------- 8. Bottom band CTA (area footer-about) ------------------- */
+
+.theme-schema-theme .bottom-band {
+  margin-top: clamp(28px, 4vw, 44px);
+  padding-block: clamp(24px, 3.4vw, 38px);
+  background:
+    radial-gradient(120% 130% at 0 0,
+      color-mix(in srgb, var(--t-accent) 45%, transparent), transparent 55%),
+    linear-gradient(135deg, var(--t-primary), var(--t-primary-dark));
+  color: #eef1ff;
+}
+
+.theme-schema-theme .bottom-band a { color: #fff; }
+
+.theme-schema-theme .bottom-band .widget {
+  background: rgba(255, 255, 255, .09);
+  border-color: rgba(255, 255, 255, .2);
+  box-shadow: none;
+  color: #eef1ff;
+}
+
+.theme-schema-theme .bottom-band .widget-title { color: #fff; }
+.theme-schema-theme .bottom-band .widget-title::before { background: #fff; }
+
+/* ---------- 9. Footer ------------------------------------------------ */
+
+.theme-schema-theme .site-footer::before {
+  height: 3px;
+  background: linear-gradient(90deg, var(--t-accent), var(--t-primary));
+}
+
+.theme-schema-theme .site-footer .widget-title::before { border-radius: 2px; }
+
+/* ---------- 10. Logika komponen bawaan tema -------------------------- */
+
+/* Sama seperti tema bawaan lain: `system.css` menangani susunannya, jadi di
+   sini cukup menandai batas antar komponen tanpa menambah bungkus baru. */
+.theme-schema-theme .shell { padding-inline: clamp(14px, 3vw, 22px); }

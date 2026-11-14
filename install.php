@@ -128,7 +128,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     'name' => $siteName,
                     'slug' => \App\Core\Slug::make($siteName, 'blog'),
                     'description' => '',
-                    'theme' => 'aurora',
+                    'theme' => \App\Core\Theme::defaultSlug(),
                     'language' => 'id',
                     'timezone' => 'Asia/Jakarta',
                     'is_primary' => 1,
@@ -150,14 +150,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 \App\Core\Settings::setMany([
                     'site_name' => $siteName,
                     'site_url' => $siteUrl,
-                    'theme' => 'aurora',
+                    'theme' => \App\Core\Theme::defaultSlug(),
                 ], $blogId);
                 \App\Core\Context::forceBlog($blogId);
                 log_activity('install', 'CMS dipasang melalui web installer');
             });
 
             // 5. Activate the default theme for the new blog.
-            \App\Core\ThemeEngine::activate('aurora');
+            \App\Core\ThemeEngine::activate(\App\Core\Theme::defaultSlug());
 
             header('Location: admin/index.php');
             exit;

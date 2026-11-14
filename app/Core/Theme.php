@@ -31,7 +31,7 @@ final class Theme
     public static function instance(): Theme
     {
         if (self::$instance === null) {
-            $slug = Settings::get('theme', 'aurora');
+            $slug = Settings::get('theme', self::defaultSlug());
             $blogTheme = (string)(Context::blog()['theme'] ?? '');
             if ($blogTheme !== '' && self::exists($blogTheme)) {
                 $slug = $blogTheme;
@@ -69,7 +69,7 @@ final class Theme
     public static function defaultSlug(): string
     {
         $bundled = self::bundledSlugs();
-        return $bundled[0] ?? 'aurora';
+        return $bundled[0] ?? 'amp-theme';
     }
 
     public static function dir(string $slug): string
@@ -193,7 +193,7 @@ final class Theme
     {
         $layout = self::dir($this->slug) . '/layout.php';
         if (!is_file($layout)) {
-            $layout = CMS_ROOT . '/themes/aurora/layout.php';
+            $layout = self::dir(self::defaultSlug()) . '/layout.php';
         }
         $ui = new \App\Theme\Ui($this, $page);
         $functions = self::dir($this->slug) . '/functions.php';
@@ -253,7 +253,15 @@ final class Theme
             } elseif ($type === 'color' && !preg_match('/^#[0-9a-f]{3,8}$/i', (string)$value)) {
                 continue;
             } elseif ($type === 'select') {
-                $allowed = array_map(static fn($o): string => is_array($o) ? (string)$o['value'] : (string)$o, (array)($definition['options'] ?? []));
+                // Options may be a value => label map or a list of
+                // {value, label} arrays; validate against the value, never the
+                // label, otherwise a valid choice is silently dropped.
+                $allowed = [];
+                foreach ((array)($definition['options'] ?? []) as $optionKey => $optionLabel) {
+                    $allowed[] = is_array($optionLabel)
+                        ? (string)($optionLabel['value'] ?? '')
+                        : (string)$optionKey;
+                }
                 if (!in_array((string)$value, $allowed, true)) {
                     continue;
                 }

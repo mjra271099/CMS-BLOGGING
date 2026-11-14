@@ -1,0 +1,498 @@
+{
+    "slug": "schema-theme",
+    "name": "Schema Theme",
+    "version": "1.0.0",
+    "author": "CMS Studio",
+    "description": "Tema data-first: setiap halaman memancarkan JSON-LD lengkap untuk seluruh galeri Structured Data Google (25 jenis), dari Organization dan BlogPosting sampai Movie, Recipe, LocalBusiness, dan VideoObject.",
+    "category": "magazine",
+    "tags": [
+        "structured-data",
+        "json-ld",
+        "seo",
+        "schema.org",
+        "rich-results",
+        "professional",
+        "responsive"
+    ],
+    "screenshot": "screenshot.svg",
+    "supports": {
+        "sidebar": "right",
+        "hero": true,
+        "builder": true,
+        "amp": true
+    },
+    "areas": [
+        "announcement",
+        "header",
+        "menu",
+        "top-banner",
+        "featured",
+        "before-content",
+        "main",
+        "middle-content",
+        "after-content",
+        "sidebar",
+        "ad-top",
+        "ad-bottom",
+        "footer-about",
+        "footer-links",
+        "footer-social",
+        "footer-bottom",
+        "footer-1",
+        "footer-2",
+        "footer-3",
+        "custom"
+    ],
+    "structured_data": {
+        "enabled": true,
+        "article_type": "BlogPosting",
+        "speakable": true,
+        "speakable_selectors": [
+            "h1",
+            ".article-body p:first-of-type"
+        ],
+        "image_metadata": true,
+        "paywall": false,
+        "paywall_selector": ".article-body",
+        "movie_categories": [
+            "film",
+            "movie",
+            "sinema"
+        ],
+        "covers": [
+            "Article",
+            "Breadcrumb",
+            "Carousel",
+            "Course list",
+            "Dataset",
+            "Discussion Forum",
+            "Education Q&A",
+            "Employer Aggregate Rating",
+            "Event",
+            "Image Metadata",
+            "Job Posting",
+            "Local Business",
+            "Math Solver",
+            "Movie",
+            "Organization",
+            "Product",
+            "Profile Page",
+            "Q&A Page",
+            "Recipe",
+            "Review Snippet",
+            "Software App",
+            "Speakable",
+            "Subscription",
+            "Vacation Rental",
+            "Video"
+        ]
+    },
+    "settings": [
+        {
+            "key": "primary_color",
+            "label": "Warna utama",
+            "type": "color",
+            "default": "#4338ca",
+            "group": "Warna"
+        },
+        {
+            "key": "primary_dark",
+            "label": "Warna utama gelap",
+            "type": "color",
+            "default": "#312e81",
+            "group": "Warna"
+        },
+        {
+            "key": "accent_color",
+            "label": "Warna aksen",
+            "type": "color",
+            "default": "#059669",
+            "group": "Warna"
+        },
+        {
+            "key": "background_color",
+            "label": "Latar halaman",
+            "type": "color",
+            "default": "#f5f6fb",
+            "group": "Warna"
+        },
+        {
+            "key": "surface_color",
+            "label": "Latar kartu",
+            "type": "color",
+            "default": "#ffffff",
+            "group": "Warna"
+        },
+        {
+            "key": "text_color",
+            "label": "Warna teks",
+            "type": "color",
+            "default": "#141a33",
+            "group": "Warna"
+        },
+        {
+            "key": "muted_color",
+            "label": "Teks sekunder",
+            "type": "color",
+            "default": "#5b6478",
+            "group": "Warna"
+        },
+        {
+            "key": "border_color",
+            "label": "Garis tepi",
+            "type": "color",
+            "default": "#e3e6f3",
+            "group": "Warna"
+        },
+        {
+            "key": "font_pair",
+            "label": "Pasangan font (URL stylesheet)",
+            "type": "text",
+            "default": "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap",
+            "description": "Biarkan kosong untuk memakai font sistem tanpa permintaan jaringan.",
+            "group": "Tipografi"
+        },
+        {
+            "key": "font_family",
+            "label": "Font teks",
+            "type": "text",
+            "default": "\"Inter\", system-ui, -apple-system, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+            "group": "Tipografi"
+        },
+        {
+            "key": "font_heading",
+            "label": "Font judul",
+            "type": "text",
+            "default": "\"Inter\", system-ui, -apple-system, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+            "group": "Tipografi"
+        },
+        {
+            "key": "font_size",
+            "label": "Ukuran teks (px)",
+            "type": "number",
+            "default": 17,
+            "min": 14,
+            "max": 22,
+            "group": "Tipografi"
+        },
+        {
+            "key": "radius",
+            "label": "Radius sudut (px)",
+            "type": "number",
+            "default": 8,
+            "min": 0,
+            "max": 32,
+            "group": "Tata letak"
+        },
+        {
+            "key": "content_width",
+            "label": "Lebar konten (px)",
+            "type": "number",
+            "default": 1160,
+            "min": 900,
+            "max": 1600,
+            "group": "Tata letak"
+        },
+        {
+            "key": "spacing",
+            "label": "Jarak antar blok (px)",
+            "type": "number",
+            "default": 24,
+            "min": 12,
+            "max": 48,
+            "group": "Tata letak"
+        },
+        {
+            "key": "sidebar_position",
+            "label": "Posisi sidebar",
+            "type": "select",
+            "default": "right",
+            "options": {
+                "left": "Kiri",
+                "right": "Kanan",
+                "none": "Tanpa sidebar"
+            },
+            "group": "Tata letak"
+        },
+        {
+            "key": "header_style",
+            "label": "Gaya header",
+            "type": "select",
+            "default": "compact",
+            "options": {
+                "classic": "Klasik",
+                "compact": "Ringkas (sticky)",
+                "centered": "Tengah",
+                "transparent": "Transparan"
+            },
+            "group": "Tata letak"
+        },
+        {
+            "key": "footer_style",
+            "label": "Gaya footer",
+            "type": "select",
+            "default": "dark",
+            "options": {
+                "dark": "Gelap",
+                "plain": "Terang",
+                "tinted": "Ungu muda",
+                "minimal": "Minimal"
+            },
+            "group": "Tata letak"
+        },
+        {
+            "key": "card_style",
+            "label": "Gaya kartu artikel",
+            "type": "select",
+            "default": "feature",
+            "options": {
+                "feature": "Feature (gambar atas)",
+                "cover": "Cover (teks di atas gambar)",
+                "compact": "Ringkas (gambar samping)",
+                "minimal": "Minimal (tanpa bingkai)",
+                "list": "Daftar"
+            },
+            "group": "Tata letak"
+        },
+        {
+            "key": "custom_css",
+            "label": "CSS kustom",
+            "type": "textarea",
+            "default": "",
+            "group": "Lanjutan"
+        },
+        {
+            "key": "show_hero",
+            "label": "Tampilkan area unggulan",
+            "type": "checkbox",
+            "default": 1,
+            "group": "Lanjutan"
+        },
+        {
+            "key": "show_breadcrumbs",
+            "label": "Tampilkan breadcrumb",
+            "type": "checkbox",
+            "default": 1,
+            "group": "Lanjutan"
+        },
+        {
+            "key": "show_reading_time",
+            "label": "Tampilkan waktu baca",
+            "type": "checkbox",
+            "default": 1,
+            "group": "Lanjutan"
+        },
+        {
+            "key": "org_type",
+            "label": "Jenis organisasi",
+            "type": "select",
+            "default": "Organization",
+            "options": {
+                "Organization": "Organization (default)",
+                "LocalBusiness": "LocalBusiness (bisnis lokal)",
+                "OnlineBusiness": "OnlineBusiness (toko online)"
+            },
+            "group": "Structured Data — Organisasi"
+        },
+        {
+            "key": "org_email",
+            "label": "Email organisasi",
+            "type": "text",
+            "default": "",
+            "description": "Dipakai untuk properti email pada Organization/LocalBusiness.",
+            "group": "Structured Data — Organisasi"
+        },
+        {
+            "key": "org_phone",
+            "label": "Telepon organisasi",
+            "type": "text",
+            "default": "",
+            "group": "Structured Data — Organisasi"
+        },
+        {
+            "key": "org_street",
+            "label": "Alamat jalan",
+            "type": "text",
+            "default": "",
+            "group": "Structured Data — Organisasi"
+        },
+        {
+            "key": "org_city",
+            "label": "Kota",
+            "type": "text",
+            "default": "",
+            "group": "Structured Data — Organisasi"
+        },
+        {
+            "key": "org_region",
+            "label": "Provinsi / region",
+            "type": "text",
+            "default": "",
+            "group": "Structured Data — Organisasi"
+        },
+        {
+            "key": "org_postal_code",
+            "label": "Kode pos",
+            "type": "text",
+            "default": "",
+            "group": "Structured Data — Organisasi"
+        },
+        {
+            "key": "org_country",
+            "label": "Kode negara",
+            "type": "text",
+            "default": "ID",
+            "description": "Kode ISO 3166-1 alpha-2, misalnya ID atau US.",
+            "group": "Structured Data — Organisasi"
+        },
+        {
+            "key": "org_latitude",
+            "label": "Latitude",
+            "type": "text",
+            "default": "",
+            "description": "Isi bersama longitude untuk memancarkan GeoCoordinates (Local Business).",
+            "group": "Structured Data — Organisasi"
+        },
+        {
+            "key": "org_longitude",
+            "label": "Longitude",
+            "type": "text",
+            "default": "",
+            "group": "Structured Data — Organisasi"
+        },
+        {
+            "key": "org_price_range",
+            "label": "Rentang harga",
+            "type": "text",
+            "default": "",
+            "description": "Contoh: Rp50.000–Rp250.000 atau $$.",
+            "group": "Structured Data — Organisasi"
+        },
+        {
+            "key": "org_opening_hours",
+            "label": "Jam buka",
+            "type": "textarea",
+            "default": "",
+            "description": "Satu baris per aturan, contoh: Mo-Fr 09:00-17:00.",
+            "group": "Structured Data — Organisasi"
+        },
+        {
+            "key": "social_links",
+            "label": "Tautan profil (sameAs)",
+            "type": "textarea",
+            "default": "",
+            "description": "Satu URL per baris: Instagram, X, YouTube, LinkedIn, dan lainnya.",
+            "group": "Structured Data — Organisasi"
+        },
+        {
+            "key": "org_rating_value",
+            "label": "Rating organisasi",
+            "type": "text",
+            "default": "",
+            "description": "1–5. Aktifkan bersama jumlah ulasan untuk Employer Aggregate Rating.",
+            "group": "Structured Data — Organisasi"
+        },
+        {
+            "key": "org_rating_count",
+            "label": "Jumlah ulasan organisasi",
+            "type": "text",
+            "default": "",
+            "group": "Structured Data — Organisasi"
+        },
+        {
+            "key": "article_type",
+            "label": "Jenis artikel",
+            "type": "select",
+            "default": "BlogPosting",
+            "options": {
+                "BlogPosting": "BlogPosting",
+                "NewsArticle": "NewsArticle",
+                "Article": "Article",
+                "TechArticle": "TechArticle",
+                "Report": "Report"
+            },
+            "group": "Structured Data — Artikel"
+        },
+        {
+            "key": "image_license",
+            "label": "Lisensi gambar",
+            "type": "text",
+            "default": "",
+            "description": "URL lisensi untuk Image Metadata, misalnya halaman Creative Commons.",
+            "group": "Structured Data — Artikel"
+        },
+        {
+            "key": "speakable_selectors",
+            "label": "Selector Speakable",
+            "type": "text",
+            "default": "",
+            "description": "Dipisah koma. Kosongkan untuk memakai h1 dan paragraf pertama.",
+            "group": "Structured Data — Artikel"
+        },
+        {
+            "key": "paywall",
+            "label": "Tandai konten berbayar",
+            "type": "checkbox",
+            "default": 0,
+            "group": "Structured Data — Artikel"
+        },
+        {
+            "key": "paywall_selector",
+            "label": "Selector bagian berbayar",
+            "type": "text",
+            "default": ".article-body",
+            "group": "Structured Data — Artikel"
+        },
+        {
+            "key": "movie_categories",
+            "label": "Kategori film",
+            "type": "text",
+            "default": "film, movie, sinema",
+            "description": "Dipisah koma. Post pada kategori ini memancarkan Movie dan katalognya menjadi ItemList film.",
+            "group": "Structured Data — Film"
+        },
+        {
+            "key": "movie_directors",
+            "label": "Sutradara",
+            "type": "textarea",
+            "default": "",
+            "description": "Satu nama per baris, dipakai pada node Movie.",
+            "group": "Structured Data — Film"
+        },
+        {
+            "key": "movie_rating_value",
+            "label": "Rating film",
+            "type": "text",
+            "default": "",
+            "group": "Structured Data — Film"
+        },
+        {
+            "key": "movie_rating_count",
+            "label": "Jumlah rating film",
+            "type": "text",
+            "default": "",
+            "group": "Structured Data — Film"
+        },
+        {
+            "key": "schema_site",
+            "label": "Node JSON-LD situs (semua halaman)",
+            "type": "textarea",
+            "default": "",
+            "description": "Objek atau array JSON. Contoh: {\"@type\":\"Dataset\",\"name\":\"Data Uji\",\"license\":\"https://contoh.id/lisensi\"}",
+            "group": "Structured Data — Manual"
+        },
+        {
+            "key": "schema_pages",
+            "label": "Node JSON-LD per halaman",
+            "type": "textarea",
+            "default": "",
+            "description": "Array JSON berisi path, gallery, dan data. Contoh: [{\"path\":\"/resep/*\",\"gallery\":\"Recipe\",\"data\":{\"recipeCategory\":\"Dessert\"}}]",
+            "group": "Structured Data — Manual"
+        }
+    ],
+    "layouts": {
+        "home": "default",
+        "post": "default",
+        "page": "default"
+    }
+}

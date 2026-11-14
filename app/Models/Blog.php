@@ -49,7 +49,7 @@ final class Blog
                 'slug' => $slug,
                 'description' => trim((string)($data['description'] ?? '')) ?: null,
                 'domain' => $domain,
-                'theme' => (string)($data['theme'] ?? 'aurora'),
+                'theme' => (string)($data['theme'] ?? \App\Core\Theme::defaultSlug()),
                 'language' => (string)($data['language'] ?? 'id'),
                 'timezone' => (string)($data['timezone'] ?? 'Asia/Jakarta'),
                 'is_primary' => 0,
@@ -61,7 +61,7 @@ final class Blog
             $defaults = \App\Core\Settings::defaults();
             $defaults['site_name'] = $name;
             $defaults['site_url'] = $domain !== '' ? 'https://' . $domain . '/' : '';
-            $defaults['theme'] = (string)($data['theme'] ?? 'aurora');
+            $defaults['theme'] = (string)($data['theme'] ?? \App\Core\Theme::defaultSlug());
             $stmt = Database::pdo()->prepare('INSERT INTO settings (blog_id, setting_key, setting_value) VALUES (?, ?, ?)');
             foreach ($defaults as $key => $value) {
                 $stmt->execute([$id, $key, (string)$value]);

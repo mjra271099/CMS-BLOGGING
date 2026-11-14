@@ -1,7 +1,0 @@
-/* Monolith — tata letak.
-   Gaya visual (warna, radius, tipografi, bayangan) berasal dari
-   assets/front/system.css dan token di theme.json, jadi tampilannya seragam
-   dengan tema lain. Berkas ini hanya mengatur tata letak. */
-
-.narrow-column { max-width: 720px; margin-inline: auto; }
-.post-grid.grid-grid { grid-template-columns: 1fr; }

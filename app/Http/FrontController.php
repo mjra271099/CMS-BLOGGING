@@ -234,6 +234,7 @@ final class FrontController
             'route' => 'home',
             'content' => $content,
             'layout_mode' => 'standard',
+            'schema' => ['items' => $this->schemaItems($posts)],
             'meta' => Seo::meta([
                 'title' => Settings::get('site_name'),
                 'description' => Settings::get('site_description'),
@@ -296,6 +297,11 @@ final class FrontController
             'layout_mode' => 'standard',
             'breadcrumbs' => $breadcrumbs,
             'context' => ['route' => 'post', 'post_id' => (int)$post['id'], 'author_id' => (int)$post['author_id'], 'body' => (string)$post['body'], 'slug' => (string)$post['slug']],
+            'schema' => ['post' => [
+                'id' => (int)$post['id'],
+                'visibility' => (string)$post['visibility'],
+                'category_slugs' => array_column($categories, 'slug'),
+            ]],
             'meta' => Seo::meta([
                 'title' => (string)($post['meta_title'] ?: $post['title']),
                 'description' => $description,
@@ -435,6 +441,7 @@ final class FrontController
             'content' => $content,
             'breadcrumbs' => $breadcrumbs,
             'context' => ['route' => 'category', 'slug' => (string)$category['slug']],
+            'schema' => ['items' => $this->schemaItems($posts)],
             'meta' => Seo::meta([
                 'title' => (string)($category['meta_title'] ?: $category['name']),
                 'description' => (string)($category['meta_description'] ?: $category['description'] ?: 'Artikel kategori ' . $category['name']),
@@ -477,6 +484,7 @@ final class FrontController
             'slug' => $slug,
             'content' => $content,
             'breadcrumbs' => [['name' => __('home'), 'url' => url()], ['name' => $label, 'url' => url('tag/' . rawurlencode($slug))]],
+            'schema' => ['items' => $this->schemaItems($posts)],
             'meta' => Seo::meta([
                 'title' => $label,
                 'description' => __('tag') . ' ' . $label,
@@ -536,6 +544,7 @@ final class FrontController
             'route' => 'search',
             'content' => $content,
             'context' => ['route' => 'search'],
+            'schema' => ['items' => $this->schemaItems($posts)],
             'meta' => Seo::meta([
                 'title' => $term !== '' ? __('search_results') . ': ' . $term : __('searching'),
                 'description' => 'Hasil pencarian untuk ' . $term,
@@ -584,6 +593,12 @@ final class FrontController
             'content' => $content,
             'breadcrumbs' => $breadcrumbs,
             'context' => ['route' => 'author', 'author_id' => (int)$author['id']],
+            'schema' => ['author' => [
+                'name' => $name,
+                'url' => Helpers::authorUrl($name),
+                'bio' => (string)($author['bio'] ?? ''),
+                'image' => (string)($author['avatar'] ?? ''),
+            ]],
             'meta' => Seo::meta([
                 'title' => $name,
                 'description' => (string)($author['bio'] ?? ''),
@@ -617,6 +632,7 @@ final class FrontController
         return $this->renderTheme([
             'route' => 'archive',
             'content' => $content,
+            'schema' => ['items' => $this->schemaItems($posts)],
             'meta' => Seo::meta([
                 'title' => __('archive') . ' ' . $label,
                 'description' => __('archive') . ' ' . $label,
@@ -671,6 +687,7 @@ final class FrontController
         return $this->renderTheme([
             'route' => 'archive',
             'content' => $content,
+            'schema' => ['items' => $this->schemaItems($posts ?? [])],
             'meta' => Seo::meta([
                 'title' => __('archive') . ' — ' . Settings::get('site_name'),
                 'description' => __('archive') . ' ' . Settings::get('site_name'),
@@ -790,6 +807,30 @@ final class FrontController
     private function pager(int $current, int $total): string
     {
         return (new \App\Theme\Ui(Theme::instance(), []))->pagination($current, $total);
+    }
+
+    /**
+     * Compact list of the posts shown on an archive page, used by the
+     * structured data engine to emit an ItemList (carousel) node.
+     *
+     * @param array<int, array<string, mixed>> $posts
+     * @return array<int, array{name: string, url: string, image: string, date: string}>
+     */
+    private function schemaItems(array $posts): array
+    {
+        $items = [];
+        foreach ($posts as $post) {
+            if (!is_array($post) || !isset($post['title'])) {
+                continue;
+            }
+            $items[] = [
+                'name' => (string)$post['title'],
+                'url' => post_url($post),
+                'image' => post_image_url($post),
+                'date' => Helpers::isoDate((string)($post['published_at'] ?? '')),
+            ];
+        }
+        return $items;
     }
 
     /**

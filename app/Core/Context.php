@@ -97,7 +97,7 @@ final class Context
             'domain' => '',
             'custom_domain' => null,
             'description' => '',
-            'theme' => 'aurora',
+            'theme' => Theme::defaultSlug(),
             'logo' => null,
             'favicon' => null,
             'language' => 'id',

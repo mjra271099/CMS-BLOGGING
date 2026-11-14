@@ -128,10 +128,7 @@ final class Ui
         if (trim($custom) !== '') {
             $head .= '<style id="theme-customizer">' . $custom . '</style>';
         }
-        $structured = \App\Services\Seo::structuredData($this->page['meta'] + $this->page);
-        $head .= '<script type="application/ld+json">'
-            . json_encode($structured, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT)
-            . '</script>';
+        $head .= \App\Services\StructuredData::script($this->page);
         if (Settings::get('header_code') !== '') {
             $head .= Settings::get('header_code');
         }

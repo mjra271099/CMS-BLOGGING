@@ -27,6 +27,7 @@ use App\Core\Settings;
 use App\Core\Slug;
 use App\Core\Str;
 use App\Core\Theme;
+use App\Core\ThemeEngine;
 use App\Core\Widget;
 use App\Models\Comment;
 use App\Models\Page;
@@ -34,6 +35,7 @@ use App\Models\Post;
 use App\Models\Taxonomy;
 use App\Services\Builder;
 use App\Services\Seo;
+use App\Services\StructuredData;
 use App\Services\TmdbArticle;
 
 if (!Database::tableExists('users')) {
@@ -58,6 +60,11 @@ $createdCommentIds = [];
 $createdWidgetIds = [];
 $createdRedirectIds = [];
 $originalTheme = Theme::instance()->slug();
+// Guard rails so a failure in the middle of the theme/structured-data tests
+// still leaves the site, its theme and its theme settings untouched.
+$themeSwitched = false;
+$sdSettingsWritten = false;
+$sdBackup = [];
 
 function check(string $name, bool $condition, string $detail = ''): void
 {
@@ -275,18 +282,165 @@ try {
     ]) === '');
 
     section('Themes');
-    check('Bundled themes exist', count(Theme::bundledSlugs()) >= 15);
+    check('Bundled themes exist', count(Theme::bundledSlugs()) >= 2);
+    check('AMP theme is still bundled', Theme::exists('amp-theme'));
+    check('Schema theme is bundled', Theme::exists('schema-theme'));
+    check('Schema theme passes validation', (bool)(ThemeEngine::validate(Theme::dir('schema-theme'))['valid'] ?? false));
     $activeTheme = Theme::instance();
     check('Active theme has metadata', (string)$activeTheme->name() !== '');
     check('Customizer CSS emits variables', str_contains($activeTheme->customizerCss(), ':root'));
-    if ($originalTheme !== 'aurora' && Theme::exists('aurora')) {
-        \App\Core\ThemeEngine::activate('aurora');
-        check('ThemeEngine::activate switches theme', Theme::instance()->slug() === 'aurora');
-        \App\Core\ThemeEngine::activate($originalTheme);
-        check('ThemeEngine::activate restores theme', Theme::instance()->slug() === $originalTheme);
-    } else {
-        check('ThemeEngine::activate is available', method_exists(\App\Core\ThemeEngine::class, 'activate'));
+
+    /*
+     * Structured Data: the theme decides how far the JSON-LD graph goes. A
+     * theme without a `structured_data` declaration keeps the minimal graph
+     * (Organization + WebSite + article/breadcrumb only); the Schema Theme
+     * turns on the rest of the Google Search Gallery.
+     */
+    section('Structured data');
+    $gallery = StructuredData::coverage();
+    check('Structured data covers all 25 gallery types', count($gallery) === 25, 'count=' . count($gallery));
+    check('Every gallery type resolves to a schema.org type', array_filter($gallery, static fn(string $name): bool => StructuredData::schemaType($name) === null) === []);
+    check('Unknown gallery names resolve to null', StructuredData::schemaType('Tidak Ada') === null);
+    $declaredCovers = (array)(Theme::make('schema-theme')->metadata()['structured_data']['covers'] ?? []);
+    check('Schema Theme declares the whole gallery', $declaredCovers !== [] && array_diff($gallery, $declaredCovers) === []);
+
+    ThemeEngine::activate('amp-theme');
+    $themeSwitched = Theme::instance()->slug() !== $originalTheme;
+    check('ThemeEngine::activate switches theme', Theme::instance()->slug() === 'amp-theme');
+    $plainTypes = array_column(StructuredData::graph([
+        'route' => 'home',
+        'meta' => ['title' => 'Uji', 'canonical' => url(), 'schema' => []],
+    ])['@graph'], '@type');
+    check('A theme without a declaration gets the minimal graph', $plainTypes === ['Organization', 'WebSite'], implode(',', $plainTypes));
+
+    ThemeEngine::activate('schema-theme');
+    check('Schema Theme becomes active for the graph tests', Theme::instance()->slug() === 'schema-theme');
+
+    $sdBody = '<p>Isi artikel uji.</p><iframe src="https://www.youtube.com/embed/zzTESTvid01" title="Trailer uji"></iframe>';
+    $sdItems = [
+        ['name' => 'Satu', 'url' => url('post/satu'), 'image' => url('media/1.jpg'), 'date' => '2026-01-01T00:00:00+07:00'],
+        ['name' => 'Dua', 'url' => url('post/dua'), 'image' => '', 'date' => '2026-01-02T00:00:00+07:00'],
+    ];
+    $sdHome = ['route' => 'home', 'schema' => ['items' => $sdItems], 'meta' => ['title' => 'Beranda', 'canonical' => url(), 'schema' => []]];
+    $sdPost = [
+        'route' => 'post',
+        'slug' => 'zztest-film',
+        'context' => ['body' => $sdBody],
+        'breadcrumbs' => [
+            ['name' => 'Beranda', 'url' => url()],
+            ['name' => 'Film', 'url' => url('category/film')],
+            ['name' => 'Film Uji', 'url' => url('post/zztest-film')],
+        ],
+        'schema' => ['post' => ['id' => $postId, 'visibility' => 'public', 'category_slugs' => ['film']]],
+        'meta' => [
+            'title' => 'Film Uji',
+            'description' => 'Sinopsis uji </script> <b>tebal</b>.',
+            'canonical' => url('post/zztest-film'),
+            'image' => url('media/zztest.jpg'),
+            'published' => '2026-01-02T09:00:00+07:00',
+            'modified' => '2026-01-03T09:00:00+07:00',
+            'author' => 'ZZ Tester',
+            'article' => ['title' => 'Film Uji', 'body' => $sdBody, 'categories' => ['Film']],
+            'schema' => [],
+        ],
+    ];
+    $sdTypes = static fn(array $page): array => array_column(StructuredData::graph($page)['@graph'], '@type');
+
+    $postTypes = $sdTypes($sdPost);
+    check('Post emits Organization and WebSite', in_array('Organization', $postTypes, true) && in_array('WebSite', $postTypes, true));
+    check('Post emits a BlogPosting', in_array('BlogPosting', $postTypes, true));
+    check('Post emits ImageObject metadata', in_array('ImageObject', $postTypes, true));
+    check('Post emits VideoObject for an embed', in_array('VideoObject', $postTypes, true));
+    check('Movie category adds a Movie node', in_array('Movie', $postTypes, true));
+    check('Post emits a BreadcrumbList', in_array('BreadcrumbList', $postTypes, true));
+
+    $homeTypes = $sdTypes($sdHome);
+    check('Home emits an ItemList carousel', in_array('ItemList', $homeTypes, true));
+    $homeList = null;
+    foreach (StructuredData::graph($sdHome)['@graph'] as $node) {
+        if (($node['@type'] ?? '') === 'ItemList') {
+            $homeList = $node;
+        }
     }
+    check('Carousel lists the published posts', ($homeList['numberOfItems'] ?? 0) === 2);
+    check('Carousel items are articles', (string)($homeList['itemListElement'][0]['item']['@type'] ?? '') === 'Article');
+
+    $category = $sdHome + ['route' => 'category', 'slug' => 'film'];
+    $category['breadcrumbs'] = [['name' => 'Beranda', 'url' => url()], ['name' => 'Film', 'url' => url('category/film')]];
+    $categoryList = null;
+    foreach (StructuredData::graph($category)['@graph'] as $node) {
+        if (($node['@type'] ?? '') === 'ItemList') {
+            $categoryList = $node;
+        }
+    }
+    check('Movie archive turns the carousel into movies', (string)($categoryList['itemListElement'][0]['item']['@type'] ?? '') === 'Movie');
+
+    $authorTypes = $sdTypes([
+        'route' => 'author',
+        'breadcrumbs' => [['name' => 'Beranda', 'url' => url()], ['name' => 'ZZ Tester', 'url' => url('author/zz-tester')]],
+        'schema' => ['author' => ['name' => 'ZZ Tester', 'url' => url('author/zz-tester'), 'bio' => 'Penulis uji.', 'image' => '']],
+        'meta' => ['title' => 'ZZ Tester', 'canonical' => url('author/zz-tester'), 'schema' => []],
+    ]);
+    check('Author page emits a ProfilePage', in_array('ProfilePage', $authorTypes, true));
+
+    $sdJson = StructuredData::json($sdPost);
+    check('JSON-LD decodes as valid JSON', json_decode($sdJson, true) !== null);
+    check('JSON-LD keeps slashes readable', str_contains($sdJson, 'https://schema.org'));
+    check('JSON-LD escapes tag delimiters', !str_contains($sdJson, '</script') && str_contains($sdJson, '\u003C/script'));
+    check('Seo::structuredData delegates to StructuredData', Seo::structuredData($sdPost) === StructuredData::graph($sdPost));
+
+    // Manual nodes (Recipe/Dataset/…) come from the theme settings; store a
+    // payload, read the graph, then put the rows back exactly as they were.
+    $sdBackup = Database::run(
+        'SELECT setting_key, setting_value FROM theme_settings WHERE blog_id = ? AND theme = ?',
+        [Context::blogId(), 'schema-theme']
+    )->fetchAll(\PDO::FETCH_KEY_PAIR);
+    $schemaTheme = Theme::make('schema-theme');
+    $schemaTheme->saveSettings([
+        'schema_pages' => '[{"path":"/resep/*","gallery":"Recipe","data":{"recipeCategory":"Dessert"}},'
+            . '{"path":"/produk/*","gallery":"Product","data":{"sku":"SKU-ZZ"}}]',
+        'schema_site' => '{"@type":"Dataset","name":"Data Uji"}',
+        'org_type' => 'LocalBusiness',
+        'org_city' => 'Bandung',
+        'org_rating_value' => '4.7',
+        'org_rating_count' => '128',
+        'movie_categories' => 'sinema-uji',
+    ]);
+    Theme::reset();
+    $sdSettingsWritten = true;
+    $pageTypes = $sdTypes([
+        'route' => 'page',
+        'breadcrumbs' => [['name' => 'Beranda', 'url' => url()], ['name' => 'Resep Uji', 'url' => url('resep/uji')]],
+        'meta' => ['title' => 'Resep Uji', 'canonical' => url('resep/uji'), 'published' => '2026-01-01T00:00:00+07:00', 'schema' => []],
+    ]);
+    check('schema_pages adds a Recipe for the matching path', in_array('Recipe', $pageTypes, true), implode(',', $pageTypes));
+    check('schema_site adds a site-wide Dataset', in_array('Dataset', $pageTypes, true));
+    check('Customizer JSON also validates a Product node', StructuredData::schemaType('Product') === 'Product');
+    $org = null;
+    foreach (StructuredData::graph(['route' => 'home', 'meta' => ['canonical' => url(), 'schema' => []]])['@graph'] as $node) {
+        if (str_contains((string)($node['@id'] ?? ''), '#organization')) {
+            $org = $node;
+        }
+    }
+    check('Organisation settings pick LocalBusiness', (string)($org['@type'] ?? '') === 'LocalBusiness');
+    check('Organisation settings pick the address', (string)($org['address']['addressLocality'] ?? '') === 'Bandung');
+    check('Organisation settings pick the aggregate rating', (float)($org['aggregateRating']['ratingValue'] ?? 0) === 4.7);
+
+    Database::run('DELETE FROM theme_settings WHERE blog_id = ? AND theme = ?', [Context::blogId(), 'schema-theme']);
+    foreach ($sdBackup as $sdKey => $sdValue) {
+        Database::insert('theme_settings', [
+            'blog_id' => Context::blogId(),
+            'theme' => 'schema-theme',
+            'setting_key' => (string)$sdKey,
+            'setting_value' => (string)$sdValue,
+        ]);
+    }
+    $sdSettingsWritten = false;
+    Theme::reset();
+
+    ThemeEngine::activate($originalTheme);
+    $themeSwitched = Theme::instance()->slug() !== $originalTheme;
+    check('ThemeEngine::activate restores theme', Theme::instance()->slug() === $originalTheme);
 
     section('Security');
     check('Guest cannot publish posts', !Auth::can('post.publish'));
@@ -317,6 +471,20 @@ try {
         Database::delete('redirects', 'id = ?', [$id]);
     }
     Widget::flush();
+    if ($sdSettingsWritten) {
+        Database::run('DELETE FROM theme_settings WHERE blog_id = ? AND theme = ?', [Context::blogId(), 'schema-theme']);
+        foreach ((array)$sdBackup as $sdKey => $sdValue) {
+            Database::insert('theme_settings', [
+                'blog_id' => Context::blogId(),
+                'theme' => 'schema-theme',
+                'setting_key' => (string)$sdKey,
+                'setting_value' => (string)$sdValue,
+            ]);
+        }
+    }
+    if ($themeSwitched && Theme::exists($originalTheme)) {
+        ThemeEngine::activate($originalTheme);
+    }
     Theme::reset();
 }
 
