@@ -247,10 +247,13 @@ a { text-underline-offset: 3px; }
 
 /* "See all" link for category blocks in card style. It sits in the widget
    header, opposite the title: title on the left, link on the right, with the
-   card grid wrapped onto the row below. */
+   card grid wrapped onto the row below. The widget must be a flex container
+   for that to work, and several areas leave `.widget` as a plain block, so the
+   header layout is established here rather than relying on the area rules. */
 .has-widget-action {
-  /* Title (auto-grow) + link + grid (own line). */
+  display: flex;
   flex-wrap: wrap;
+  align-items: center;
 }
 .has-widget-action > .widget-title {
   flex: 1 1 auto;
