@@ -42,7 +42,23 @@ final class AdminController
         'dashboard', 'posts', 'post-edit', 'pages', 'page-edit', 'media', 'comments',
         'categories', 'tags', 'themes', 'customize', 'layout', 'menus', 'builder',
         'blogs', 'users', 'seo', 'redirects', 'newsletter', 'settings', 'backup', 'logs', 'profile',
+        'tmdb',
     ];
+
+    /**
+     * Nav entries that live outside the admin controller (standalone pages).
+     * Their value is the root-relative URL to link to instead of "?view=key".
+     */
+    private const EXTERNAL_VIEWS = ['tmdb' => 'tmdb-generator.php'];
+
+    /**
+     * URL of a standalone module reachable from the sidebar, or null when the
+     * key is a regular admin view.
+     */
+    public static function moduleUrl(string $view): ?string
+    {
+        return isset(self::EXTERNAL_VIEWS[$view]) ? url(self::EXTERNAL_VIEWS[$view]) : null;
+    }
 
     /** Sidebar navigation, grouped. */
     public static function navigation(): array
@@ -68,6 +84,9 @@ final class AdminController
                 'seo' => ['SEO & Audit', 'search'],
                 'redirects' => ['Redirect', 'arrow'],
                 'newsletter' => ['Newsletter', 'mail'],
+                // Standalone page (see EXTERNAL_VIEWS) — the shell links to its
+                // own URL, so opening it must not require a matching admin view.
+                'tmdb' => ['Generator TMDB', 'clapper'],
             ],
             'Sistem' => [
                 'blogs' => ['Blog', 'globe'],
@@ -93,6 +112,10 @@ final class AdminController
         }
         if (!in_array($view, self::VIEWS, true)) {
             $view = 'dashboard';
+        }
+        // Standalone modules own their page; the admin shell only links to them.
+        if (isset(self::EXTERNAL_VIEWS[$view])) {
+            \App\Core\Response::redirect(url(self::EXTERNAL_VIEWS[$view]));
         }
 
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {

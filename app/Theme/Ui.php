@@ -509,9 +509,9 @@ final class Ui
             $query['page'] = $page;
             return e($path . '?' . http_build_query($query));
         };
-        $out = '<nav class="pagination" aria-label="Navigasi halaman">';
+        $out = '<nav class="pagination" aria-label="' . e(__('pagination')) . '">';
         if ($current > 1) {
-            $out .= '<a class="page-prev" href="' . $link($current - 1) . '" rel="prev">‹ Sebelumnya</a>';
+            $out .= '<a class="page-prev" href="' . $link($current - 1) . '" rel="prev">' . e(__('previous_page')) . '</a>';
         }
         $window = 2;
         $start = max(1, $current - $window);
@@ -534,7 +534,7 @@ final class Ui
             $out .= '<a class="page-num" href="' . $link($total) . '">' . $total . '</a>';
         }
         if ($current < $total) {
-            $out .= '<a class="page-next" href="' . $link($current + 1) . '" rel="next">Berikutnya ›</a>';
+            $out .= '<a class="page-next" href="' . $link($current + 1) . '" rel="next">' . e(__('next_page')) . '</a>';
         }
         return $out . '</nav>';
     }

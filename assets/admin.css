@@ -2209,9 +2209,11 @@ html[data-theme="dark"] .menu-order { background: var(--admin-surface-hover); }
 .sidebar-close { display: none; }
 
 .icon-btn > span { display: inline-flex; align-items: center; justify-content: center; }
-.icon-sun { display: none; }
-html[data-theme="dark"] .icon-moon { display: none; }
-html[data-theme="dark"] .icon-sun { display: inline-flex; }
+/* The light/dark toggle stacks a moon and a sun; only one may render. These
+   rules must match .icon-btn > span's specificity to win over it. */
+.icon-btn > .icon-sun { display: none; }
+html[data-theme="dark"] .icon-btn > .icon-moon { display: none; }
+html[data-theme="dark"] .icon-btn > .icon-sun { display: inline-flex; }
 
 .user-menu > summary > svg { color: var(--admin-text-muted); flex-shrink: 0; }
 

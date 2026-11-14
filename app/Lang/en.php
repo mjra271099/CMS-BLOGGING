@@ -110,4 +110,8 @@ return [
     'back_to_top' => 'Back to top',
     'scroll_top' => 'Top',
     'switch_language' => 'Switch language',
+    // Pagination
+    'pagination' => 'Pagination',
+    'previous_page' => '‹ Previous',
+    'next_page' => 'Next ›',
 ];

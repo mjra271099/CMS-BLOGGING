@@ -20,6 +20,7 @@ declare(strict_types=1);
 
 use App\Core\Csrf;
 use App\Core\Settings;
+use App\Http\AdminController;
 use App\Http\AdminUi;
 use App\Models\Post;
 
@@ -126,8 +127,12 @@ try { if (localStorage.getItem('cms-sidebar') === 'collapsed') document.body.cla
             <?php foreach ($nav as $group => $items): ?>
                 <div class="nav-section"><?= e($group) ?></div>
                 <?php foreach ((array)$items as $key => $item): ?>
-                    <?php [$label, $icon] = [(string)($item[0] ?? $key), (string)($item[1] ?? 'grid')]; ?>
-                    <a href="<?= e($adminBase . '?view=' . $key) ?>"<?= AdminUi::active($view, (string)$key) ?>>
+                    <?php
+                    [$label, $icon] = [(string)($item[0] ?? $key), (string)($item[1] ?? 'grid')];
+                    // Modules that live on their own URL link there instead of ?view=key.
+                    $moduleUrl = AdminController::moduleUrl((string)$key);
+                    ?>
+                    <a href="<?= e($moduleUrl ?? ($adminBase . '?view=' . $key)) ?>"<?= AdminUi::active($view, (string)$key) ?>>
                         <span class="nav-icon"><?= AdminUi::icon($icon, 17) ?></span>
                         <span class="sidebar-label"><?= e($label) ?></span>
                         <?php if (!empty($badges[$key])): ?>

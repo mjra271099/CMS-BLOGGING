@@ -33,13 +33,22 @@ final class Lang
         if (isset(self::SUPPORTED[$cookie])) {
             return self::$locale = $cookie;
         }
-        // 2) blog/site setting
-        $locale = strtolower(Settings::get('language', 'id'));
-        $locale = substr($locale, 0, 2);
+        // 2) automatic detection from the visitor's country / Accept-Language,
+        //    falling back to the language configured for this blog.
+        return self::$locale = LocaleResolver::resolve(self::configured());
+    }
+
+    /**
+     * Language configured for the current blog (the "language" setting), or
+     * the blog's own `language` column when the setting has never been saved.
+     */
+    public static function configured(): string
+    {
+        $locale = strtolower(substr(Settings::get('language', ''), 0, 2));
         if (!isset(self::SUPPORTED[$locale])) {
-            $locale = 'id';
+            $locale = strtolower(substr((string)(\App\Core\Context::blog()['language'] ?? 'id'), 0, 2));
         }
-        return self::$locale = $locale;
+        return isset(self::SUPPORTED[$locale]) ? $locale : 'id';
     }
 
     /**

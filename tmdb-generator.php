@@ -34,6 +34,7 @@ use App\Core\Auth;
 use App\Core\Container;
 use App\Core\Context;
 use App\Core\Csrf;
+use App\Core\Database;
 use App\Core\Flash;
 use App\Core\Response;
 use App\Core\Settings;
@@ -43,6 +44,7 @@ use App\Http\AdminController;
 use App\Models\Blog;
 use App\Models\Comment;
 use App\Models\Post;
+use App\Models\Taxonomy;
 use App\Services\Tmdb;
 use App\Services\TmdbArticle;
 
@@ -129,6 +131,11 @@ final class TmdbGeneratorPage
                 $this->createPost($user, $flash);
                 return;
 
+            case 'tmdb.bulk':
+                Auth::requirePermission('post.create');
+                $this->bulkCreate($user, $flash);
+                return;
+
             default:
                 throw new ValidationException('Aksi tidak dikenal.');
         }
@@ -143,6 +150,132 @@ final class TmdbGeneratorPage
         }
 
         $details = (new Tmdb())->details($tmdbId, $type);
+        if ($this->alreadyPosted($tmdbId, $type)) {
+            throw new ValidationException('Judul ini sudah pernah dibuat (TMDB #' . $tmdbId . ').');
+        }
+
+        [$article, $status] = $this->buildArticle($details, $type);
+
+        $postId = Post::save([
+            'title' => $article['title'],
+            'slug' => $article['slug'],
+            'body' => $article['body'],
+            'excerpt' => $article['excerpt'],
+            'meta_title' => $article['seo_title'],
+            'meta_description' => $article['meta_description'],
+            'thumbnail' => $article['thumbnail'],
+            'og_image' => $article['og_image'],
+            'status' => $status,
+            'author_id' => (int)$user['id'],
+            'content_json' => $this->provenance($tmdbId, $type),
+        ], $article['categories'], $article['tags']);
+
+        log_activity('post.tmdb.create', 'TMDB ' . $type . ' #' . $tmdbId . ' → post #' . $postId);
+        $flash->success(
+            'Postingan dibuat (' . $status . '): #' . $postId . ' — ' . $article['title']
+            . '. Kategori: ' . TmdbArticle::DEFAULT_CATEGORY . '.'
+        );
+    }
+
+    /**
+     * Post every checked title in one submission. Partial failures never abort
+     * the run: each item is reported and the rest continue.
+     */
+    private function bulkCreate(array $user, Flash $flash): void
+    {
+        $checked = (array)($_POST['ids'] ?? []);
+        $selection = [];
+        foreach ($checked as $raw) {
+            $raw = (string)$raw;
+            if (preg_match('/^(movie|tv):(\d+)$/', $raw, $match) !== 1) {
+                continue;
+            }
+            $id = (int)$match[2];
+            if ($id > 0) {
+                $selection[$match[1] . ':' . $id] = ['type' => $match[1], 'id' => $id];
+            }
+        }
+        if ($selection === []) {
+            throw new ValidationException('Centang minimal satu judul untuk posting massal.');
+        }
+
+        $client = new Tmdb();
+        $created = 0;
+        $skipped = 0;
+        $failed = [];
+
+        foreach ($selection as $item) {
+            $type = $item['type'];
+            $tmdbId = $item['id'];
+            try {
+                if ($this->alreadyPosted($tmdbId, $type)) {
+                    $skipped++;
+                    continue;
+                }
+                $details = $client->details($tmdbId, $type);
+                [$article, $status] = $this->buildArticle($details, $type);
+                $postId = Post::save([
+                    'title' => $article['title'],
+                    'slug' => $article['slug'],
+                    'body' => $article['body'],
+                    'excerpt' => $article['excerpt'],
+                    'meta_title' => $article['seo_title'],
+                    'meta_description' => $article['meta_description'],
+                    'thumbnail' => $article['thumbnail'],
+                    'og_image' => $article['og_image'],
+                    'status' => $status,
+                    'author_id' => (int)$user['id'],
+                    'content_json' => $this->provenance($tmdbId, $type),
+                ], $article['categories'], $article['tags']);
+                log_activity('post.tmdb.create', 'TMDB ' . $type . ' #' . $tmdbId . ' → post #' . $postId . ' (massal)');
+                $created++;
+            } catch (\Throwable $exception) {
+                $failed[] = $type . ' #' . $tmdbId . ' (' . $exception->getMessage() . ')';
+            }
+        }
+
+        $parts = [];
+        if ($created > 0) {
+            $parts[] = $created . ' postingan dibuat';
+        }
+        if ($skipped > 0) {
+            $parts[] = $skipped . ' dilewati (sudah pernah diposting)';
+        }
+        if ($failed !== []) {
+            $parts[] = count($failed) . ' gagal: ' . implode('; ', array_slice($failed, 0, 3));
+        }
+        $summary = 'Posting massal selesai — ' . ($parts !== [] ? implode(', ', $parts) : 'tidak ada yang diproses') . '.';
+
+        if ($created > 0) {
+            $flash->success($summary);
+        } elseif ($failed !== []) {
+            $flash->error($summary);
+        } else {
+            $flash->info($summary);
+        }
+    }
+
+    /**
+     * Provenance stamped into posts.content_json. It is stored, never rendered,
+     * and lets the generator recognise which titles it already published.
+     */
+    private function provenance(int $tmdbId, string $type): string
+    {
+        return json_encode([
+            'tmdb_id' => $tmdbId,
+            'tmdb_type' => $type,
+            'generator' => 'tmdb',
+            'generated_at' => gmdate('c'),
+        ], JSON_UNESCAPED_SLASHES) ?: '';
+    }
+
+    /**
+     * Build the article from TMDB metadata, applying the per-form overrides.
+     *
+     * @return array{0: array, 1: string} the article payload and resolved status
+     */
+    private function buildArticle(array $details, string $type): array
+    {
         $sections = array_values(array_filter(
             array_map('strval', (array)($_POST['sections'] ?? [])),
             static fn(string $key): bool => isset(TmdbArticle::SECTIONS[$key])
@@ -162,25 +295,93 @@ final class TmdbGeneratorPage
         $overrideMeta = trim((string)($_POST['meta_description'] ?? ''));
         $overrideBody = trim((string)($_POST['body'] ?? ''));
 
-        $postId = Post::save([
-            'title' => $overrideTitle !== '' ? $overrideTitle : $article['title'],
-            'slug' => $overrideSlug !== '' ? $overrideSlug : $article['slug'],
-            'body' => ($_POST['use_edited_body'] ?? '') === '1' && $overrideBody !== '' ? $overrideBody : $article['body'],
-            'excerpt' => $overrideExcerpt !== '' ? $overrideExcerpt : $article['excerpt'],
-            'meta_title' => $article['seo_title'],
-            'meta_description' => $overrideMeta !== '' ? $overrideMeta : $article['meta_description'],
-            'thumbnail' => $article['thumbnail'],
-            'og_image' => $article['og_image'],
-            'status' => $status,
-            'author_id' => (int)$user['id'],
-        ], $article['categories'], $article['tags']);
+        if ($overrideTitle !== '') {
+            $article['title'] = $overrideTitle;
+        }
+        if ($overrideSlug !== '') {
+            $article['slug'] = $overrideSlug;
+        }
+        if ($overrideExcerpt !== '') {
+            $article['excerpt'] = $overrideExcerpt;
+        }
+        if ($overrideMeta !== '') {
+            $article['meta_description'] = $overrideMeta;
+        }
+        if (($_POST['use_edited_body'] ?? '') === '1' && $overrideBody !== '') {
+            $article['body'] = $overrideBody;
+        }
 
-        log_activity('post.tmdb.create', 'TMDB ' . $type . ' #' . $tmdbId . ' → post #' . $postId);
-        $flash->success(
-            'Postingan dibuat (' . $status . '): #' . $postId . ' — ' . $article['title']
-            . '. Kategori: ' . $category . '.'
-        );
+        return [$article, $status];
     }
+
+    /**
+     * Has this title already been turned into a post? The generator stamps a
+     * small provenance blob into posts.content_json (never rendered), so the
+     * check survives slug/title edits and needs no schema change.
+     */
+    private function alreadyPosted(int $tmdbId, string $type): bool
+    {
+        if ($tmdbId <= 0) {
+            return false;
+        }
+        try {
+            $found = Database::fetch(
+                'SELECT id FROM posts WHERE blog_id = ? AND deleted_at IS NULL AND content_json LIKE ? LIMIT 1',
+                [Context::blogId(), '%"tmdb_id":' . $tmdbId . ',%']
+            );
+        } catch (\Throwable) {
+            return false;
+        }
+        return $found !== null;
+    }
+
+    /**
+     * Map of "type:id" → post id for the titles on screen that already exist.
+     *
+     * @param array<int, array> $results
+     * @return array<string, int>
+     */
+    private function postedMap(array $results): array
+    {
+        $ids = [];
+        foreach ($results as $item) {
+            $id = (int)($item['id'] ?? 0);
+            if ($id > 0) {
+                $ids[$id] = ($item['media_type'] ?? '') === 'tv' ? 'tv' : 'movie';
+            }
+        }
+        if ($ids === []) {
+            return [];
+        }
+
+        $map = [];
+        try {
+            foreach (array_chunk($ids, 40, true) as $chunk) {
+                $placeholders = implode(',', array_fill(0, count($chunk), '?'));
+                $rows = Database::run(
+                    'SELECT id, content_json FROM posts WHERE blog_id = ? AND deleted_at IS NULL'
+                    . ' AND content_json LIKE \'%"tmdb_id":%\' AND content_json REGEXP ?',
+                    array_merge([Context::blogId()], ['"tmdb_id":(' . implode('|', array_keys($chunk)) . '),'])
+                )->fetchAll();
+                foreach ($rows as $row) {
+                    $meta = json_decode((string)$row['content_json'], true);
+                    if (!is_array($meta)) {
+                        continue;
+                    }
+                    $id = (int)($meta['tmdb_id'] ?? 0);
+                    $type = ($meta['tmdb_type'] ?? '') === 'tv' ? 'tv' : 'movie';
+                    if ($id > 0 && isset($ids[$id])) {
+                        $map[$type . ':' . $id] = (int)$row['id'];
+                    }
+                }
+            }
+        } catch (\Throwable) {
+            // Badges are cosmetic; a query failure must never break the page.
+            return [];
+        }
+        return $map;
+    }
+
 
     // ------------------------------------------------------------------
     // GET state
@@ -247,6 +448,8 @@ final class TmdbGeneratorPage
             'defaultCategory' => TmdbArticle::DEFAULT_CATEGORY,
             'preview' => $details ? TmdbArticle::preview($details) : null,
             'generated' => $details ? TmdbArticle::build($details, array_keys(TmdbArticle::SECTIONS)) : null,
+            'postedMap' => $this->postedMap($results),
+            'alreadyPosted' => $selectedId > 0 ? $this->alreadyPosted($selectedId, $selectedType) : false,
         ];
     }
 

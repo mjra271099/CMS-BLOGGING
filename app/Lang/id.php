@@ -111,4 +111,8 @@ return [
     'back_to_top' => 'Kembali ke atas',
     'scroll_top' => 'Ke atas',
     'switch_language' => 'Ganti bahasa',
+    // Pagination
+    'pagination' => 'Navigasi halaman',
+    'previous_page' => '‹ Sebelumnya',
+    'next_page' => 'Berikutnya ›',
 ];
