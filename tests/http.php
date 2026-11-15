@@ -121,6 +121,23 @@ if ($firstPostPath !== '') {
 }
 $page = request($base . '/p/tentang-kami.html');
 check('Page permalink returns 200', $page['status'] === 200, 'status=' . $page['status']);
+
+// Halaman QR Code Generator (template `qr-generator`): aplikasi + asetnya
+// dimuat hanya di halaman ini. Bila halaman belum dibuat di blog ini,
+// pengecekan dilewati agar instalasi baru tetap hijau.
+$qrPage = request($base . '/p/qr-code-generator.html');
+if ($qrPage['status'] === 200) {
+    check('QR page renders the app root', str_contains($qrPage['body'], 'class="qr-app"'));
+    check('QR page loads its own stylesheet', str_contains($qrPage['body'], 'assets/front/qr-generator.css'));
+    check('QR page loads its script deferred', str_contains($qrPage['body'], 'assets/front/qr-generator.js'));
+    check('QR page has the type tabs and download buttons', str_contains($qrPage['body'], 'id="typeTabs"') && str_contains($qrPage['body'], 'data-fmt="png"'));
+    check('QR page keeps the direct-link hook', str_contains($qrPage['body'], 'data-direct-url'));
+    check('QR page hides the blog promo', !str_contains($qrPage['body'], 'Visit Our Blog'));
+    check('QR assets stay off other pages', !str_contains($home['body'], 'qr-generator.js'));
+} else {
+    check('QR page not created on this blog (skipped)', true, 'status=' . $qrPage['status']);
+}
+
 $category = request($base . '/search/label/olahraga');
 check('Label archive returns 200', in_array($category['status'], [200, 404], true), 'status=' . $category['status']);
 $search = request($base . '/search?q=uji');

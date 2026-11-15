@@ -34,6 +34,7 @@ use App\Models\Page;
 use App\Models\Post;
 use App\Models\Taxonomy;
 use App\Services\Builder;
+use App\Services\QrPage;
 use App\Services\Seo;
 use App\Services\StructuredData;
 use App\Services\TmdbArticle;
@@ -145,6 +146,31 @@ try {
     check('Page::save creates a page', $pageId > 0);
     $page = Page::find($pageId);
     check('Page::findBySlug works', $page !== null && Page::findBySlug((string)$page['slug']) !== null);
+
+    /*
+     * Halaman QR Code Generator: fitur Page dengan template `qr-generator`.
+     * Asetnya hanya dimuat untuk template tersebut, dan tautan unduhan bisa
+     * diarahkan ke Direct Link iklan dari Pengaturan situs.
+     */
+    section('QR code page');
+    check('Page::templates lists the QR template', array_key_exists('qr-generator', Page::templates()));
+    check('QR assets skipped on other templates', QrPage::headHtml('default') === '');
+    $qrHead = QrPage::headHtml('qr-generator');
+    check('QR head loads its stylesheet', str_contains($qrHead, 'qr-generator.css'));
+    check('QR head loads its script deferred', str_contains($qrHead, 'qr-generator.js') && str_contains($qrHead, 'defer'));
+    check('QR direct link empty by default', QrPage::directUrl() === '');
+    $qrPreviousDirect = Settings::get(QrPage::DIRECT_LINK_KEY, '');
+    Settings::set(QrPage::DIRECT_LINK_KEY, 'https://iklan.example/go');
+    check('QR direct link reads the setting', QrPage::directUrl() === 'https://iklan.example/go');
+    Settings::set(QrPage::DIRECT_LINK_KEY, 'bukan-url');
+    check('QR direct link rejects non-http values', QrPage::directUrl() === '');
+    Settings::set(QrPage::DIRECT_LINK_KEY, $qrPreviousDirect);
+    $qrBody = QrPage::body();
+    check('QR body renders the app root', str_contains($qrBody, 'class="qr-app"'));
+    check('QR body has the download controls', str_contains($qrBody, 'data-fmt="png"') && str_contains($qrBody, 'data-fmt="svg"'));
+    check('QR body has a toast element', str_contains($qrBody, 'id="toast"'));
+    check('QR body drops the blog promo', !str_contains($qrBody, 'Visit Our Blog') && !str_contains($qrBody, 'blog.v-dey.com'));
+    check('QR direct link setting is registered', array_key_exists(QrPage::DIRECT_LINK_KEY, Settings::defaults()));
 
     section('Taxonomy');
     $categoryId = Taxonomy::createCategory('ZZ Test Kategori ' . bin2hex(random_bytes(2)));

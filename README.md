@@ -14,6 +14,7 @@ Aset Blogger asli (`assets/template-source.xml`) tidak diubah; CSS template lama
 - **Dua bahasa antarmuka** — Bahasa Indonesia dan English untuk seluruh halaman depan (navigasi, arsip, pencarian, artikel, komentar, 404, tanggal/bulan, waktu relatif). Bahasa default diatur di Admin → Pengaturan; pengunjung dapat berganti lewat tombol ID/EN di header (disimpan di cookie `site_language`). Katalog string ada di `app/Lang/id.php` dan `app/Lang/en.php`, dipakai melalui helper global `__()`.
 - **SEO** — meta title/description, canonical, Open Graph/Twitter, sitemap XML, robots.txt, RSS feed, redirect manager, dan audit SEO dengan skor. Mesin JSON-LD `App\Services\StructuredData` mendukung seluruh **25 jenis Structured Data Google Search Gallery** (Article, Breadcrumb, Carousel, Course list, Dataset, Discussion Forum, Education Q&A, Employer Aggregate Rating, Event, Image Metadata, Job Posting, Local Business, Math Solver, Movie, Organization, Product, Profile Page, Q&A Page, Recipe, Review Snippet, Software App, Speakable, Subscription, Vacation Rental, Video) dan hanya memancarkan node yang datanya benar-benar ada.
 - **Media library** — unggah gambar (JPG/PNG/GIF/WebP) dengan thumbnail otomatis, metadata alt/caption/folder, resize, dan penggantian file.
+- **Halaman QR Code Generator** — fitur Page dengan template `qr-generator`: aplikasi QR (URL, WhatsApp, teks, email, telepon, WiFi, vCard, lokasi) yang berjalan di peramban, dengan unduhan PNG/JPG/WEBP/SVG. Aset halaman hanya dimuat di template itu, dan tombol unduh bisa diarahkan ke **Direct Link iklan** lewat Pengaturan situs.
 - **Dashboard admin baru** — MVC (`AdminController` + `app/Views/admin/*`) menggantikan `admin/index.php` satu-file. Ringkasan, editor dengan autosave, kustomizer live preview, builder, moderasi komentar, pengaturan, backup, dan log aktivitas.
 - **Keamanan** — CSRF pada semua form, escaping output, sanitasi HTML pada konten/kustom HTML, password hash `PASSWORD_DEFAULT`, cookie `HttpOnly`/`SameSite`, security headers, folder implementasi (`app/`, `database/`, `storage/`, `tests/`, `bin/`) dan berkas kredensial diblokir dari HTTP, serta eksekusi PHP di `uploads/` dilarang.
 - **CLI** — `bin/console.php` untuk instalasi, migrasi, seed, sinkronisasi tema, pembuatan pengguna, pembersihan cache, dan status.
@@ -69,15 +70,17 @@ app/
   Core/        Config, Database, Context, Settings, Cache, Auth, Csrf, Theme,
                ThemeEngine, Widget, Migrator, View, Response, Lang, Theme/Ui
   Models/      Post, Page, Taxonomy, Comment, Blog, Menu, Media
-  Services/    Seo, Builder, Newsletter, Analytics, Backup
+  Services/    Seo, Builder, Newsletter, Analytics, Backup, QrPage, StructuredData
   Http/        FrontController, AdminController, AdminUi
   Lang/        id.php, en.php — katalog string antarmuka (Indonesia & English)
   Views/admin/ 26 template dashboard
+  Views/front/qr-generator.php   markup aplikasi QR (template halaman qr-generator)
   Http/Theme/Ui.php   kit UI yang dipakai semua tema
 assets/
   front/base.css                   primitif front-end (reset, token, komponen dasar)
   front/system.css                 sistem desain bersama semua tema (gaya "AMP")
   front/app.js                     skrip front-end
+  front/qr-generator.css|.js        halaman QR Code Generator (hanya template qr-generator)
   admin.css, admin-app.css/js      dashboard
   admin-editor.css                 lapisan tampilan editor kaya (Tiptap)
   admin-embed.js                   dukungan embed iframe di editor (token + pemulihan saat simpan)
@@ -144,8 +147,22 @@ Antarmuka depan mendukung **Bahasa Indonesia** dan **English**. Rantai penentuan
 
 Untuk menambah string: tambahkan pasangan kunci yang sama ke `app/Lang/id.php` dan `app/Lang/en.php`, lalu panggil lewat `__()` pada template/Ui/Widget.
 
-## Widget
+## Halaman QR Code Generator
 
+QR Code Generator dijalankan sebagai **halaman CMS biasa** dengan template `qr-generator`, bukan berkas HTML terpisah:
+
+1. Admin → Halaman → Halaman Baru, judul misalnya *QR Code Generator*, slug `qr-code-generator`, lalu pilih template **QR Code Generator**. Isi kolom konten dengan pengantar singkat (opsional) dan publikasikan.
+2. URL-nya mengikuti permalink halaman: `/p/qr-code-generator.html`. Halaman otomatis muncul di sitemap dan bisa dimasukkan ke menu.
+
+Yang terjadi di balik layar:
+
+- `App\Services\QrPage` memutuskan markup dan aset; `app/Views/front/qr-generator.php` berisi markup aplikasi, `assets/front/qr-generator.css` + `.js` berisi gaya dan logika.
+- Aset hanya dimuat pada template `qr-generator` (`Ui::head()` memanggil `QrPage::headHtml()`), jadi halaman lain tidak terbebani. Gaya memakai token tema (`--t-*`), sehingga warnanya ikut tema aktif dan mode gelap.
+- Template ini memakai `layout_mode = full`, jadi kolom sidebar tidak dirender.
+
+**Monetisasi tautan unduhan (sederhana).** Isi **Admin → Pengaturan → Direct Link Iklan (QR Code)** dengan URL direct link (mis. dari penyedia shortlink/iklan). Nilai itu dicetak sebagai `data-direct-url` pada pembungkus `.qr-app`; `assets/front/qr-generator.js` membukanya di tab baru saat tombol unduh ditekan, lalu berkas QR tetap terunduh. Kosongkan pengaturan untuk unduhan langsung tanpa perantara. Belum ada integrasi jaringan iklan otomatis — hanya satu hook `QrPage::DIRECT_LINK_KEY` (`qr_download_direct_url`).
+
+## Widget
 Widget disimpan di tabel `widgets` dan dikelompokkan lewat `section_id`. Visibilitas mendukung kombinasi halaman, perangkat (desktop/mobile/tablet), dan peran pengguna. Urutan dan area diatur dari Admin → Tata Letak (drag-and-drop); ada pula endpoint `?ajax=widget.reorder`. Halaman Tata Letak menyertakan pratinjau situs langsung (iframe) dengan pilihan rute — beranda, artikel, halaman, dan arsip — serta tombol lebar perangkat, sehingga penempatan widget langsung terlihat pada tema aktif.
 
 ## Aset admin

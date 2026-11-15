@@ -129,6 +129,10 @@ final class Ui
             $head .= '<style id="theme-customizer">' . $custom . '</style>';
         }
         $head .= \App\Services\StructuredData::script($this->page);
+        $qrAssets = \App\Services\QrPage::headHtml((string)($this->page['template'] ?? ''));
+        if ($qrAssets !== '') {
+            $head .= $qrAssets;
+        }
         if (Settings::get('header_code') !== '') {
             $head .= Settings::get('header_code');
         }

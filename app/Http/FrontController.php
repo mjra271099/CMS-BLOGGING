@@ -358,11 +358,12 @@ final class FrontController
             return $this->notFound();
         }
         $content = $this->renderPageBody($page);
-        $layout = in_array((string)$page['template'], ['full-width', 'landing', 'builder'], true) ? 'full' : 'standard';
+        $layout = in_array((string)$page['template'], ['full-width', 'landing', 'builder', \App\Services\QrPage::TEMPLATE], true) ? 'full' : 'standard';
         $breadcrumbs = [['name' => __('home'), 'url' => url()], ['name' => $page['title'], 'url' => page_url($page)]];
         return $this->renderTheme([
             'route' => 'page',
             'slug' => $page['slug'],
+            'template' => (string)$page['template'],
             'content' => $content,
             'layout_mode' => $layout,
             'breadcrumbs' => $breadcrumbs,
@@ -389,12 +390,16 @@ final class FrontController
         } elseif ($body !== '' && (string)($page['template'] ?? '') === 'builder') {
             $body = Builder::render((string)$page['content_json']) . '<div class="prose">' . $body . '</div>';
         }
+        $qr = \App\Services\QrPage::isTemplate((string)($page['template'] ?? ''));
         $out .= '<article class="single-page page-' . e((string)($page['template'] ?? 'default')) . '">';
         $out .= '<header class="page-header"><h1>' . e($page['title']) . '</h1>';
         if ((string)($page['excerpt'] ?? '') !== '') {
             $out .= '<p class="article-lede">' . e((string)$page['excerpt']) . '</p>';
         }
-        $out .= '</header><div class="article-body prose">' . $body . '</div></article>';
+        $out .= '</header><div class="article-body' . ($qr ? '' : ' prose') . '">'
+            . ($qr ? \App\Services\QrPage::body() : '')
+            . ($body !== '' ? ($qr ? '<div class="prose qr-notes">' . $body . '</div>' : $body) : '')
+            . '</div></article>';
         if (!empty($page['custom_css'])) {
             $out .= '<style>' . strip_tags((string)$page['custom_css'], '<style>') . '</style>';
         }

@@ -137,6 +137,13 @@ $value = static fn(string $key): string => (string)($settings[$key] ?? ($default
     </div>
 
     <div class="card">
+        <h2>Direct Link Iklan (QR Code)</h2>
+        <label for="qr_download_direct_url">URL Direct Link untuk tombol unduh QR</label>
+        <input id="qr_download_direct_url" type="url" name="qr_download_direct_url" value="<?= e($value('qr_download_direct_url')) ?>" placeholder="https://direct-link-iklan.example/">
+        <p class="help">Opsional. Bila diisi, tautan ini dibuka di tab baru setiap pengunjung menekan tombol unduh di halaman QR Code Generator. Kosongkan untuk unduhan langsung tanpa perantara.</p>
+    </div>
+
+    <div class="card">
         <h2>SEO Default</h2>
         <div class="row">
             <div>

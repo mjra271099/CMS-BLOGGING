@@ -125,6 +125,7 @@ final class Settings
             'media_webp' => '1',
             'cache_ttl' => '300',
             'cdn_url' => '',
+            'qr_download_direct_url' => '',
             'analytics_code' => '',
             'header_code' => '',
             'footer_code' => '',

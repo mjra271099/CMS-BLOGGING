@@ -166,6 +166,7 @@ final class Page
             'sidebar-left' => 'Sidebar Kiri',
             'landing' => 'Landing Page',
             'builder' => 'Page Builder',
+            'qr-generator' => 'QR Code Generator',
             'contact' => 'Kontak',
             'documentation' => 'Dokumentasi',
         ];
