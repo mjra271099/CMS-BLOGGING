@@ -179,7 +179,7 @@ Hero, deskripsi, fitur, tangkapan layar, teknologi, lisensi, harga, demo, FAQ, t
 ### Konfigurasi, dukungan, dan monetisasi
 
 - **Penyimpanan**: `App\Services\ToolConfig` menyimpan semua nilai di tabel `settings` dengan prefix `tool_`/`price_` (per blog) — tidak ada tabel baru. `ToolConfig::save()` menghormati scope per form, jadi menyimpan form CV+QR tidak menimpa pengaturan landing, dan sebaliknya.
-- **Popup dukungan sukarela** ("Dukung Kami" + "Nanti Dulu"): unduhan **tetap berjalan** bila pengguna memilih lewat. QRIS dapat diunggah/diganti dari admin (fallback ke `QR-DANA.jpeg` di root bila belum ada).
+- **Popup dukungan sukarela** ("Dukung Kami" + "Nanti Dulu"): unduhan **tetap berjalan** bila pengguna memilih lewat. QRIS dapat diunggah/diganti dari admin (fallback ke `QR-DANA.jpeg` di root bila belum ada) dan tampil besar di popup — ketuk gambar untuk membuka lightbox ukuran penuh agar kode jelas terbaca.
 - **Monetisasi per alat**: aktifkan monetisasi lalu isi **Direct Link** untuk sebuah alat; tautan dibuka di tab baru **hanya saat pengguna menekan unduh**, proses unduhan tetap berlanjut di halaman utama, dan tidak pernah ditampilkan ulang tanpa aksi pengguna. Konfigurasi terpisah untuk CV, QR, dan landing.
 
 ### Template halaman QR (opsional)

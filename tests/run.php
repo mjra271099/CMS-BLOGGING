@@ -478,6 +478,7 @@ try {
     section('Tool config');
     check('ToolConfig exposes defaults', isset(ToolConfig::defaults()['tool_cv_title']));
     check('ToolConfig all() includes landing keys', array_key_exists('price_headline', ToolConfig::all()));
+    check('ToolConfig exposes testimonial keys', array_key_exists('price_testimonials', ToolConfig::all()) && array_key_exists('price_show_testimonials', ToolConfig::all()));
     $prevScope = ToolConfig::all();
     $saved = ToolConfig::save([
         '_scope' => 'tool_cv_',
@@ -494,6 +495,13 @@ try {
     $afterCv = ToolConfig::all();
     check('ToolConfig scoped save leaves other tools alone', $afterCv['tool_qr_title'] === $prevScope['tool_qr_title']);
     check('ToolConfig persists the value', ToolConfig::get('tool_cv_title') === 'CV Uji');
+    $priceSaved = ToolConfig::save([
+        '_scope' => 'price_',
+        'price_testimonials' => "Rina | Freelancer | Rapi\nBudi | Toko | Cepat",
+        'price_show_testimonials' => '1',
+    ]);
+    check('Landing save stores testimonials', str_contains((string)($priceSaved['price_testimonials'] ?? ''), 'Rina'));
+    check('Landing save does not overwrite CV scope', ToolConfig::get('tool_cv_title') === 'CV Uji');
     $cvConfig = ToolConfig::publicConfig('cv');
     check('CV public config exposes monetised direct URL', ($cvConfig['directUrl'] ?? '') === 'https://iklan.example/cv');
     check('CV public config lists templates', ($cvConfig['templates'] ?? []) === ['modern', 'ats']);

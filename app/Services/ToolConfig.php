@@ -79,6 +79,8 @@ final class ToolConfig
         'price_shot_frontend' => ['', 'text'],
         'price_show_faq' => ['1', 'bool'],
         'price_faq' => ['', 'textarea'],
+        'price_show_testimonials' => ['1', 'bool'],
+        'price_testimonials' => ['', 'textarea'],
         'price_show_contacts' => ['1', 'bool'],
         'price_contact_email' => ['', 'text'],
         'price_contact_whatsapp' => ['', 'text'],

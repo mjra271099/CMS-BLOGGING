@@ -785,8 +785,14 @@ function openSupport(){
     if(title) title.textContent = SUPPORT.title;
     if(desc)  desc.textContent  = SUPPORT.desc;
     if(img){
-      if(SUPPORT.qris){ img.src = SUPPORT.qris; img.alt = 'QRIS DANA'; img.parentElement.hidden = false; }
-      else { img.parentElement.hidden = true; }
+      if(SUPPORT.qris){
+        img.src = SUPPORT.qris; img.alt = 'QRIS DANA';
+        img.parentElement.parentElement.hidden = false;
+        const open = document.getElementById('qrSupportOpen');
+        if(open){ open.href = SUPPORT.qris; open.hidden = false; }
+      } else {
+        img.parentElement.parentElement.hidden = true;
+      }
     }
     if(btn){
       if(/^https?:\/\//i.test(SUPPORT.url)){ btn.href = SUPPORT.url; btn.hidden = false; }
@@ -804,8 +810,28 @@ function openSupport(){
 function closeSupport(){
   const modal = document.getElementById('qrSupport');
   if(modal){ modal.hidden = true; modal.classList.remove('is-open'); }
+  closeLightbox();
   document.documentElement.style.overflow = '';
   if(supportResolve){ const r = supportResolve; supportResolve = null; r(); }
+}
+
+/* Lightbox QRIS: gambar ukuran penuh agar mudah dipindai. */
+function openLightbox(){
+  const box = document.getElementById('qrLightbox');
+  const img = document.getElementById('qrLightboxImage');
+  const open = document.getElementById('qrLightboxOpen');
+  if(!box || !img || !SUPPORT.qris) return;
+  img.src = SUPPORT.qris;
+  if(open) open.href = SUPPORT.qris;
+  box.hidden = false;
+  document.documentElement.style.overflow = 'hidden';
+  const close = document.getElementById('qrLightboxClose');
+  if(close) close.focus({ preventScroll: true });
+}
+
+function closeLightbox(){
+  const box = document.getElementById('qrLightbox');
+  if(box) box.hidden = true;
 }
 
 async function doDownload(fmt){
@@ -873,8 +899,27 @@ function bindSupport(){
   }
   const link = document.getElementById('qrSupportLink');
   if(link) link.addEventListener('click', () => setTimeout(closeSupport, 150));
+
+  // Zoom QRIS + lightbox.
+  const zoom = document.getElementById('qrSupportZoom');
+  if(zoom){
+    zoom.addEventListener('click', openLightbox);
+    zoom.addEventListener('keydown', e => {
+      if(e.key === 'Enter' || e.key === ' '){ e.preventDefault(); openLightbox(); }
+    });
+  }
+  const lbClose = document.getElementById('qrLightboxClose');
+  if(lbClose) lbClose.addEventListener('click', closeLightbox);
+  const lbDismiss = document.getElementById('qrLightboxDismiss');
+  if(lbDismiss) lbDismiss.addEventListener('click', closeLightbox);
+  const lbBox = document.getElementById('qrLightbox');
+  if(lbBox) lbBox.addEventListener('click', e => { if(e.target === lbBox) closeLightbox(); });
+
   document.addEventListener('keydown', e => {
-    if(e.key === 'Escape' && modal && modal.classList.contains('is-open')) closeSupport();
+    if(e.key !== 'Escape') return;
+    const lb = document.getElementById('qrLightbox');
+    if(lb && !lb.hidden){ closeLightbox(); return; }
+    if(modal && modal.classList.contains('is-open')) closeSupport();
   });
 }
 

@@ -38,6 +38,7 @@ final class SalesPage
         $cfg = ToolConfig::all();
         $features = $this->pairs($cfg['price_features']) ?: $this->defaultFeatures();
         $faq = $this->pairs($cfg['price_faq']) ?: $this->defaultFaq();
+        $testimonials = $this->triples($cfg['price_testimonials']);
 
         $siteName = Settings::get('site_name', 'CMS');
         $home = url();
@@ -58,6 +59,7 @@ final class SalesPage
             'cfg' => $cfg,
             'features' => $features,
             'faq' => $faq,
+            'testimonials' => $testimonials,
             'siteName' => $siteName,
             'home' => $home,
             'demo' => $demo,
@@ -133,6 +135,28 @@ final class SalesPage
     private function lines(string $text): array
     {
         return array_values(array_filter(array_map('trim', preg_split('/\R|,/', $text) ?: [])));
+    }
+
+    /**
+     * "Nama | Peran | Kutipan" per baris → daftar triple.
+     *
+     * @return array<int, array{0:string,1:string,2:string}>
+     */
+    private function triples(string $text): array
+    {
+        $out = [];
+        foreach (preg_split('/\R/', $text) ?: [] as $line) {
+            $line = trim($line);
+            if ($line === '') {
+                continue;
+            }
+            $parts = array_map('trim', explode('|', $line, 3));
+            if (($parts[0] ?? '') === '' && ($parts[2] ?? '') === '') {
+                continue;
+            }
+            $out[] = [$parts[0] ?? '', $parts[1] ?? '', $parts[2] ?? ''];
+        }
+        return $out;
     }
 
     private function mediaUrl(string $path): string

@@ -245,8 +245,10 @@ $activeTemplates = array_filter(explode(',', $v('tool_cv_templates')));
         <div>
             <label>QRIS aktif</label>
             <?php if ($qris !== ''): ?>
-                <p><img src="<?= e($qris) ?>" alt="QRIS dukungan" style="max-width:220px;width:100%;height:auto;border:1px solid var(--border,#e5e7eb);border-radius:10px;background:#fff;padding:6px"></p>
-                <p class="help"><?= $customQris !== '' ? 'Kustom: ' . e($customQris) : 'Bawaan: QR-DANA.jpeg' ?></p>
+                <a href="<?= e($qris) ?>" target="_blank" rel="noopener" title="Buka gambar QRIS ukuran penuh">
+                    <img src="<?= e($qris) ?>" alt="QRIS dukungan" style="max-width:300px;width:100%;height:auto;border:1px solid var(--border,#e5e7eb);border-radius:12px;background:#fff;padding:8px;cursor:zoom-in">
+                </a>
+                <p class="help"><?= $customQris !== '' ? 'Kustom: ' . e($customQris) : 'Bawaan: QR-DANA.jpeg' ?> · klik gambar untuk membuka ukuran penuh.</p>
             <?php else: ?>
                 <p class="muted">Belum ada gambar QRIS.</p>
             <?php endif; ?>
@@ -354,6 +356,11 @@ $activeTemplates = array_filter(explode(',', $v('tool_cv_templates')));
         <label for="price_faq">FAQ</label>
         <textarea id="price_faq" name="cfg[price_faq]" rows="8" placeholder="Satu tanya-jawab per baris: Pertanyaan | Jawaban"><?= e($v('price_faq')) ?></textarea>
         <p class="help">Format: <code>Pertanyaan | Jawaban</code> per baris. Kosongkan untuk FAQ bawaan.</p>
+
+        <label class="checkbox"><input type="checkbox" name="cfg[price_show_testimonials]" value="1"<?= $checked('price_show_testimonials') ?>> Tampilkan testimoni</label>
+        <label for="price_testimonials">Testimoni</label>
+        <textarea id="price_testimonials" name="cfg[price_testimonials]" rows="6" placeholder="Satu testimoni per baris: Nama | Peran/Profesi | Kutipan"><?= e($v('price_testimonials')) ?></textarea>
+        <p class="help">Format: <code>Nama | Peran | Kutipan</code> per baris. Kosongkan untuk menyembunyikan bagian testimoni.</p>
 
         <label class="checkbox"><input type="checkbox" name="cfg[price_show_contacts]" value="1"<?= $checked('price_show_contacts') ?>> Tampilkan kontak</label>
         <div class="row">

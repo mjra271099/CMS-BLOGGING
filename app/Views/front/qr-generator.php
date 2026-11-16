@@ -337,17 +337,31 @@ $intro     = (string)($intro ?? 'Buat QR Code untuk URL, WhatsApp, teks, email, 
 
 <!-- Popup dukungan sukarela (QRIS DANA). Isi diatur dari Admin → Tools. -->
 <div class="sa-modal" id="qrSupport" role="dialog" aria-modal="true" aria-labelledby="qrSupportTitle" hidden>
-  <div class="sa-modal-card">
+  <div class="sa-modal-card sa-modal-wide">
     <button type="button" class="sa-modal-close" id="qrSupportClose" aria-label="Tutup">×</button>
     <h2 id="qrSupportTitle">Dukung Pengembangan Tools Ini</h2>
     <p id="qrSupportDesc">QR Code Generator ini gratis. Dukungan sukarela membantu biaya server dan pengembangan fitur berikutnya.</p>
     <div class="sa-qris" hidden>
-      <img id="qrSupportImage" src="" alt="QRIS DANA" width="230" height="230" loading="lazy">
+      <div class="sa-qris-frame" id="qrSupportZoom" role="button" tabindex="0" aria-label="Perbesar gambar QRIS">
+        <img id="qrSupportImage" src="" alt="QRIS DANA" loading="lazy">
+        <span class="sa-qris-zoom">🔍 Perbesar</span>
+      </div>
+      <a class="sa-btn" id="qrSupportOpen" href="#" target="_blank" rel="noopener" hidden style="font-size:.82rem;padding:7px 12px">Buka gambar ukuran penuh</a>
     </div>
-    <p class="sa-note" style="margin:0 0 10px">Pindai QRIS di atas dengan aplikasi e-wallet atau mobile banking. Dukungan sepenuhnya sukarela — QR Code tetap bisa diunduh tanpa membayar.</p>
+    <p class="sa-note" style="margin:0 0 10px">Pindai QRIS di atas dengan aplikasi e-wallet atau mobile banking. Ketuk gambar untuk memperbesar. Dukungan sepenuhnya sukarela — QR Code tetap bisa diunduh tanpa membayar.</p>
     <div class="sa-modal-actions">
       <a class="sa-btn primary" id="qrSupportLink" href="#" target="_blank" rel="noopener" hidden>Buka Halaman Dukungan</a>
       <button type="button" class="sa-btn" id="qrSupportLater">Nanti Dulu</button>
     </div>
+  </div>
+</div>
+
+<!-- Lightbox QRIS: gambar ukuran penuh agar kode jelas terbaca -->
+<div class="sa-lightbox" id="qrLightbox" hidden role="dialog" aria-modal="true" aria-label="QRIS ukuran penuh">
+  <button type="button" class="sa-lightbox-close" id="qrLightboxClose" aria-label="Tutup">×</button>
+  <img id="qrLightboxImage" src="" alt="QRIS DANA ukuran penuh">
+  <div class="sa-lightbox-bar">
+    <a class="sa-btn" id="qrLightboxOpen" href="#" target="_blank" rel="noopener">Buka di tab baru</a>
+    <button type="button" class="sa-btn" id="qrLightboxDismiss">Tutup</button>
   </div>
 </div>

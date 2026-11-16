@@ -11,6 +11,7 @@ declare(strict_types=1);
  * @var array  $cfg      ToolConfig::all()
  * @var array  $features daftar [judul, deskripsi]
  * @var array  $faq      daftar [tanya, jawab]
+ * @var array  $testimonials daftar [nama, peran, kutipan]
  * @var array  $shots    ['dashboard'=>url, 'frontend'=>url]
  * @var array  $tech     daftar teknologi
  * @var array|null $flash
@@ -91,6 +92,25 @@ $externalBuy = preg_match('~^https?://~i', $buyUrl) === 1;
             <ul class="lp-tech">
                 <?php foreach ($tech as $item): ?><li><?= e($item) ?></li><?php endforeach; ?>
             </ul>
+        </div>
+    </section>
+    <?php endif; ?>
+
+    <?php if ($on('price_show_testimonials') && ($testimonials ?? []) !== []): ?>
+    <section class="lp-section" id="testimoni">
+        <div class="sa-shell">
+            <h2>Apa kata pengguna</h2>
+            <div class="lp-testimonials">
+                <?php foreach ($testimonials as [$who, $role, $quote]): ?>
+                    <figure class="lp-testimonial">
+                        <blockquote><?= nl2br(e($quote)) ?></blockquote>
+                        <figcaption>
+                            <?php if ($who !== ''): ?><strong><?= e($who) ?></strong><?php endif; ?>
+                            <?php if ($role !== ''): ?><span><?= e($role) ?></span><?php endif; ?>
+                        </figcaption>
+                    </figure>
+                <?php endforeach; ?>
+            </div>
         </div>
     </section>
     <?php endif; ?>
