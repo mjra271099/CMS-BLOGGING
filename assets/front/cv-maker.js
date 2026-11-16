@@ -3,9 +3,9 @@
    --------------------------------------------------------------------------
    • Satu state (localStorage) menjadi sumber semua template: ganti desain
      tidak menghilangkan isian.
-   • Intelligent layout: ukur tinggi dokumen, kecilkan font secara bertahap
-     sampai batas minimum, rapatkan spacing, atur margin — lalu peringatkan
-     pengguna bila konten tetap melebihi satu halaman.
+   • Intelligent layout: ukuran font & jarak proporsional — default lega/nyaman,
+     mengecil bertahap hanya bila konten panjang, dengan lantai keterbacaan;
+     bila tetap melebihi, konten dibagi ke beberapa halaman (tidak dipotong).
    • Download = cetak browser (Save as PDF) pada ukuran kertas asli, sehingga
      pratinjau dan hasil PDF identik.
    • Popup dukungan sukarela + direct link iklan di tab baru; unduhan tetap
@@ -711,18 +711,28 @@
   /** Terapkan setelan layout (font/gap/pad) + sesuaikan ukuran nama. */
   function applyStep(doc, step) {
     doc.style.setProperty('--fs', step.fs.toFixed(2) + 'px');
-    doc.style.setProperty('--gap', (6.4 * step.gap).toFixed(2) + 'px');
+    doc.style.setProperty('--gap', (6.6 * step.gap).toFixed(2) + 'px');
     doc.style.setProperty('--pad', (step.pad * 32).toFixed(2) + 'px');
     doc.style.setProperty('--pad-x', (step.pad * 48).toFixed(2) + 'px');
-    doc.style.setProperty('--lh', (1.34 + 0.06 * step.gap).toFixed(2));
+    // Line-height sedikit naik saat spacing dirapatkan supaya tetap terbaca.
+    doc.style.setProperty('--lh', (1.31 + 0.09 * step.gap).toFixed(2));
     fitNames(doc, step);
   }
 
-  /** Kecilkan nama (tanpa melewati lantai) agar muat satu baris bila mungkin. */
+  /**
+   * Sesuaikan elemen satu-baris agar tidak melewati lebar container:
+   * • Nama (.name/.name-lg): diturunkan bertahap tapi tidak melewati lantai
+   *   agar tetap menonjol & terbaca; bila tetap tak muat, dibiarkan membungkus.
+   * • Teks nowrap lain (.cv-entry-when, .cv-contact span, .cv-entry-sub):
+   *   dikecilkan sedikit bila perlu lalu boleh membungkus — mencegah teks
+   *   keluar container / bertumpuk pada kolom sempit.
+   */
   function fitNames(doc, step) {
     var tpl = state.template;
     var scaleMap = { modern: 2.1, colored: 2.45, minimal: 2.35, ats: 1.95, timeline: 2.3 };
     var scale = scaleMap[tpl] || 2.1;
+
+    // Nama: pertahankan sebagai elemen paling menonjol.
     $$('.name, .name-lg', doc).forEach(function (nameEl) {
       nameEl.style.fontSize = '';
       nameEl.style.whiteSpace = '';
@@ -733,8 +743,8 @@
       if (avail <= 0) return;
       nameEl.style.whiteSpace = 'nowrap';
       var w = measureWidth(nameEl);
-      // Lantai: minimal ~1.55x font isi agar tetap menonjol namun terbaca.
-      var floor = step.fs * 1.55;
+      // Lantai: minimal ~1.6x font isi agar tetap menonjol namun terbaca.
+      var floor = step.fs * 1.6;
       if (w > avail + 0.5) {
         var fitted = Math.max(floor, baseFs * (avail / w) * 0.985);
         nameEl.style.fontSize = fitted.toFixed(2) + 'px';
@@ -745,6 +755,19 @@
           nameEl.style.overflowWrap = 'anywhere';
         }
       }
+    });
+
+    // Elemen nowrap lain: cegah luapan horizontal pada kolom sempit.
+    $$('.cv-entry-when', doc).forEach(function (el) {
+      el.style.whiteSpace = 'nowrap';
+      el.style.maxWidth = '100%';
+      if (el.scrollWidth > el.clientWidth + 1) {
+        el.style.whiteSpace = 'normal';
+      }
+    });
+    $$('.cv-tag', doc).forEach(function (el) {
+      el.style.maxWidth = '100%';
+      el.style.overflowWrap = 'anywhere';
     });
   }
 
@@ -809,19 +832,42 @@
 
   /* ---------------- Render CV + paginasi ---------------- */
 
-  /** Setelan auto-fit: pilih kombinasi font/spacing paling lega yang muat. */
-  var FIT_STEPS = [
-    { fs: 1.00, gap: 1.00, pad: 1.00 },
-    { fs: 0.97, gap: 0.90, pad: 0.95 },
-    { fs: 0.94, gap: 0.82, pad: 0.90 },
-    { fs: 0.91, gap: 0.74, pad: 0.86 },
-    { fs: 0.88, gap: 0.66, pad: 0.82 },
-    { fs: 0.86, gap: 0.60, pad: 0.78 }
-  ];
+  /* ---------------- Skala auto-fit (font + jarak proporsional) ----------------
+     Ukuran font & jarak mengecil BERSAMAAN secara bertahap dan halus, mengikuti
+     rasio yang sama, sehingga hierarki serta estetika tiap template tetap utuh
+     dan hanya "menyusut" secara proporsional. Default = paling lega (fs 1.00).
+     Bila konten tetap belum muat di lantai minimum, konten dibagi ke halaman
+     berikutnya (tidak pernah dipotong). */
+  var FIT_MIN_FS = 0.82;          // lantai: ≈ 8.9px dari basis 10.9px — tetap nyaman dibaca
+  var FIT_STEPS = (function () {
+    // Lantai font mengikuti setelan admin (minFont, px) bila wajar; jika tidak,
+    // pakai lantai baku. Dijaga agar tidak pernah < ~8px (tak terbaca).
+    var base = 10.9 * (parseFloat(CFG.fontScale) > 0 ? parseFloat(CFG.fontScale) : 1);
+    var adminMin = parseFloat(CFG.minFont);
+    var floorFs = FIT_MIN_FS;
+    if (adminMin > 0) {
+      var ratio = Math.min(1, Math.max(adminMin, 8) / Math.max(1, base));
+      // Hanya terima bila masuk akal (tidak memaksa font lebih besar dari default).
+      if (ratio < 1 && ratio >= 0.74) floorFs = ratio;
+    }
+    var steps = [];
+    var n = 13;                   // 13 langkah halus 1.00 → floor (~1.5% per langkah)
+    for (var i = 0; i < n; i++) {
+      var fs = 1 - (1 - floorFs) * (i / (n - 1));
+      // Jarak mengecil sedikit lebih cepat dari font agar ruang terpakai efisien,
+      // tetapi tetap proporsional sehingga blok tidak berdempetan.
+      var t = (fs - floorFs) / (1 - floorFs);
+      var gap = 0.60 + 0.40 * Math.pow(t, 0.85);
+      var pad = 0.74 + 0.26 * Math.pow(t, 0.85);
+      steps.push({ fs: fs, gap: gap, pad: pad });
+    }
+    return steps;
+  })();
 
+  /** Font isi dasar (px). Dinaikkan agar default lebih lega & nyaman dibaca. */
   function baseFont() {
     var scale = parseFloat(CFG.fontScale) > 0 ? parseFloat(CFG.fontScale) : 1;
-    return 10.6 * scale;
+    return 10.9 * scale;
   }
 
   function renderCV() {
@@ -877,31 +923,56 @@
 
   /**
    * Pilih step layout.
-   * Kebijakan: tipografi yang nyaman lebih penting daripada memaksa 1 halaman.
-   * Hanya mengecilkan font sebatas "lantai terbaca" (≈ 6% dari ukuran dasar).
-   * Bila dengan font terbaca konten tetap > 1 halaman, biarkan beberapa
-   * halaman dengan font lega — jangan mengecilkan sampai sulit dibaca.
+   * Kebijakan: default = tipografi paling lega (langkah 0). Bila konten lebih
+   * panjang dari satu halaman, font + jarak mengecil bertahap & proporsional
+   * sampai lantai minimum (FIT_MIN_FS) demi memuat satu halaman. Bila di lantai
+   * minimum pun belum muat, gunakan lantai itu dan bagi konten ke beberapa
+   * halaman — tidak pernah mengecil di bawah lantai maupun memotong konten.
    */
-  var FIT_SINGLE_PAGE_LIMIT = 3; // hanya 3 langkah teratas yang boleh untuk 1 halaman
-
   function pickLayout(tpl, size) {
     var results = FIT_STEPS.map(function (st) {
       var hh = measureLayout(tpl, st, size);
-      return { step: st, height: hh, pages: Math.max(1, Math.ceil(hh / size.h)), fits1: hh <= size.h + 2 };
+      return { step: st, height: hh, fits1: hh <= size.h };
     });
 
-    // 1) Upaya 1 halaman dengan pengecilan wajar (≤ FIT_SINGLE_PAGE_LIMIT langkah).
-    for (var i = 0; i < Math.min(FIT_SINGLE_PAGE_LIMIT, results.length); i++) {
+    // 1) Upaya 1 halaman: cari langkah paling lega (paling awal) yang muat.
+    for (var i = 0; i < results.length; i++) {
       if (results[i].fits1) {
-        return { step: results[i].step, fits: true, height: results[i].height };
+        // Optimalkan: bila langkah sebelumnya (lebih lega) hanya sedikit
+        // melebihi, cari ukuran di antaranya agar font sebesar mungkin.
+        var step = results[i].step;
+        if (i > 0) {
+          step = refineStep(tpl, size, results[i - 1], results[i]);
+        }
+        return { step: step, fits: true, height: measureLayout(tpl, step, size) };
       }
     }
 
-    // 2) Tidak muat tanpa mengecil berlebihan → pakai font paling terbaca
-    //    (langkah 0) dan biarkan konten mengalir ke beberapa halaman. Ini
-    //    lebih baik daripada font kecil yang sulit dibaca.
-    var best = results[0];
+    // 2) Tidak muat hingga lantai minimum → pakai lantai (langkah terakhir)
+    //    dan biarkan konten mengalir ke beberapa halaman secara rapi.
+    var best = results[results.length - 1];
     return { step: best.step, fits: false, height: best.height };
+  }
+
+  /**
+   * Interpolasi halus antara langkah "terlalu besar" (tooBig) dan langkah yang
+   * muat (ok) untuk mendekati ukuran font terbesar yang masih pas 1 halaman.
+   * Hasilnya tetap ≥ langkah ok (tidak pernah lebih kecil) — keterbacaan aman.
+   */
+  function refineStep(tpl, size, tooBig, ok) {
+    var lo = ok.step, hi = tooBig.step;
+    // Cukup 2 iterasi biseksi agar tetap cepat namun menghasilkan ukuran nyaris
+    // optimal (proporsi kontinu, bukan lompatan kasar).
+    for (var k = 0; k < 2; k++) {
+      var mid = {
+        fs: (lo.fs + hi.fs) / 2,
+        gap: (lo.gap + hi.gap) / 2,
+        pad: (lo.pad + hi.pad) / 2
+      };
+      var h = measureLayout(tpl, mid, size);
+      if (h <= size.h - 1) { lo = mid; } else { hi = mid; }
+    }
+    return lo;
   }
 
   /**

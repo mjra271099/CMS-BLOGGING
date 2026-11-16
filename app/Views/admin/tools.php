@@ -143,7 +143,7 @@ $activeTemplates = array_filter(explode(',', $v('tool_cv_templates')));
                 <input id="tool_cv_min_font" type="number" step="0.5" min="8" max="12" name="cfg[tool_cv_min_font]" value="<?= e($v('tool_cv_min_font')) ?>">
             </div>
         </div>
-        <p class="help">Font dikecilkan otomatis hanya sampai batas minimum; setelah itu CV Maker menampilkan peringatan agar pengguna meringkas konten.</p>
+        <p class="help">Ukuran font &amp; jarak mengecil otomatis secara bertahap dan proporsional hanya bila teks lebih panjang dari ruang tersedia, sampai batas minimum di atas (agar tetap nyaman dibaca). Bila di batas minimum pun belum muat satu halaman, konten dibagi ke halaman berikutnya — tidak pernah dikecilkan di bawah batas ini dan tidak pernah dipotong.</p>
 
         <h3>Popup dukungan</h3>
         <label class="checkbox"><input type="checkbox" name="cfg[tool_cv_support_enabled]" value="1"<?= $checked('tool_cv_support_enabled') ?>> Tampilkan popup dukungan saat menekan Download</label>
