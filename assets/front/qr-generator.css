@@ -431,3 +431,35 @@
   font-size: 13.5px;
   color: var(--qr-text-muted);
 }
+
+/* ==========================================================================
+   Halaman mandiri /qr-code-generator
+   Hanya berlaku di luar halaman CMS (pembungkus .qr-standalone-wrap), sehingga
+   tampilan di dalam tema tetap sama seperti sebelumnya.
+   ========================================================================== */
+.qr-standalone-wrap { padding: 18px clamp(10px, 3vw, 26px) 48px; }
+.qr-standalone-wrap .qr-app {
+  max-width: 1180px;
+  margin: 0 auto;
+  --qr-header-h: 0px;
+  --qr-action-h: 0px;
+}
+.qr-standalone-wrap .qr-page-head {
+  margin-bottom: 14px;
+}
+.qr-standalone-wrap .qr-page-head .qr-kicker {
+  font-size: .72rem;
+  text-transform: uppercase;
+  letter-spacing: .09em;
+  font-weight: 700;
+  color: #2563eb;
+}
+.qr-standalone-wrap .qr-page-head p {
+  margin: 4px 0 0;
+  color: #5b6472;
+  font-size: .9rem;
+  max-width: 70ch;
+}
+@media (max-width: 640px) {
+  .qr-standalone-wrap { padding-top: 12px; }
+}

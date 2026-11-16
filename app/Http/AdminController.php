@@ -49,7 +49,10 @@ final class AdminController
      * Nav entries that live outside the admin controller (standalone pages).
      * Their value is the root-relative URL to link to instead of "?view=key".
      */
-    private const EXTERNAL_VIEWS = ['tmdb' => 'tmdb-generator.php'];
+    private const EXTERNAL_VIEWS = [
+        'tmdb' => 'tmdb-generator.php',
+        'tools' => 'admin/tools.php',
+    ];
 
     /**
      * URL of a standalone module reachable from the sidebar, or null when the
@@ -79,6 +82,8 @@ final class AdminController
                 'layout' => ['Tata Letak', 'columns'],
                 'menus' => ['Menu', 'menu'],
                 'builder' => ['Page Builder', 'blocks'],
+                // Modul mandiri (admin/tools.php): CV Maker, QR, landing penjualan.
+                'tools' => ['Tools & Landing', 'download'],
             ],
             'Pertumbuhan' => [
                 'seo' => ['SEO & Audit', 'search'],

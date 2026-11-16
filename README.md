@@ -14,6 +14,7 @@ Aset Blogger asli (`assets/template-source.xml`) tidak diubah; CSS template lama
 - **Dua bahasa antarmuka** — Bahasa Indonesia dan English untuk seluruh halaman depan (navigasi, arsip, pencarian, artikel, komentar, 404, tanggal/bulan, waktu relatif). Bahasa default diatur di Admin → Pengaturan; pengunjung dapat berganti lewat tombol ID/EN di header (disimpan di cookie `site_language`). Katalog string ada di `app/Lang/id.php` dan `app/Lang/en.php`, dipakai melalui helper global `__()`.
 - **SEO** — meta title/description, canonical, Open Graph/Twitter, sitemap XML, robots.txt, RSS feed, redirect manager, dan audit SEO dengan skor. Mesin JSON-LD `App\Services\StructuredData` mendukung seluruh **25 jenis Structured Data Google Search Gallery** (Article, Breadcrumb, Carousel, Course list, Dataset, Discussion Forum, Education Q&A, Employer Aggregate Rating, Event, Image Metadata, Job Posting, Local Business, Math Solver, Movie, Organization, Product, Profile Page, Q&A Page, Recipe, Review Snippet, Software App, Speakable, Subscription, Vacation Rental, Video) dan hanya memancarkan node yang datanya benar-benar ada.
 - **Media library** — unggah gambar (JPG/PNG/GIF/WebP) dengan thumbnail otomatis, metadata alt/caption/folder, resize, dan penggantian file.
+- **Tools mandiri & landing penjualan** — CV/Resume Maker, QR Code Generator, dan halaman penjualan script CMS yang berjalan sebagai halaman mandiri (`/cv-maker`, `/qr-code-generator`, `/jual-script-cms`) tanpa navbar/footer tema, dengan tombol Home ke beranda. Semua isinya diatur dari **Admin → Tools & Landing**: judul, deskripsi, desain CV aktif, format/ukuran/ECC QR, popup dukungan sukarela (termasuk QRIS), status monetisasi + Direct Link per alat, serta konten landing (harga, fitur, FAQ, kontak). Lihat [Tools & Landing](#tools--landing).
 - **Halaman QR Code Generator** — fitur Page dengan template `qr-generator`: aplikasi QR (URL, WhatsApp, teks, email, telepon, WiFi, vCard, lokasi) yang berjalan di peramban, dengan unduhan PNG/JPG/WEBP/SVG. Aset halaman hanya dimuat di template itu, dan tombol unduh bisa diarahkan ke **Direct Link iklan** lewat Pengaturan situs.
 - **Dashboard admin baru** — MVC (`AdminController` + `app/Views/admin/*`) menggantikan `admin/index.php` satu-file. Ringkasan, editor dengan autosave, kustomizer live preview, builder, moderasi komentar, pengaturan, backup, dan log aktivitas.
 - **Keamanan** — CSRF pada semua form, escaping output, sanitasi HTML pada konten/kustom HTML, password hash `PASSWORD_DEFAULT`, cookie `HttpOnly`/`SameSite`, security headers, folder implementasi (`app/`, `database/`, `storage/`, `tests/`, `bin/`) dan berkas kredensial diblokir dari HTTP, serta eksekusi PHP di `uploads/` dilarang.
@@ -70,17 +71,23 @@ app/
   Core/        Config, Database, Context, Settings, Cache, Auth, Csrf, Theme,
                ThemeEngine, Widget, Migrator, View, Response, Lang, Theme/Ui
   Models/      Post, Page, Taxonomy, Comment, Blog, Menu, Media
-  Services/    Seo, Builder, Newsletter, Analytics, Backup, QrPage, StructuredData
+  Services/    Seo, Builder, Newsletter, Analytics, Backup, QrPage, StructuredData,
+               ToolConfig, ToolAdminPage, CvMakerPage, SalesPage, SalesOrder
   Http/        FrontController, AdminController, AdminUi
   Lang/        id.php, en.php — katalog string antarmuka (Indonesia & English)
-  Views/admin/ 26 template dashboard
-  Views/front/qr-generator.php   markup aplikasi QR (template halaman qr-generator)
+  Views/admin/ 27 template dashboard (termasuk tools.php)
+  Views/front/qr-generator.php   markup aplikasi QR (dipakai template halaman & halaman mandiri)
+  Views/cv-maker.php             markup CV/Resume Maker
+  Views/sales.php                markup landing penjualan
+  Views/standalone/  shell.php, sales-shell.php — dokumen mandiri tanpa chrome tema
   Http/Theme/Ui.php   kit UI yang dipakai semua tema
 assets/
   front/base.css                   primitif front-end (reset, token, komponen dasar)
   front/system.css                 sistem desain bersama semua tema (gaya "AMP")
+  front/standalone.css             kerangka halaman mandiri + gaya landing penjualan
   front/app.js                     skrip front-end
-  front/qr-generator.css|.js        halaman QR Code Generator (hanya template qr-generator)
+  front/qr-generator.css|.js        QR Code Generator (template qr-generator & /qr-code-generator)
+  front/cv-maker.css|.js            CV/Resume Maker (/cv-maker)
   admin.css, admin-app.css/js      dashboard
   admin-editor.css                 lapisan tampilan editor kaya (Tiptap)
   admin-embed.js                   dukungan embed iframe di editor (token + pemulihan saat simpan)
@@ -89,7 +96,7 @@ resources/editor/editor.js         sumber editor; dibundel ke assets/vendor/tipt
 database/        schema.sql, migrations/
 tests/           run.php (integrasi), http.php (smoke test HTTP)
 bin/console.php
-index.php, admin/index.php, router.php, .htaccess
+index.php, admin/index.php, admin/tools.php, router.php, .htaccess
 ```
 
 Legacy front files (`header.php`, `footer.php`, `sidebar.php`, `post.php`, `page.php`, `category.php`, `search.php`) tetap ada sebagai shim tipis yang mendelegasikan ke arsitektur `app/` agar tautan lama tetap bekerja.
@@ -109,7 +116,10 @@ Legacy front files (`header.php`, `footer.php`, `sidebar.php`, `post.php`, `page
 | Ganti bahasa | `/language/id`, `/language/en` (menyimpan cookie lalu kembali ke halaman asal) |
 | Sitemap | `/sitemap.xml` |
 | Feed | `/feed.xml`, `/feed/`, `/rss` |
-| Admin | `/admin/index.php?view=…` |
+| CV/Resume Maker | `/cv-maker` (halaman mandiri) |
+| QR Code Generator | `/qr-code-generator` (halaman mandiri) — juga template halaman `qr-generator` di `/p/<slug>.html` |
+| Landing penjualan CMS | `/jual-script-cms` (halaman mandiri) |
+| Admin | `/admin/index.php?view=…` — Tools & Landing: `/admin/tools.php` |
 
 ## Tema
 
@@ -147,20 +157,34 @@ Antarmuka depan mendukung **Bahasa Indonesia** dan **English**. Rantai penentuan
 
 Untuk menambah string: tambahkan pasangan kunci yang sama ke `app/Lang/id.php` dan `app/Lang/en.php`, lalu panggil lewat `__()` pada template/Ui/Widget.
 
-## Halaman QR Code Generator
+## Tools & Landing
 
-QR Code Generator dijalankan sebagai **halaman CMS biasa** dengan template `qr-generator`, bukan berkas HTML terpisah:
+Tiga halaman mandiri tersedia dan semuanya diatur dari **Admin → Tools & Landing** (`admin/tools.php`). Halaman-halaman ini tidak memakai navbar, footer, atau sidebar tema: masing-masing dirender lewat `app/Views/standalone/shell.php` (token `assets/front/base.css` + `standalone.css`) dengan header ringkas dan tombol **Home** ke beranda. Routing ditangani satu rute `tool` di `FrontController`; bila alat dinonaktifkan lewat admin, URL-nya menjadi 404.
 
-1. Admin → Halaman → Halaman Baru, judul misalnya *QR Code Generator*, slug `qr-code-generator`, lalu pilih template **QR Code Generator**. Isi kolom konten dengan pengantar singkat (opsional) dan publikasikan.
-2. URL-nya mengikuti permalink halaman: `/p/qr-code-generator.html`. Halaman otomatis muncul di sitemap dan bisa dimasukkan ke menu.
+### CV / Resume Maker — `/cv-maker`
 
-Yang terjadi di balik layar:
+- Lima desain: **Modern** (dua kolom + foto), **Klasik Serif**, **Minimalis** (foto bulat), **ATS Friendly** (satu kolom, hitam-putih), dan **Timeline**. Desain yang aktif diatur admin; tiga desain asli selalu tersedia.
+- **Layout satu halaman pintar**: `assets/front/cv-maker.js` mengukur tinggi isi lalu mengecilkan font secara bertahap sampai batas keterbacaan minimum, merapatkan spacing, dan mengatur margin. Bila konten tetap melebihi satu halaman, muncul peringatan jujur (bukan memaksa font terkecil yang tidak terbaca).
+- Ukuran kertas A4/Letter/Legal/kustom. Unduhan memakai dialog cetak peramban dengan `@page size: <w>mm <h>mm; margin: 0`, sehingga pratinjau dan PDF identik dan sesuai ukuran kertas.
+- 11 bagian dinamis (informasi pribadi, foto, ringkasan, pengalaman, pendidikan, keterampilan, sertifikasi, bahasa, proyek, penghargaan, tambahan), autosave ke `localStorage`, dan konfirmasi sebelum menghapus data/item. Semua data tetap di peramban — tidak ada yang dikirim ke server.
 
-- `App\Services\QrPage` memutuskan markup dan aset; `app/Views/front/qr-generator.php` berisi markup aplikasi, `assets/front/qr-generator.css` + `.js` berisi gaya dan logika.
-- Aset hanya dimuat pada template `qr-generator` (`Ui::head()` memanggil `QrPage::headHtml()`), jadi halaman lain tidak terbebani. Gaya memakai token tema (`--t-*`), sehingga warnanya ikut tema aktif dan mode gelap.
-- Template ini memakai `layout_mode = full`, jadi kolom sidebar tidak dirender.
+### QR Code Generator — `/qr-code-generator`
 
-**Monetisasi tautan unduhan (sederhana).** Isi **Admin → Pengaturan → Direct Link Iklan (QR Code)** dengan URL direct link (mis. dari penyedia shortlink/iklan). Nilai itu dicetak sebagai `data-direct-url` pada pembungkus `.qr-app`; `assets/front/qr-generator.js` membukanya di tab baru saat tombol unduh ditekan, lalu berkas QR tetap terunduh. Kosongkan pengaturan untuk unduhan langsung tanpa perantara. Belum ada integrasi jaringan iklan otomatis — hanya satu hook `QrPage::DIRECT_LINK_KEY` (`qr_download_direct_url`).
+Berjalan juga sebagai template halaman CMS `qr-generator` (`/p/<slug>.html`) untuk kompatibilitas. Format unduhan, ukuran, dan tingkat ECC dibaca dari konfigurasi admin. Kode QR dirender di peramban (format PNG/JPG/WEBP/SVG).
+
+### Landing penjualan script CMS — `/jual-script-cms`
+
+Hero, deskripsi, fitur, tangkapan layar, teknologi, lisensi, harga, demo, FAQ, testimoni, CTA (**Lihat Demo / Beli Script CMS / Hubungi Kami**), dan kontak — semuanya diisi dari admin; bagian yang belum diisi tidak dirender (tidak ada klaim fitur yang tidak ada). Form kontak/pesan disimpan ke tabel `orders` yang dibuat otomatis saat pertama dipakai (`SalesOrder::ensureTable()`), ter-scope `blog_id`.
+
+### Konfigurasi, dukungan, dan monetisasi
+
+- **Penyimpanan**: `App\Services\ToolConfig` menyimpan semua nilai di tabel `settings` dengan prefix `tool_`/`price_` (per blog) — tidak ada tabel baru. `ToolConfig::save()` menghormati scope per form, jadi menyimpan form CV+QR tidak menimpa pengaturan landing, dan sebaliknya.
+- **Popup dukungan sukarela** ("Dukung Kami" + "Nanti Dulu"): unduhan **tetap berjalan** bila pengguna memilih lewat. QRIS dapat diunggah/diganti dari admin (fallback ke `QR-DANA.jpeg` di root bila belum ada).
+- **Monetisasi per alat**: aktifkan monetisasi lalu isi **Direct Link** untuk sebuah alat; tautan dibuka di tab baru **hanya saat pengguna menekan unduh**, proses unduhan tetap berlanjut di halaman utama, dan tidak pernah ditampilkan ulang tanpa aksi pengguna. Konfigurasi terpisah untuk CV, QR, dan landing.
+
+### Template halaman QR (opsional)
+
+Selain `/qr-code-generator`, QR juga tetap tersedia sebagai halaman CMS bertemplate `qr-generator` untuk instalasi lama: Admin → Halaman → Halaman Baru, pilih template **QR Code Generator**, publikasikan; URL-nya `/p/<slug>.html`. Aset hanya dimuat pada template itu (`QrPage::headHtml()`), dan template memakai `layout_mode = full` sehingga sidebar tidak dirender.
 
 ## Widget
 Widget disimpan di tabel `widgets` dan dikelompokkan lewat `section_id`. Visibilitas mendukung kombinasi halaman, perangkat (desktop/mobile/tablet), dan peran pengguna. Urutan dan area diatur dari Admin → Tata Letak (drag-and-drop); ada pula endpoint `?ajax=widget.reorder`. Halaman Tata Letak menyertakan pratinjau situs langsung (iframe) dengan pilihan rute — beranda, artikel, halaman, dan arsip — serta tombol lebar perangkat, sehingga penempatan widget langsung terlihat pada tema aktif.
@@ -191,7 +215,9 @@ php -S 127.0.0.1:8090 -t . router.php
 php tests/http.php http://127.0.0.1:8090
 ```
 
-`tests/run.php` menguji utilitas inti, Settings/Cache, CRUD posting/halaman/taksonomi/komentar, widget & reorder, page builder, SEO, Structured Data (25 jenis galeri, node per rute, node manual, escape JSON), tema, dan hak akses. `tests/http.php` menguji routing, header keamanan, sitemap/feed, URL Blogger, shim legacy, dan bahwa berkas privat tidak dapat diakses.
+`tests/run.php` menguji utilitas inti, Settings/Cache, CRUD posting/halaman/taksonomi/komentar, widget & reorder, page builder, SEO, Structured Data (25 jenis galeri, node per rute, node manual, escape JSON), tema, hak akses, konfigurasi tools (`ToolConfig`), dan tabel pesanan (`SalesOrder`). `tests/http.php` menguji routing, header keamanan, sitemap/feed, URL Blogger, shim legacy, halaman mandiri (`/cv-maker`, `/qr-code-generator`, `/jual-script-cms`), dan bahwa berkas privat tidak dapat diakses.
+
+Untuk pengujian manual, konfigurasi Tools bisa disetel dari **Admin → Tools & Landing**; nilai uji disimpan di tabel `settings` dan otomatis dibersihkan oleh `tests/run.php`.
 
 ## Catatan operasional
 

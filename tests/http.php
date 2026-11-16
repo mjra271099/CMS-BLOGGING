@@ -132,6 +132,8 @@ if ($qrPage['status'] === 200) {
     check('QR page loads its script deferred', str_contains($qrPage['body'], 'assets/front/qr-generator.js'));
     check('QR page has the type tabs and download buttons', str_contains($qrPage['body'], 'id="typeTabs"') && str_contains($qrPage['body'], 'data-fmt="png"'));
     check('QR page keeps the direct-link hook', str_contains($qrPage['body'], 'data-direct-url'));
+    check('QR page exposes admin config', str_contains($qrPage['body'], 'data-config='));
+    check('QR page renders the support popup', str_contains($qrPage['body'], 'id="qrSupport"') && str_contains($qrPage['body'], 'id="qrSupportLater"'));
     check('QR page hides the blog promo', !str_contains($qrPage['body'], 'Visit Our Blog'));
     check('QR assets stay off other pages', !str_contains($home['body'], 'qr-generator.js'));
 } else {
@@ -197,6 +199,53 @@ $dashboard = request($base . '/admin/index.php?view=dashboard');
 check('Dashboard requires login', in_array($dashboard['status'], [301, 302], true), 'status=' . $dashboard['status']);
 $builderPreview = request($base . '/admin/index.php?ajax=builder.preview');
 check('Builder preview requires login', $builderPreview['status'] === 401, 'status=' . $builderPreview['status']);
+
+// Halaman mandiri (CV Maker, QR, landing penjualan): tanpa chrome tema,
+// punya header + tombol Home sendiri, dan konfigurasinya dari Admin → Tools.
+section('Standalone tools');
+$cvUrl = '/cv-maker';
+$cv = request($base . $cvUrl);
+if ($cv['status'] === 200) {
+    check('CV Maker returns 200', true);
+    check('CV Maker loads the standalone shell', str_contains($cv['body'], 'class="sa-header"') && str_contains($cv['body'], 'assets/front/standalone.css'));
+    check('CV Maker loads base.css for tokens', str_contains($cv['body'], 'assets/front/base.css'));
+    check('CV Maker loads its own css + js', str_contains($cv['body'], 'assets/front/cv-maker.css') && str_contains($cv['body'], 'assets/front/cv-maker.js'));
+    $cvHasTemplates = str_contains($cv['body'], '&quot;templates&quot;') || str_contains($cv['body'], '"templates"');
+    check('CV Maker exposes admin config', str_contains($cv['body'], 'data-config=') && $cvHasTemplates);
+    check('CV Maker renders all sections and the paper', str_contains($cv['body'], 'id="cvApp"') && str_contains($cv['body'], 'id="cvDoc"'));
+    check('CV Maker renders the support popup', str_contains($cv['body'], 'id="cvSupport"') && str_contains($cv['body'], 'id="cvSupportLater"'));
+    check('CV Maker has a Home link to the site root', str_contains($cv['body'], 'class="sa-home"'));
+    check('CV Maker has no sidebar/footer chrome', !str_contains($cv['body'], 'class="sidebar') && !str_contains($cv['body'], 'site-footer'));
+    check('CV Maker is page-scoped for print', str_contains($cv['body'], 'page-cv-maker'));
+} else {
+    check('CV Maker not enabled on this blog (skipped)', true, 'status=' . $cv['status']);
+}
+
+$qrStandalone = request($base . '/qr-code-generator');
+if ($qrStandalone['status'] === 200) {
+    check('QR standalone returns 200', true);
+    check('QR standalone loads the standalone shell', str_contains($qrStandalone['body'], 'class="sa-header"'));
+    check('QR standalone renders the app + popup', str_contains($qrStandalone['body'], 'class="qr-app"') && str_contains($qrStandalone['body'], 'id="qrSupport"'));
+    check('QR standalone exposes admin config', str_contains($qrStandalone['body'], 'data-config='));
+    check('QR standalone has no sidebar/footer chrome', !str_contains($qrStandalone['body'], 'class="sidebar') && !str_contains($qrStandalone['body'], 'site-footer'));
+} else {
+    check('QR standalone not enabled on this blog (skipped)', true, 'status=' . $qrStandalone['status']);
+}
+
+$sales = request($base . '/jual-script-cms');
+if ($sales['status'] === 200) {
+    check('Sales landing returns 200', true);
+    check('Sales landing renders the hero', str_contains($sales['body'], 'class="lp-hero"'));
+    check('Sales landing lists features and FAQ', str_contains($sales['body'], 'lp-feature') && str_contains($sales['body'], 'lp-faq'));
+    check('Sales landing has a contact form', str_contains($sales['body'], 'class="lp-form"'));
+    check('Sales landing loads the standalone shell', str_contains($sales['body'], 'class="sa-header"'));
+    check('Sales landing has no sidebar/footer chrome', !str_contains($sales['body'], 'class="sidebar') && !str_contains($sales['body'], 'site-footer'));
+} else {
+    check('Sales landing not enabled on this blog (skipped)', true, 'status=' . $sales['status']);
+}
+
+$unknownTool = request($base . '/tool-tidak-ada-zztest');
+check('Unknown tool slug returns 404', $unknownTool['status'] === 404, 'status=' . $unknownTool['status']);
 
 echo "\n" . str_repeat('-', 56) . "\n";
 echo sprintf("%d passed, %d failed\n", $passed, $failed);

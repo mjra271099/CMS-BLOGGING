@@ -68,8 +68,24 @@ final class FrontController
             'robots' => $this->robots(),
             'feed' => $this->feed(),
             'newsletter' => $this->newsletter(),
+            'tool' => $this->tool((string)($route['params']['tool'] ?? '')),
             'preview' => $this->post($route['params']),
             'not-found' => $this->notFound(),
+            default => $this->notFound(),
+        };
+    }
+
+    /**
+     * Halaman mandiri: CV Maker, QR Code Generator, dan landing penjualan.
+     * Masing-masing berdiri sendiri (tanpa navbar/footer blog) dan hanya
+     * dirender bila diaktifkan dari Admin → Tools.
+     */
+    private function tool(string $tool): string
+    {
+        return match ($tool) {
+            'cv-maker' => (new \App\Services\CvMakerPage())->run(),
+            'qr-code-generator' => (new \App\Services\QrPage())->run(),
+            'jual-script-cms' => (new \App\Services\SalesPage())->run(),
             default => $this->notFound(),
         };
     }
@@ -126,6 +142,10 @@ final class FrontController
         }
         if ($path === 'newsletter') {
             return ['name' => 'newsletter', 'params' => []];
+        }
+        // Halaman alat mandiri & landing penjualan (tidak memakai chrome tema).
+        if (in_array($path, ['cv-maker', 'qr-code-generator', 'jual-script-cms'], true)) {
+            return ['name' => 'tool', 'params' => ['tool' => $path]];
         }
         if (preg_match('~^search/label/([^/]+)$~', $path, $match)) {
             return ['name' => 'category', 'params' => ['slug' => urldecode($match[1])]];

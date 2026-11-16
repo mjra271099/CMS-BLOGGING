@@ -35,6 +35,9 @@ use App\Models\Post;
 use App\Models\Taxonomy;
 use App\Services\Builder;
 use App\Services\QrPage;
+use App\Services\CvMakerPage;
+use App\Services\SalesOrder;
+use App\Services\ToolConfig;
 use App\Services\Seo;
 use App\Services\StructuredData;
 use App\Services\TmdbArticle;
@@ -467,6 +470,66 @@ try {
     ThemeEngine::activate($originalTheme);
     $themeSwitched = Theme::instance()->slug() !== $originalTheme;
     check('ThemeEngine::activate restores theme', Theme::instance()->slug() === $originalTheme);
+
+    /*
+     * Tools & landing: konfigurasi terpusat (ToolConfig) + halaman mandiri.
+     * Semua nilai disimpan di tabel settings, jadi tidak ada tabel baru.
+     */
+    section('Tool config');
+    check('ToolConfig exposes defaults', isset(ToolConfig::defaults()['tool_cv_title']));
+    check('ToolConfig all() includes landing keys', array_key_exists('price_headline', ToolConfig::all()));
+    $prevScope = ToolConfig::all();
+    $saved = ToolConfig::save([
+        '_scope' => 'tool_cv_',
+        'tool_cv_title' => 'CV Uji',
+        'tool_cv_enabled' => '',
+        'tool_cv_templates' => 'modern,ats',
+        'tool_cv_default_template' => 'ats',
+        'tool_cv_direct_url' => 'https://iklan.example/cv',
+        'tool_cv_monetize' => '1',
+    ]);
+    check('ToolConfig save keeps scoped keys', ($saved['tool_cv_title'] ?? '') === 'CV Uji');
+    check('ToolConfig save coerces unchecked boolean to 0', ($saved['tool_cv_enabled'] ?? '') === '0');
+    check('ToolConfig save keeps default template inside list', ($saved['tool_cv_default_template'] ?? '') === 'ats');
+    $afterCv = ToolConfig::all();
+    check('ToolConfig scoped save leaves other tools alone', $afterCv['tool_qr_title'] === $prevScope['tool_qr_title']);
+    check('ToolConfig persists the value', ToolConfig::get('tool_cv_title') === 'CV Uji');
+    $cvConfig = ToolConfig::publicConfig('cv');
+    check('CV public config exposes monetised direct URL', ($cvConfig['directUrl'] ?? '') === 'https://iklan.example/cv');
+    check('CV public config lists templates', ($cvConfig['templates'] ?? []) === ['modern', 'ats']);
+    $invalidUrl = false;
+    try {
+        ToolConfig::save(['_scope' => 'tool_qr_', 'tool_qr_direct_url' => 'javascript:alert(1)', 'tool_qr_monetize' => '1']);
+    } catch (\Throwable $e) {
+        $invalidUrl = true;
+    }
+    check('ToolConfig rejects non-http direct links', $invalidUrl);
+    check('QR public config falls back to bundled QRIS', str_contains((string)(ToolConfig::publicConfig('qr')['qris'] ?? ''), 'QR-DANA'));
+    check('CV data attribute is HTML-safe JSON', str_contains(ToolConfig::dataAttribute('cv'), 'data-config=') && !str_contains(ToolConfig::dataAttribute('cv'), '"tool"'));
+    // Bersihkan jejak uji: buang semua key tool_/price_ agar tabel settings
+    // kembali seperti sebelum tes (default tetap datang dari ToolConfig).
+    Database::pdo()->exec("DELETE FROM settings WHERE setting_key LIKE 'tool\\\\_%' OR setting_key LIKE 'price\\\\_%'");
+
+
+    section('Standalone tools');
+    check('QR legacy template still recognised', QrPage::isTemplate('qr-generator'));
+    check('QR head loads standalone tokens too', str_contains(QrPage::headHtml('qr-generator'), 'standalone.css'));
+    check('QR head skipped elsewhere', QrPage::headHtml('default') === '');
+    check('QR page class exists', class_exists(CvMakerPage::class));
+    SalesOrder::ensureTable();
+    check('SalesOrder table is available', Database::tableExists('orders'));
+    $orderId = SalesOrder::create(['name' => 'ZZ Test Buyer', 'email' => 'zz@example.com', 'whatsapp' => '0812', 'amount' => 1000]);
+    check('SalesOrder::create stores a pending order', $orderId > 0);
+    $order = Database::fetch('SELECT * FROM orders WHERE id = ?', [$orderId]);
+    check('SalesOrder defaults to pending', (string)($order['status'] ?? '') === 'pending');
+    $badOrder = false;
+    try {
+        SalesOrder::create(['name' => '', 'email' => 'bukan-email']);
+    } catch (\Throwable $e) {
+        $badOrder = true;
+    }
+    check('SalesOrder validates name and email', $badOrder);
+    Database::delete('orders', 'id = ?', [$orderId]);
 
     section('Security');
     check('Guest cannot publish posts', !Auth::can('post.publish'));

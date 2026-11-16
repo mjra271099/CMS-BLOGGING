@@ -13,10 +13,14 @@ declare(strict_types=1);
  */
 
 $directUrl = (string)($directUrl ?? '');
-$kicker    = (string)($kicker ?? 'Structured tool');
+$config    = (string)($config ?? '');
+$formats   = is_array($formats ?? null) ? $formats : ['png','jpeg','webp','svg'];
+$sizes     = is_array($sizes ?? null) ? $sizes : [256,512,1024,2048];
+$ecc       = (string)($ecc ?? 'H');
+$kicker    = (string)($kicker ?? 'Alat gratis');
 $intro     = (string)($intro ?? 'Buat QR Code untuk URL, WhatsApp, teks, email, WiFi, vCard, dan lainnya — lalu unduh sebagai PNG, JPG, WEBP, atau SVG.');
 ?>
-<div class="qr-app" data-direct-url="<?= e($directUrl) ?>">
+<div class="qr-app" data-direct-url="<?= e($directUrl) ?>"<?= $config ?>>
   <div class="qr-page-head">
     <span class="qr-kicker"><?= e($kicker) ?></span>
     <p><?= e($intro) ?></p>
@@ -295,18 +299,17 @@ $intro     = (string)($intro ?? 'Buat QR Code untuk URL, WhatsApp, teks, email, 
         <div class="field">
           <label for="dlSize">Ukuran unduhan</label>
           <select id="dlSize">
-            <option value="256">256 × 256 px</option>
-            <option value="512" selected>512 × 512 px</option>
-            <option value="1024">1024 × 1024 px</option>
-            <option value="2048">2048 × 2048 px (cetak)</option>
+            <?php foreach ($sizes as $sz): ?>
+              <option value="<?= (int)$sz ?>"<?= (int)$sz === 512 ? ' selected' : '' ?>><?= (int)$sz ?> × <?= (int)$sz ?> px<?= (int)$sz >= 2048 ? ' (cetak)' : '' ?></option>
+            <?php endforeach; ?>
           </select>
         </div>
 
         <div class="dl">
-          <button type="button" class="btn fmt"           data-fmt="png">PNG</button>
-          <button type="button" class="btn secondary fmt" data-fmt="jpeg">JPG</button>
-          <button type="button" class="btn secondary fmt" data-fmt="webp">WEBP</button>
-          <button type="button" class="btn secondary fmt" data-fmt="svg">SVG</button>
+          <?php $labels = ['png' => 'PNG', 'jpeg' => 'JPG', 'webp' => 'WEBP', 'svg' => 'SVG'];
+          foreach ($formats as $i => $fmt): if (!isset($labels[$fmt])) continue; ?>
+            <button type="button" class="btn<?= $i === 0 ? '' : ' secondary' ?> fmt" data-fmt="<?= e($fmt) ?>"><?= e($labels[$fmt]) ?></button>
+          <?php endforeach; ?>
         </div>
 
         <p class="note"><b>SVG</b> paling tajam untuk cetak besar. <b>PNG</b> untuk media sosial &amp; dokumen.</p>
@@ -330,4 +333,21 @@ $intro     = (string)($intro ?? 'Buat QR Code untuk URL, WhatsApp, teks, email, 
     </div>
 
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
+</div>
+
+<!-- Popup dukungan sukarela (QRIS DANA). Isi diatur dari Admin → Tools. -->
+<div class="sa-modal" id="qrSupport" role="dialog" aria-modal="true" aria-labelledby="qrSupportTitle" hidden>
+  <div class="sa-modal-card">
+    <button type="button" class="sa-modal-close" id="qrSupportClose" aria-label="Tutup">×</button>
+    <h2 id="qrSupportTitle">Dukung Pengembangan Tools Ini</h2>
+    <p id="qrSupportDesc">QR Code Generator ini gratis. Dukungan sukarela membantu biaya server dan pengembangan fitur berikutnya.</p>
+    <div class="sa-qris" hidden>
+      <img id="qrSupportImage" src="" alt="QRIS DANA" width="230" height="230" loading="lazy">
+    </div>
+    <p class="sa-note" style="margin:0 0 10px">Pindai QRIS di atas dengan aplikasi e-wallet atau mobile banking. Dukungan sepenuhnya sukarela — QR Code tetap bisa diunduh tanpa membayar.</p>
+    <div class="sa-modal-actions">
+      <a class="sa-btn primary" id="qrSupportLink" href="#" target="_blank" rel="noopener" hidden>Buka Halaman Dukungan</a>
+      <button type="button" class="sa-btn" id="qrSupportLater">Nanti Dulu</button>
+    </div>
+  </div>
 </div>

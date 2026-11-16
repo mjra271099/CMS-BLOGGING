@@ -1,0 +1,1400 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="description" content="CV & Resume Maker — buat CV profesional dalam 3 desain, siap cetak atau simpan sebagai PDF." />
+  <meta name="theme-color" content="#0f172a" />
+  <title>CV & Resume Maker — 3 Desain Profesional</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: #f1f5f9;
+      color: #0f172a;
+    }
+    .tpl1-font, .tpl3-font { font-family: 'Plus Jakarta Sans', 'Inter', sans-serif; }
+    .tpl2-font { font-family: 'Libre Baskerville', Georgia, 'Times New Roman', serif; }
+
+    /* ============================================================
+       KERTAS: min-height A4; tumbuh mengikuti isi konten (no clip)
+       ============================================================ */
+    .a4-sheet {
+      width: 794px;
+      min-height: 1123px;
+      height: auto;
+      box-sizing: border-box;
+      position: relative;
+      box-shadow: 0 20px 45px -15px rgba(15, 23, 42, 0.22), 0 0 1px 1px rgba(15, 23, 42, 0.08);
+      transform-origin: top center;
+      transition: transform 0.2s ease;
+    }
+
+    #scale-container {
+      align-items: flex-start;
+    }
+
+    /* ============================================================
+       TEXT SAFETY — semua teks CV aman dari overflow horizontal.
+       overflow-wrap:anywhere hanya memutus jika kata tak muat;
+       teks normal tetap wrap di spasi.
+       ============================================================ */
+    #cv-canvas, #cv-canvas * {
+      overflow-wrap: break-word;
+      overflow-wrap: anywhere;
+      word-break: normal;
+      min-width: 0;
+    }
+    #cv-canvas img { max-width: 100%; }
+
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 999px; }
+    ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+
+    :focus-visible { outline: 2px solid #0f172a; outline-offset: 2px; border-radius: 0.5rem; }
+    input:focus-visible, textarea:focus-visible { outline: 2px solid #0f172a; outline-offset: 1px; }
+    summary:focus-visible { outline: 2px solid #0f172a; outline-offset: -2px; }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+      }
+    }
+
+    /* ============================================================
+       PRINT — reset wrapper & overflow agar halaman bisa bertambah
+       ============================================================ */
+    @media print {
+      @page {
+        size: A4 portrait;
+        margin: 0;
+      }
+
+      *, *::before, *::after {
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+      }
+
+      html, body {
+        margin: 0 !important;
+        padding: 0 !important;
+        height: auto !important;
+        min-height: 0 !important;
+        max-height: none !important;
+        overflow: visible !important;
+        background: #ffffff !important;
+        display: block !important;
+      }
+
+      .no-print,
+      .sr-only { display: none !important; }
+
+      body > div,
+      body > div > main,
+      #scale-container {
+        display: block !important;
+        height: auto !important;
+        min-height: 0 !important;
+        max-height: none !important;
+        overflow: visible !important;
+        flex: none !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        border: none !important;
+        background: transparent !important;
+        box-shadow: none !important;
+        position: static !important;
+      }
+
+      #preview-wrapper {
+        display: block !important;
+        width: auto !important;
+      }
+
+      #scale-container {
+        width: 794px !important;
+        margin: 0 auto !important;
+      }
+
+      .a4-sheet {
+        display: block !important;
+        width: 794px !important;
+        min-height: 1123px !important;
+        height: auto !important;
+        max-height: none !important;
+        overflow: visible !important;
+        box-shadow: none !important;
+        transform: none !important;
+        transform-origin: top left !important;
+        margin: 0 !important;
+        page-break-inside: auto;
+      }
+
+      .cv-entry {
+        break-inside: avoid !important;
+        page-break-inside: avoid !important;
+      }
+
+      h1, h2, h3, h4 {
+        break-after: avoid !important;
+        page-break-after: avoid !important;
+      }
+
+      p, li {
+        orphans: 2 !important;
+        widows: 2 !important;
+      }
+
+      section {
+        break-inside: auto;
+        page-break-inside: auto;
+      }
+    }
+  </style>
+</head>
+<body class="h-screen flex flex-col overflow-hidden">
+
+  <a href="#editor-panel"
+     class="no-print sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[100] focus:bg-slate-900 focus:text-white focus:px-4 focus:py-2 focus:rounded-xl focus:shadow-lg focus:text-sm focus:font-semibold">
+    Lewati ke formulir isi CV
+  </a>
+
+  <!-- TOP NAVBAR -->
+  <header class="no-print bg-white border-b border-slate-200 px-4 lg:px-6 py-3 flex flex-wrap items-center justify-between gap-3 z-30 shrink-0">
+    <div class="flex items-center gap-3">
+      <div class="w-9 h-9 rounded-xl bg-slate-900 text-white flex items-center justify-center font-bold text-lg shadow-sm" aria-hidden="true">CV</div>
+      <div>
+        <h1 class="text-base font-bold text-slate-900 leading-tight">CV &amp; Resume Studio</h1>
+        <p class="text-xs text-slate-500">3 Desain Eksklusif &bull; Siap Cetak / Simpan PDF</p>
+      </div>
+    </div>
+
+    <div role="tablist" aria-label="Pilih tampilan" class="flex lg:hidden bg-slate-100 p-1 rounded-xl">
+      <button id="tab-editor" role="tab" aria-selected="true" aria-controls="editor-panel" tabindex="0"
+              onclick="switchMobileView('editor')"
+              class="px-3 py-1.5 text-xs font-semibold rounded-lg bg-white text-slate-900 shadow-sm">
+        Isi Form
+      </button>
+      <button id="tab-preview" role="tab" aria-selected="false" aria-controls="preview-wrapper" tabindex="-1"
+              onclick="switchMobileView('preview')"
+              class="px-3 py-1.5 text-xs font-semibold rounded-lg text-slate-600">
+        Lihat Hasil CV
+      </button>
+    </div>
+
+    <div class="flex items-center gap-2">
+      <div class="relative">
+        <button id="preset-toggle" type="button" onclick="togglePresetMenu()"
+                aria-haspopup="true" aria-expanded="false" aria-controls="preset-menu"
+                class="px-3 py-2 text-xs font-medium text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-xl transition flex items-center gap-1.5">
+          <svg aria-hidden="true" class="w-4 h-4 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+          <span class="hidden sm:inline">Contoh Data</span>
+        </button>
+        <div id="preset-menu" role="menu" aria-labelledby="preset-toggle" hidden
+             class="absolute right-0 mt-2 w-64 bg-white rounded-xl shadow-xl border border-slate-200 py-1.5 z-50">
+          <div class="px-3 py-1.5 text-[11px] font-semibold text-slate-400 uppercase tracking-wider" aria-hidden="true">Muat Contoh Bawaan</div>
+          <button type="button" role="menuitem" onclick="loadPreset(1)" class="w-full text-left px-3 py-2 text-xs hover:bg-slate-50 focus:bg-slate-100 flex items-center justify-between">
+            <span>1. Cahaya Dewi (Manajer Pemasaran)</span>
+            <span class="text-[10px] bg-slate-100 px-1.5 py-0.5 rounded font-medium">Desain 1</span>
+          </button>
+          <button type="button" role="menuitem" onclick="loadPreset(2)" class="w-full text-left px-3 py-2 text-xs hover:bg-slate-50 focus:bg-slate-100 flex items-center justify-between">
+            <span>2. Pedro Fernandes (Digital Marketer)</span>
+            <span class="text-[10px] bg-slate-100 px-1.5 py-0.5 rounded font-medium">Desain 2</span>
+          </button>
+          <button type="button" role="menuitem" onclick="loadPreset(3)" class="w-full text-left px-3 py-2 text-xs hover:bg-slate-50 focus:bg-slate-100 flex items-center justify-between">
+            <span>3. Daniel Gallego (Admin Staff)</span>
+            <span class="text-[10px] bg-slate-100 px-1.5 py-0.5 rounded font-medium">Desain 3</span>
+          </button>
+          <div class="border-t border-slate-100 my-1" role="separator"></div>
+          <button type="button" role="menuitem" onclick="clearAllData()" class="w-full text-left px-3 py-2 text-xs text-rose-600 hover:bg-rose-50 focus:bg-rose-50 font-medium">
+            Kosongkan Semua Form
+          </button>
+        </div>
+      </div>
+
+      <button type="button" onclick="printCV()"
+              class="px-3 sm:px-4 py-2 text-xs font-semibold text-white bg-slate-900 hover:bg-slate-800 rounded-xl shadow-sm transition flex items-center gap-2 cursor-pointer">
+        <svg aria-hidden="true" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
+        <span class="hidden sm:inline">Cetak / Simpan PDF</span>
+        <span class="sm:hidden">PDF</span>
+      </button>
+    </div>
+  </header>
+
+  <div class="flex-1 flex overflow-hidden">
+
+    <!-- LEFT PANEL: FORM EDITOR -->
+    <aside id="editor-panel" role="tabpanel" aria-labelledby="tab-editor" tabindex="0"
+           class="no-print w-full lg:w-[460px] xl:w-[500px] bg-white border-r border-slate-200 flex flex-col h-full shrink-0 overflow-y-auto">
+
+      <div class="p-4 bg-slate-50 border-b border-slate-200 shrink-0">
+        <div class="flex items-center justify-between mb-2.5">
+          <span id="tpl-group-label" class="text-xs font-bold uppercase tracking-wider text-slate-600">Pilih Desain Template</span>
+          <span id="save-indicator" aria-live="polite" class="text-[11px] text-emerald-600 font-medium flex items-center gap-1">
+            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500" aria-hidden="true"></span> Tersimpan otomatis
+          </span>
+        </div>
+        <div role="radiogroup" aria-labelledby="tpl-group-label" class="grid grid-cols-3 gap-2.5" id="template-group">
+          <button type="button" role="radio" aria-checked="true" tabindex="0" onclick="selectTemplate(1)" onkeydown="handleRadioKey(event,'template-group')"
+                  id="tpl-btn-1" data-tpl="1"
+                  class="tpl-card group relative p-2.5 rounded-xl border-2 border-slate-900 bg-white text-left transition shadow-sm">
+            <div class="w-full h-12 rounded-lg bg-slate-100 mb-2 p-1.5 flex flex-col justify-between overflow-hidden border border-slate-200" aria-hidden="true">
+              <div class="flex justify-between items-start">
+                <div class="space-y-1"><div class="w-8 h-1.5 bg-slate-800 rounded-xs"></div><div class="w-6 h-1 bg-slate-400 rounded-xs"></div></div>
+                <div class="w-4 h-3.5 bg-slate-300 rounded-xs"></div>
+              </div>
+              <div class="border-t border-slate-400 pt-1 flex gap-1 h-4">
+                <div class="w-2/5 border-r border-slate-400 pr-1 space-y-0.5"><div class="w-full h-0.5 bg-slate-600"></div><div class="w-3/4 h-0.5 bg-slate-400"></div></div>
+                <div class="w-3/5 space-y-0.5"><div class="w-full h-0.5 bg-slate-600"></div><div class="w-4/5 h-0.5 bg-slate-400"></div></div>
+              </div>
+            </div>
+            <div class="text-xs font-bold text-slate-900 leading-tight">Desain 1</div>
+            <div class="text-[10px] text-slate-500 truncate">Modern 2 Kolom + Foto</div>
+          </button>
+          <button type="button" role="radio" aria-checked="false" tabindex="-1" onclick="selectTemplate(2)" onkeydown="handleRadioKey(event,'template-group')"
+                  id="tpl-btn-2" data-tpl="2"
+                  class="tpl-card group relative p-2.5 rounded-xl border-2 border-slate-200 bg-white hover:border-slate-300 text-left transition">
+            <div class="w-full h-12 rounded-lg bg-slate-100 mb-2 p-1.5 flex flex-col justify-between overflow-hidden border border-slate-200" aria-hidden="true">
+              <div class="flex flex-col items-center space-y-0.5"><div class="w-10 h-1.5 bg-slate-800 rounded-xs"></div><div class="w-6 h-0.5 bg-slate-500"></div></div>
+              <div class="border-y border-slate-400 py-0.5 flex justify-center"><div class="w-12 h-0.5 bg-slate-500"></div></div>
+              <div class="space-y-0.5"><div class="w-5 h-0.5 bg-slate-800"></div><div class="w-full h-0.5 bg-slate-400"></div></div>
+            </div>
+            <div class="text-xs font-bold text-slate-900 leading-tight">Desain 2</div>
+            <div class="text-[10px] text-slate-500 truncate">Klasik ATS Serif</div>
+          </button>
+          <button type="button" role="radio" aria-checked="false" tabindex="-1" onclick="selectTemplate(3)" onkeydown="handleRadioKey(event,'template-group')"
+                  id="tpl-btn-3" data-tpl="3"
+                  class="tpl-card group relative p-2.5 rounded-xl border-2 border-slate-200 bg-white hover:border-slate-300 text-left transition">
+            <div class="w-full h-12 rounded-lg bg-[#fafafa] mb-2 p-1.5 flex flex-col justify-between overflow-hidden border border-slate-200" aria-hidden="true">
+              <div class="flex justify-between items-center"><div class="w-10 h-2 bg-slate-900 rounded-xs"></div><div class="w-4 h-3.5 bg-slate-300 rounded-xs"></div></div>
+              <div class="flex gap-1 items-center border-b border-slate-400 pb-0.5">
+                <div class="w-1.5 h-1.5 rounded-full bg-slate-900"></div><div class="w-4 h-0.5 bg-slate-500"></div>
+                <div class="w-1.5 h-1.5 rounded-full bg-slate-900"></div><div class="w-4 h-0.5 bg-slate-500"></div>
+              </div>
+              <div class="space-y-0.5"><div class="w-6 h-0.5 bg-slate-800"></div><div class="w-full h-0.5 bg-slate-400"></div></div>
+            </div>
+            <div class="text-xs font-bold text-slate-900 leading-tight">Desain 3</div>
+            <div class="text-[10px] text-slate-500 truncate">Minimalis + Foto</div>
+          </button>
+        </div>
+      </div>
+
+      <div class="flex-1 overflow-y-auto p-4 space-y-4">
+
+        <details open class="group bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-2xs">
+          <summary class="flex items-center justify-between px-4 py-3 bg-slate-50/80 cursor-pointer select-none font-semibold text-sm text-slate-800 hover:bg-slate-100/70 transition">
+            <span class="flex items-center gap-2">
+              <span class="w-6 h-6 rounded-lg bg-slate-900 text-white text-xs flex items-center justify-center font-bold" aria-hidden="true">1</span>
+              Data Pribadi, Kontak &amp; Foto
+            </span>
+            <svg aria-hidden="true" class="w-4 h-4 text-slate-500 transition-transform group-open:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+          </summary>
+          <div class="p-4 space-y-3.5 border-t border-slate-100">
+
+            <div id="photo-upload-box" class="p-3 bg-slate-50 rounded-xl border border-slate-200 flex items-center gap-3.5">
+              <img id="form-photo-preview" src="" alt="Pratinjau foto profil" class="w-16 h-14 object-cover rounded-lg border border-slate-300 bg-white shrink-0" />
+              <div class="flex-1 min-w-0">
+                <div class="text-xs font-semibold text-slate-800 mb-1">Foto Profil (Desain 1 &amp; 3)</div>
+                <div class="flex flex-wrap gap-2">
+                  <label for="input-photo"
+                         class="px-2.5 py-1.5 bg-white border border-slate-300 hover:bg-slate-100 rounded-lg text-xs font-medium text-slate-700 cursor-pointer transition">
+                    Pilih Foto
+                    <input type="file" id="input-photo" accept="image/*" class="sr-only" onchange="handlePhotoUpload(event)" />
+                  </label>
+                  <button type="button" onclick="resetDefaultPhoto()" class="px-2.5 py-1.5 text-xs text-slate-500 hover:text-slate-800">
+                    Foto Default
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label for="input-fullName" class="block text-xs font-medium text-slate-600 mb-1">Nama Lengkap</label>
+                <input type="text" id="input-fullName" name="fullName" autocomplete="name" aria-required="true"
+                       oninput="updateField('fullName', this.value)" placeholder="Contoh: Cahaya Dewi"
+                       class="w-full px-3 py-2 text-sm border border-slate-300 rounded-xl focus:ring-2 focus:ring-slate-900 focus:border-slate-900 outline-none" />
+              </div>
+              <div>
+                <label for="input-role" class="block text-xs font-medium text-slate-600 mb-1">Jabatan / Posisi Target</label>
+                <input type="text" id="input-role" name="role" autocomplete="organization-title"
+                       oninput="updateField('role', this.value)" placeholder="Contoh: Manajer Pemasaran"
+                       class="w-full px-3 py-2 text-sm border border-slate-300 rounded-xl focus:ring-2 focus:ring-slate-900 focus:border-slate-900 outline-none" />
+              </div>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label for="input-phone" class="block text-xs font-medium text-slate-600 mb-1">Nomor Telepon / WA</label>
+                <input type="tel" id="input-phone" name="phone" autocomplete="tel" inputmode="tel"
+                       oninput="updateField('phone', this.value)" placeholder="+62 812 3456 7890"
+                       class="w-full px-3 py-2 text-sm border border-slate-300 rounded-xl focus:ring-2 focus:ring-slate-900 focus:border-slate-900 outline-none" />
+              </div>
+              <div>
+                <label for="input-email" class="block text-xs font-medium text-slate-600 mb-1">Alamat Email</label>
+                <input type="email" id="input-email" name="email" autocomplete="email" inputmode="email"
+                       oninput="updateField('email', this.value)" placeholder="nama@email.com"
+                       class="w-full px-3 py-2 text-sm border border-slate-300 rounded-xl focus:ring-2 focus:ring-slate-900 focus:border-slate-900 outline-none" />
+              </div>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label for="input-address" class="block text-xs font-medium text-slate-600 mb-1">Alamat / Kota</label>
+                <input type="text" id="input-address" name="address" autocomplete="street-address"
+                       oninput="updateField('address', this.value)" placeholder="Jl. Contoh No. 123, Kota"
+                       class="w-full px-3 py-2 text-sm border border-slate-300 rounded-xl focus:ring-2 focus:ring-slate-900 focus:border-slate-900 outline-none" />
+              </div>
+              <div>
+                <label for="input-website" class="block text-xs font-medium text-slate-600 mb-1">Website / Portfolio</label>
+                <input type="url" id="input-website" name="website" autocomplete="url" inputmode="url"
+                       oninput="updateField('website', this.value)" placeholder="https://portofolio-anda.com"
+                       class="w-full px-3 py-2 text-sm border border-slate-300 rounded-xl focus:ring-2 focus:ring-slate-900 focus:border-slate-900 outline-none" />
+              </div>
+            </div>
+          </div>
+        </details>
+
+        <details open class="group bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-2xs">
+          <summary class="flex items-center justify-between px-4 py-3 bg-slate-50/80 cursor-pointer select-none font-semibold text-sm text-slate-800 hover:bg-slate-100/70 transition">
+            <span class="flex items-center gap-2">
+              <span class="w-6 h-6 rounded-lg bg-slate-900 text-white text-xs flex items-center justify-center font-bold" aria-hidden="true">2</span>
+              Profil Singkat / Ringkasan
+            </span>
+            <svg aria-hidden="true" class="w-4 h-4 text-slate-500 transition-transform group-open:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+          </summary>
+          <div class="p-4 border-t border-slate-100">
+            <label for="input-profile" class="block text-xs font-medium text-slate-600 mb-1">Deskripsi Diri Profesional</label>
+            <textarea id="input-profile" name="profile" rows="4" aria-describedby="hint-profile"
+                      oninput="updateField('profile', this.value)"
+                      placeholder="Tuliskan ringkasan pengalaman, keahlian utama, dan pencapaian Anda..."
+                      class="w-full px-3 py-2 text-sm border border-slate-300 rounded-xl focus:ring-2 focus:ring-slate-900 focus:border-slate-900 outline-none leading-relaxed"></textarea>
+            <p id="hint-profile" class="text-[11px] text-slate-500 mt-1">Disarankan 2–4 kalimat, fokus pada keahlian &amp; pencapaian terukur.</p>
+          </div>
+        </details>
+
+        <details open class="group bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-2xs">
+          <summary class="flex items-center justify-between px-4 py-3 bg-slate-50/80 cursor-pointer select-none font-semibold text-sm text-slate-800 hover:bg-slate-100/70 transition">
+            <span class="flex items-center gap-2">
+              <span class="w-6 h-6 rounded-lg bg-slate-900 text-white text-xs flex items-center justify-center font-bold" aria-hidden="true">3</span>
+              Pengalaman Kerja
+            </span>
+            <svg aria-hidden="true" class="w-4 h-4 text-slate-500 transition-transform group-open:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+          </summary>
+          <div class="p-4 space-y-3 border-t border-slate-100">
+            <p class="text-[11px] text-slate-500 bg-slate-50 p-2.5 rounded-xl border border-slate-200">
+              <strong>Tips:</strong> Desain 1 &amp; 3 menampilkan deskripsi paragraf; Desain 2 (ATS) menampilkan poin per baris. Isi keduanya agar tampil optimal di semua desain.
+            </p>
+            <div id="experience-list" class="space-y-3"></div>
+            <button type="button" id="btn-add-experience" onclick="addExperience()"
+                    class="w-full py-2.5 border-2 border-dashed border-slate-300 hover:border-slate-900 hover:bg-slate-50 text-slate-700 font-semibold text-xs rounded-xl transition flex items-center justify-center gap-1.5">
+              <span aria-hidden="true">+</span> Tambah Pengalaman Kerja
+            </button>
+          </div>
+        </details>
+
+        <details open class="group bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-2xs">
+          <summary class="flex items-center justify-between px-4 py-3 bg-slate-50/80 cursor-pointer select-none font-semibold text-sm text-slate-800 hover:bg-slate-100/70 transition">
+            <span class="flex items-center gap-2">
+              <span class="w-6 h-6 rounded-lg bg-slate-900 text-white text-xs flex items-center justify-center font-bold" aria-hidden="true">4</span>
+              Riwayat Pendidikan
+            </span>
+            <svg aria-hidden="true" class="w-4 h-4 text-slate-500 transition-transform group-open:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+          </summary>
+          <div class="p-4 space-y-3 border-t border-slate-100">
+            <div id="education-list" class="space-y-3"></div>
+            <button type="button" id="btn-add-education" onclick="addEducation()"
+                    class="w-full py-2.5 border-2 border-dashed border-slate-300 hover:border-slate-900 hover:bg-slate-50 text-slate-700 font-semibold text-xs rounded-xl transition flex items-center justify-center gap-1.5">
+              <span aria-hidden="true">+</span> Tambah Pendidikan
+            </button>
+          </div>
+        </details>
+
+        <details open class="group bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-2xs">
+          <summary class="flex items-center justify-between px-4 py-3 bg-slate-50/80 cursor-pointer select-none font-semibold text-sm text-slate-800 hover:bg-slate-100/70 transition">
+            <span class="flex items-center gap-2">
+              <span class="w-6 h-6 rounded-lg bg-slate-900 text-white text-xs flex items-center justify-center font-bold" aria-hidden="true">5</span>
+              Keahlian / Kemampuan Utama
+            </span>
+            <svg aria-hidden="true" class="w-4 h-4 text-slate-500 transition-transform group-open:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+          </summary>
+          <div class="p-4 space-y-3 border-t border-slate-100">
+            <div class="flex gap-2">
+              <label for="new-skill-input" class="sr-only">Tambah keahlian baru</label>
+              <input type="text" id="new-skill-input" onkeydown="if(event.key==='Enter'){event.preventDefault();addSkill();}"
+                     placeholder="Ketik keahlian lalu tekan Enter..."
+                     class="flex-1 px-3 py-2 text-sm border border-slate-300 rounded-xl focus:ring-2 focus:ring-slate-900 outline-none" />
+              <button type="button" onclick="addSkill()" class="px-4 py-2 bg-slate-900 text-white text-xs font-semibold rounded-xl hover:bg-slate-800 transition">
+                Tambah
+              </button>
+            </div>
+            <div id="skills-list" class="space-y-2" role="list"></div>
+          </div>
+        </details>
+
+        <details class="group bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-2xs">
+          <summary class="flex items-center justify-between px-4 py-3 bg-slate-50/80 cursor-pointer select-none font-semibold text-sm text-slate-800 hover:bg-slate-100/70 transition">
+            <span class="flex items-center gap-2">
+              <span class="w-6 h-6 rounded-lg bg-slate-900 text-white text-xs flex items-center justify-center font-bold" aria-hidden="true">6</span>
+              Pelatihan &amp; Sertifikasi <span class="text-[11px] font-normal text-slate-500">(Desain 3)</span>
+            </span>
+            <svg aria-hidden="true" class="w-4 h-4 text-slate-500 transition-transform group-open:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+          </summary>
+          <div class="p-4 space-y-3 border-t border-slate-100">
+            <div class="flex gap-2">
+              <label for="new-cert-input" class="sr-only">Tambah pelatihan atau sertifikasi baru</label>
+              <input type="text" id="new-cert-input" onkeydown="if(event.key==='Enter'){event.preventDefault();addCert();}"
+                     placeholder="Contoh: Pelatihan Administrasi (2023)"
+                     class="flex-1 px-3 py-2 text-sm border border-slate-300 rounded-xl focus:ring-2 focus:ring-slate-900 outline-none" />
+              <button type="button" onclick="addCert()" class="px-4 py-2 bg-slate-900 text-white text-xs font-semibold rounded-xl hover:bg-slate-800 transition">
+                Tambah
+              </button>
+            </div>
+            <div id="certs-list" class="space-y-2" role="list"></div>
+          </div>
+        </details>
+
+        <div class="h-6"></div>
+      </div>
+    </aside>
+
+    <!-- RIGHT PANEL: LIVE A4 PREVIEW -->
+    <main id="preview-wrapper" role="tabpanel" aria-labelledby="tab-preview" tabindex="0"
+          class="hidden lg:flex flex-1 bg-slate-200/80 flex-col items-center overflow-auto relative">
+
+      <div class="no-print sticky top-3 z-20 mb-3 mt-3 bg-white/95 backdrop-blur-xs border border-slate-200/90 shadow-md rounded-full px-3 sm:px-4 py-1.5 flex items-center gap-2 sm:gap-3 text-xs flex-wrap justify-center max-w-[calc(100%-1rem)]">
+        <span class="font-semibold text-slate-700 truncate max-w-[140px] sm:max-w-none" id="active-template-label" aria-live="polite">Desain 1: Modern 2 Kolom + Foto</span>
+        <span class="text-slate-300 hidden sm:inline" aria-hidden="true">|</span>
+        <span id="page-count" class="text-emerald-600 font-semibold text-[11px]">1 halaman</span>
+        <span class="text-slate-300" aria-hidden="true">|</span>
+        <div class="flex items-center gap-1.5">
+          <button type="button" onclick="adjustZoom(-0.1)" aria-label="Perkecil tampilan"
+                  class="w-6 h-6 rounded-full hover:bg-slate-100 flex items-center justify-center font-bold text-slate-700">−</button>
+          <span id="zoom-level-text" aria-live="polite" aria-label="Tingkat zoom" class="w-10 text-center font-mono text-slate-600">85%</span>
+          <button type="button" onclick="adjustZoom(0.1)" aria-label="Perbesar tampilan"
+                  class="w-6 h-6 rounded-full hover:bg-slate-100 flex items-center justify-center font-bold text-slate-700">+</button>
+          <button type="button" onclick="fitZoomToScreen()"
+                  class="ml-1 px-2 py-0.5 bg-slate-100 hover:bg-slate-200 rounded-full text-[11px] font-medium text-slate-700">
+            Pas Layar
+          </button>
+        </div>
+      </div>
+
+      <div id="scale-container" class="mb-10 flex justify-center items-start">
+        <div id="cv-canvas" class="a4-sheet bg-white" role="region" aria-label="Pratinjau CV">
+          <!-- Rendered Template Content Goes Here -->
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <div id="toast" role="status" aria-live="polite" aria-atomic="true"
+       class="no-print fixed bottom-5 left-1/2 -translate-x-1/2 sm:left-auto sm:right-5 sm:translate-x-0 bg-slate-900 text-white text-xs font-medium px-4 py-2.5 rounded-xl shadow-lg opacity-0 pointer-events-none transition-opacity duration-200 z-50">
+    Tersimpan!
+  </div>
+
+  <script>
+    const DEFAULT_PHOTO = "data:image/svg+xml;utf8," + encodeURIComponent(`
+      <svg xmlns="http://www.w3.org/2000/svg" width="320" height="275" viewBox="0 0 320 275">
+        <defs>
+          <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stop-color="#dfe4ea"/>
+            <stop offset="100%" stop-color="#ced6e0"/>
+          </linearGradient>
+        </defs>
+        <rect width="320" height="275" fill="url(#bg)"/>
+        <circle cx="160" cy="102" r="46" fill="#747d8c"/>
+        <path d="M72 275 C72 205, 248 205, 248 275 Z" fill="#57606f"/>
+      </svg>
+    `);
+
+    const PRESETS = {
+      1: {
+        template: 1, photo: DEFAULT_PHOTO,
+        fullName: "CAHAYA DEWI", role: "Manajer Pemasaran",
+        phone: "+123-456-7890", email: "hello@reallygreatsite.com",
+        address: "123 Anywhere St., Any City", website: "www.reallygreatsite.com",
+        profile: "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.",
+        education: [
+          { institution: "Universitas Borcelle", period: "2026-2029", degree: "Magister Manajemen", description: "Lorem ipsum dolor sit amet, consectetur adipiscing elit." },
+          { institution: "Universitas Borcelle", period: "2023-2026", degree: "Sarjana Manajemen Pemasaran", description: "Lorem ipsum dolor sit amet, consectetur adipiscing elit." }
+        ],
+        experience: [
+          { company: "Salford & Co.", period: "2033 - 2035", position: "Manajer Pemasaran", description: "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.", bullets: "Merancang strategi pemasaran terpadu\nMengelola tim pemasaran & kampanye lintas kanal\nMenganalisis metrik performa & ROI kampanye" },
+          { company: "Salford & Co.", period: "2030 - 2033", position: "Manajer Pemasaran Digital", description: "Lorem ipsum dolor sit amet, consectetur adipiscing elit.", bullets: "Mengoptimalkan kampanye iklan digital\nMeningkatkan visibilitas merek melalui konten" }
+        ],
+        skills: ["Strategi Pemasaran & Branding","Digital Marketing (SEO, SEM, PPC, Social Media)","Content Marketing & Copywriting","Manajemen Kampanye & Analisis Data"],
+        certifications: ["Sertifikasi Manajemen Pemasaran Profesional","Google Digital Marketing & E-Commerce Certificate"]
+      },
+      2: {
+        template: 2, photo: DEFAULT_PHOTO,
+        fullName: "Pedro Fernandes", role: "Digital Marketer",
+        phone: "+123-456-7890", email: "hello@reallygreatsite.com",
+        address: "123 Anywhere St., Any City", website: "@reallygreatsite.com",
+        portfolioUrl: "www.reallygreatsite.com",
+        profile: "Digital Marketer berpengalaman mengelola kampanye pemasaran digital berbasis data. Terbiasa menggunakan berbagai platform iklan digital untuk meningkatkan visibilitas dan konversi brand.",
+        skills: ["Digital Advertising","SEO","Social Media Management","Email Marketing","Analytics","Copywriting & Content Planning","Software Desain Grafis"],
+        experience: [
+          { position: "Digital Marketing Specialist", company: "Paucek and Lage", period: "2021 – 2023", description: "Merancang & menjalankan strategi kampanye digital untuk 10+ brand lokal.", bullets: "Merancang & menjalankan strategi kampanye digital untuk 10+ brand lokal\nMengelola iklan berbayar dengan rata-rata ROI 4x\nMeningkatkan traffic organik website 80% dalam 6 bulan" },
+          { position: "Social Media & Content Strategist", company: "Salford & Co. Freelance", period: "2020 – 2021", description: "Membuat & menjadwalkan konten sosial media.", bullets: "Membuat & menjadwalkan konten sosial media\nMenaikkan followers akun klien hingga 200% dalam 4 bulan" }
+        ],
+        education: [
+          { degree: "S1 Ilmu Komunikasi", institution: "Universitas Borcelle", period: "2016 – 2020", description: "Fokus komunikasi pemasaran digital." },
+          { degree: "S2 Ilmu Komunikasi", institution: "Universitas Borcelle", period: "2021 – 2023", description: "Penelitian perilaku konsumen digital." }
+        ],
+        certifications: ["Google Ads & Analytics Certification","Meta Certified Digital Marketing Associate"]
+      },
+      3: {
+        template: 3, photo: DEFAULT_PHOTO,
+        fullName: "Daniel Gallego", role: "Admin Staff",
+        phone: "+123-456-7890", email: "hello@reallygreatsite.com",
+        address: "123 Anywhere St., Any City", website: "www.reallygreatsite.com",
+        portfolioUrl: "www.reallygreatsite.com",
+        profile: "Lulusan S1 Manajemen dengan kemampuan administrasi terstruktur, teliti dalam pengolahan data dan dokumentasi, serta mendukung operasional melalui pengelolaan arsip dan koordinasi internal yang efektif.",
+        education: [{ degree: "S1 Manajemen", institution: "Universitas Borcelle", period: "Lulus Tahun 2023", description: "" }],
+        experience: [{ position: "Admin Staff", company: "Ingoude Company", period: "2023–2024", description: "Bertanggung jawab mengelola arsip dokumen perusahaan, melakukan input & rekapitulasi data, menyusun laporan administrasi bulanan, mengatur jadwal rapat, dan memastikan proses administrasi sesuai SOP.", bullets: "Mengelola arsip dokumen perusahaan\nInput & rekapitulasi data\nMenyusun laporan administrasi bulanan" }],
+        skills: ["Pengelolaan administrasi & dokumentasi","Data entry & laporan berkala","Manajemen waktu & ketelitian tinggi","Komunikasi profesional & koordinasi tim"],
+        certifications: ["Pelatihan Administrasi Perkantoran Profesional (2023)","Sertifikat Kompetensi Administrasi Perkantoran"]
+      }
+    };
+
+    let cvData = JSON.parse(localStorage.getItem('cv_maker_state_v1')) || JSON.parse(JSON.stringify(PRESETS[1]));
+    let currentZoom = 0.78;
+
+    function esc(str) {
+      if (str === null || str === undefined) return '';
+      return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+    const trimArr = arr => (Array.isArray(arr) ? arr.map(x => typeof x === 'string' ? x.trim() : x) : []);
+    const hasText = s => typeof s === 'string' && s.trim().length > 0;
+
+    function saveState() {
+      try { localStorage.setItem('cv_maker_state_v1', JSON.stringify(cvData)); }
+      catch (e) { console.warn('Storage full', e); }
+    }
+
+    let toastTimer;
+    function showToast(msg) {
+      const t = document.getElementById('toast');
+      t.textContent = msg;
+      t.classList.remove('opacity-0');
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => t.classList.add('opacity-0'), 1800);
+    }
+
+    function handleRadioKey(e, groupId) {
+      const keys = ['ArrowRight','ArrowLeft','ArrowUp','ArrowDown','Home','End'];
+      if (!keys.includes(e.key)) return;
+      e.preventDefault();
+      const group = document.getElementById(groupId);
+      const radios = Array.from(group.querySelectorAll('[role="radio"]'));
+      const currentIdx = radios.indexOf(document.activeElement);
+      let nextIdx = currentIdx;
+      if (e.key === 'ArrowRight' || e.key === 'ArrowDown') nextIdx = (currentIdx + 1) % radios.length;
+      else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') nextIdx = (currentIdx - 1 + radios.length) % radios.length;
+      else if (e.key === 'Home') nextIdx = 0;
+      else if (e.key === 'End') nextIdx = radios.length - 1;
+      radios[nextIdx].focus();
+      selectTemplate(Number(radios[nextIdx].dataset.tpl));
+    }
+
+    function selectTemplate(tplNum) {
+      cvData.template = tplNum;
+      saveState();
+      [1, 2, 3].forEach(n => {
+        const btn = document.getElementById(`tpl-btn-${n}`);
+        if (!btn) return;
+        const isActive = n === tplNum;
+        btn.setAttribute('aria-checked', String(isActive));
+        btn.tabIndex = isActive ? 0 : -1;
+        if (isActive) { btn.classList.remove('border-slate-200','hover:border-slate-300'); btn.classList.add('border-slate-900','shadow-sm'); }
+        else { btn.classList.add('border-slate-200','hover:border-slate-300'); btn.classList.remove('border-slate-900','shadow-sm'); }
+      });
+      const labels = { 1: "Desain 1: Modern 2 Kolom + Foto", 2: "Desain 2: Klasik ATS Serif", 3: "Desain 3: Minimalis Bersih + Foto" };
+      const lbl = document.getElementById('active-template-label');
+      if (lbl) lbl.textContent = labels[tplNum];
+      renderCV();
+    }
+
+    function loadPreset(num) {
+      cvData = JSON.parse(JSON.stringify(PRESETS[num]));
+      saveState(); populateForm(); selectTemplate(num);
+      closePresetMenu();
+      showToast(`Contoh Desain ${num} dimuat`);
+    }
+
+    function clearAllData() {
+      const currentTpl = cvData.template || 1;
+      cvData = {
+        template: currentTpl, photo: DEFAULT_PHOTO,
+        fullName: "", role: "", phone: "", email: "", address: "", website: "", portfolioUrl: "",
+        profile: "",
+        education: [{ institution: "", period: "", degree: "", description: "" }],
+        experience: [{ company: "", period: "", position: "", description: "", bullets: "" }],
+        skills: [""], certifications: [""]
+      };
+      saveState(); populateForm(); renderCV();
+      closePresetMenu(); showToast("Form dikosongkan");
+    }
+
+    const presetToggle = document.getElementById('preset-toggle');
+    const presetMenu = document.getElementById('preset-menu');
+
+    function openPresetMenu() {
+      presetMenu.hidden = false;
+      presetToggle.setAttribute('aria-expanded','true');
+      const firstItem = presetMenu.querySelector('[role="menuitem"]');
+      if (firstItem) firstItem.focus();
+    }
+    function closePresetMenu() {
+      presetMenu.hidden = true;
+      presetToggle.setAttribute('aria-expanded','false');
+    }
+    function togglePresetMenu() {
+      if (presetMenu.hidden) openPresetMenu();
+      else closePresetMenu();
+    }
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && !presetMenu.hidden) { closePresetMenu(); presetToggle.focus(); }
+    });
+    document.addEventListener('click', (e) => {
+      if (!presetMenu.hidden && !presetMenu.contains(e.target) && !presetToggle.contains(e.target)) closePresetMenu();
+    });
+
+    function updateField(key, val) { cvData[key] = val; saveState(); renderCV(); }
+
+    function handlePhotoUpload(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = function(evt) {
+        cvData.photo = evt.target.result;
+        document.getElementById('form-photo-preview').src = cvData.photo;
+        saveState(); renderCV();
+        showToast("Foto berhasil diperbarui");
+      };
+      reader.readAsDataURL(file);
+    }
+    function resetDefaultPhoto() {
+      cvData.photo = DEFAULT_PHOTO;
+      document.getElementById('form-photo-preview').src = DEFAULT_PHOTO;
+      saveState(); renderCV();
+    }
+
+    /* ===== FORM: EXPERIENCE ===== */
+    function renderExperienceForm() {
+      const container = document.getElementById('experience-list');
+      if (!cvData.experience.length) {
+        container.innerHTML = `<p class="text-xs text-slate-500 italic">Belum ada pengalaman kerja. Klik tombol di bawah untuk menambah.</p>`;
+        return;
+      }
+      container.innerHTML = cvData.experience.map((exp, idx) => {
+        const id = `exp-${idx}`;
+        return `
+        <fieldset class="p-3 bg-slate-50 border border-slate-200 rounded-xl space-y-2.5 relative">
+          <legend class="text-[11px] font-bold uppercase tracking-wider text-slate-500 px-1">Pengalaman #${idx + 1}</legend>
+          <button type="button" onclick="removeExperience(${idx})" aria-label="Hapus pengalaman ${idx + 1}" class="absolute top-2.5 right-2.5 text-xs text-rose-600 hover:text-rose-800 font-medium">Hapus</button>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            <div>
+              <label for="${id}-position" class="block text-[11px] font-medium text-slate-600 mb-0.5">Posisi / Jabatan</label>
+              <input type="text" id="${id}-position" value="${esc(exp.position)}" oninput="updateExperience(${idx}, 'position', this.value)" placeholder="Manajer Pemasaran" class="w-full px-2.5 py-1.5 text-xs bg-white border border-slate-300 rounded-lg outline-none focus:border-slate-900" />
+            </div>
+            <div>
+              <label for="${id}-company" class="block text-[11px] font-medium text-slate-600 mb-0.5">Nama Perusahaan</label>
+              <input type="text" id="${id}-company" value="${esc(exp.company)}" oninput="updateExperience(${idx}, 'company', this.value)" placeholder="Salford & Co." class="w-full px-2.5 py-1.5 text-xs bg-white border border-slate-300 rounded-lg outline-none focus:border-slate-900" />
+            </div>
+          </div>
+          <div>
+            <label for="${id}-period" class="block text-[11px] font-medium text-slate-600 mb-0.5">Periode Tahun</label>
+            <input type="text" id="${id}-period" value="${esc(exp.period)}" oninput="updateExperience(${idx}, 'period', this.value)" placeholder="2021 – 2023" class="w-full px-2.5 py-1.5 text-xs bg-white border border-slate-300 rounded-lg outline-none focus:border-slate-900" />
+          </div>
+          <div>
+            <label for="${id}-description" class="block text-[11px] font-medium text-slate-600 mb-0.5">Deskripsi Paragraf (Desain 1 &amp; 3)</label>
+            <textarea id="${id}-description" rows="3" oninput="updateExperience(${idx}, 'description', this.value)" placeholder="Uraikan tugas dan pencapaian dalam bentuk paragraf..." class="w-full px-2.5 py-1.5 text-xs bg-white border border-slate-300 rounded-lg outline-none focus:border-slate-900">${esc(exp.description)}</textarea>
+          </div>
+          <div>
+            <label for="${id}-bullets" class="block text-[11px] font-medium text-slate-600 mb-0.5">Poin Pencapaian (1 poin per baris, untuk Desain 2)</label>
+            <textarea id="${id}-bullets" rows="3" oninput="updateExperience(${idx}, 'bullets', this.value)" placeholder="Poin 1&#10;Poin 2&#10;Poin 3" class="w-full px-2.5 py-1.5 text-xs bg-white border border-slate-300 rounded-lg outline-none focus:border-slate-900">${esc(exp.bullets || '')}</textarea>
+          </div>
+        </fieldset>`;
+      }).join('');
+    }
+    function updateExperience(idx, key, val) { cvData.experience[idx][key] = val; saveState(); renderCV(); }
+    function addExperience() {
+      cvData.experience.push({ position: "", company: "", period: "", description: "", bullets: "" });
+      saveState(); renderExperienceForm(); renderCV();
+      const firstField = document.getElementById(`exp-${cvData.experience.length - 1}-position`);
+      if (firstField) firstField.focus();
+      showToast("Pengalaman baru ditambahkan");
+    }
+    function removeExperience(idx) {
+      cvData.experience.splice(idx, 1);
+      saveState(); renderExperienceForm(); renderCV();
+      const btn = document.getElementById('btn-add-experience'); if (btn) btn.focus();
+      showToast("Pengalaman dihapus");
+    }
+
+    /* ===== FORM: EDUCATION ===== */
+    function renderEducationForm() {
+      const container = document.getElementById('education-list');
+      if (!cvData.education.length) {
+        container.innerHTML = `<p class="text-xs text-slate-500 italic">Belum ada riwayat pendidikan.</p>`;
+        return;
+      }
+      container.innerHTML = cvData.education.map((edu, idx) => {
+        const id = `edu-${idx}`;
+        return `
+        <fieldset class="p-3 bg-slate-50 border border-slate-200 rounded-xl space-y-2.5 relative">
+          <legend class="text-[11px] font-bold uppercase tracking-wider text-slate-500 px-1">Pendidikan #${idx + 1}</legend>
+          <button type="button" onclick="removeEducation(${idx})" aria-label="Hapus pendidikan ${idx + 1}" class="absolute top-2.5 right-2.5 text-xs text-rose-600 hover:text-rose-800 font-medium">Hapus</button>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            <div>
+              <label for="${id}-degree" class="block text-[11px] font-medium text-slate-600 mb-0.5">Gelar / Jurusan</label>
+              <input type="text" id="${id}-degree" value="${esc(edu.degree)}" oninput="updateEducation(${idx}, 'degree', this.value)" placeholder="S1 Manajemen" class="w-full px-2.5 py-1.5 text-xs bg-white border border-slate-300 rounded-lg outline-none focus:border-slate-900" />
+            </div>
+            <div>
+              <label for="${id}-institution" class="block text-[11px] font-medium text-slate-600 mb-0.5">Institusi / Universitas</label>
+              <input type="text" id="${id}-institution" value="${esc(edu.institution)}" oninput="updateEducation(${idx}, 'institution', this.value)" placeholder="Universitas Borcelle" class="w-full px-2.5 py-1.5 text-xs bg-white border border-slate-300 rounded-lg outline-none focus:border-slate-900" />
+            </div>
+          </div>
+          <div>
+            <label for="${id}-period" class="block text-[11px] font-medium text-slate-600 mb-0.5">Tahun / Status Kelulusan</label>
+            <input type="text" id="${id}-period" value="${esc(edu.period)}" oninput="updateEducation(${idx}, 'period', this.value)" placeholder="2020 – 2024" class="w-full px-2.5 py-1.5 text-xs bg-white border border-slate-300 rounded-lg outline-none focus:border-slate-900" />
+          </div>
+          <div>
+            <label for="${id}-description" class="block text-[11px] font-medium text-slate-600 mb-0.5">Keterangan Singkat (Desain 1)</label>
+            <textarea id="${id}-description" rows="2" oninput="updateEducation(${idx}, 'description', this.value)" placeholder="Keterangan tambahan (opsional)..." class="w-full px-2.5 py-1.5 text-xs bg-white border border-slate-300 rounded-lg outline-none focus:border-slate-900">${esc(edu.description || '')}</textarea>
+          </div>
+        </fieldset>`;
+      }).join('');
+    }
+    function updateEducation(idx, key, val) { cvData.education[idx][key] = val; saveState(); renderCV(); }
+    function addEducation() {
+      cvData.education.push({ degree: "", institution: "", period: "", description: "" });
+      saveState(); renderEducationForm(); renderCV();
+      const firstField = document.getElementById(`edu-${cvData.education.length - 1}-degree`);
+      if (firstField) firstField.focus();
+      showToast("Pendidikan baru ditambahkan");
+    }
+    function removeEducation(idx) {
+      cvData.education.splice(idx, 1);
+      saveState(); renderEducationForm(); renderCV();
+      const btn = document.getElementById('btn-add-education'); if (btn) btn.focus();
+      showToast("Pendidikan dihapus");
+    }
+
+    /* ===== FORM: SKILLS ===== */
+    function renderSkillsForm() {
+      const container = document.getElementById('skills-list');
+      if (!cvData.skills.length) {
+        container.innerHTML = `<p class="text-xs text-slate-500 italic">Belum ada keahlian ditambahkan.</p>`;
+        return;
+      }
+      container.innerHTML = cvData.skills.map((skill, idx) => `
+        <div class="flex items-center gap-2" role="listitem">
+          <label for="skill-${idx}" class="sr-only">Keahlian ${idx + 1}</label>
+          <input type="text" id="skill-${idx}" value="${esc(skill)}" oninput="updateSkill(${idx}, this.value)" class="flex-1 px-3 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg focus:bg-white focus:border-slate-900 outline-none" />
+          <button type="button" onclick="removeSkill(${idx})" aria-label="Hapus keahlian ${idx + 1}" class="p-1.5 text-slate-400 hover:text-rose-600 transition">
+            <svg aria-hidden="true" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+          </button>
+        </div>
+      `).join('');
+    }
+    function addSkill() {
+      const inp = document.getElementById('new-skill-input');
+      const val = inp.value.trim();
+      if (!val) { inp.focus(); return; }
+      cvData.skills.push(val); inp.value = '';
+      saveState(); renderSkillsForm(); renderCV();
+      inp.focus();
+      showToast("Keahlian ditambahkan");
+    }
+    function updateSkill(idx, val) { cvData.skills[idx] = val; saveState(); renderCV(); }
+    function removeSkill(idx) { cvData.skills.splice(idx, 1); saveState(); renderSkillsForm(); renderCV(); }
+
+    /* ===== FORM: CERTIFICATIONS ===== */
+    function renderCertsForm() {
+      const container = document.getElementById('certs-list');
+      const items = cvData.certifications || [];
+      if (!items.length) {
+        container.innerHTML = `<p class="text-xs text-slate-500 italic">Belum ada sertifikasi ditambahkan.</p>`;
+        return;
+      }
+      container.innerHTML = items.map((cert, idx) => `
+        <div class="flex items-center gap-2" role="listitem">
+          <label for="cert-${idx}" class="sr-only">Sertifikasi ${idx + 1}</label>
+          <input type="text" id="cert-${idx}" value="${esc(cert)}" oninput="updateCert(${idx}, this.value)" class="flex-1 px-3 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg focus:bg-white focus:border-slate-900 outline-none" />
+          <button type="button" onclick="removeCert(${idx})" aria-label="Hapus sertifikasi ${idx + 1}" class="p-1.5 text-slate-400 hover:text-rose-600 transition">
+            <svg aria-hidden="true" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+          </button>
+        </div>
+      `).join('');
+    }
+    function addCert() {
+      const inp = document.getElementById('new-cert-input');
+      const val = inp.value.trim();
+      if (!val) { inp.focus(); return; }
+      if (!cvData.certifications) cvData.certifications = [];
+      cvData.certifications.push(val); inp.value = '';
+      saveState(); renderCertsForm(); renderCV();
+      inp.focus();
+      showToast("Sertifikasi ditambahkan");
+    }
+    function updateCert(idx, val) { cvData.certifications[idx] = val; saveState(); renderCV(); }
+    function removeCert(idx) { cvData.certifications.splice(idx, 1); saveState(); renderCertsForm(); renderCV(); }
+
+    function populateForm() {
+      document.getElementById('form-photo-preview').src = cvData.photo || DEFAULT_PHOTO;
+      document.getElementById('input-fullName').value = cvData.fullName || '';
+      document.getElementById('input-role').value = cvData.role || '';
+      document.getElementById('input-phone').value = cvData.phone || '';
+      document.getElementById('input-email').value = cvData.email || '';
+      document.getElementById('input-address').value = cvData.address || '';
+      document.getElementById('input-website').value = cvData.website || '';
+      document.getElementById('input-profile').value = cvData.profile || '';
+      renderExperienceForm();
+      renderEducationForm();
+      renderSkillsForm();
+      renderCertsForm();
+    }
+
+    /* =========================================================
+       SMART TEXT SIZING — pengukuran via clone (unscaled)
+       ========================================================= */
+    function measureNowrapWidth(el, fontSize) {
+      const cs = getComputedStyle(el);
+      const clone = el.cloneNode(true);
+      clone.style.position = 'fixed';
+      clone.style.left = '-99999px';
+      clone.style.top = '0';
+      clone.style.visibility = 'hidden';
+      clone.style.pointerEvents = 'none';
+      clone.style.whiteSpace = 'nowrap';
+      clone.style.width = 'auto';
+      clone.style.maxWidth = 'none';
+      clone.style.minWidth = '0';
+      clone.style.margin = '0';
+      clone.style.padding = '0';
+      clone.style.border = '0';
+      clone.style.display = 'inline-block';
+      clone.style.fontSize = fontSize + 'px';
+      clone.style.fontFamily = cs.fontFamily;
+      clone.style.fontWeight = cs.fontWeight;
+      clone.style.fontStyle = cs.fontStyle;
+      clone.style.letterSpacing = cs.letterSpacing;
+      clone.style.textTransform = cs.textTransform;
+      clone.style.lineHeight = '1';
+      document.body.appendChild(clone);
+      const w = clone.getBoundingClientRect().width;
+      document.body.removeChild(clone);
+      return w;
+    }
+
+    function computeFitSize(el, baseSize, minSize) {
+      const availW = el.clientWidth;
+      if (availW <= 0) return { size: baseSize, overflows: false };
+      let w = measureNowrapWidth(el, baseSize);
+      if (w <= availW + 0.5) return { size: baseSize, overflows: false };
+      let size = Math.max(minSize, baseSize * (availW / w) * 0.98);
+      w = measureNowrapWidth(el, size);
+      if (w > availW + 0.5) {
+        size = Math.max(minSize, size * (availW / w) * 0.995);
+        w = measureNowrapWidth(el, size);
+      }
+      const overflows = w > availW + 1 && size <= minSize + 0.5;
+      return { size, overflows };
+    }
+
+    function applyFit(el, res) {
+      if (!el) return;
+      el.style.fontSize = res.size + 'px';
+      el.style.whiteSpace = res.overflows ? 'normal' : 'nowrap';
+    }
+
+    /* =========================================================
+       DENSITY — reduksi spacing proporsional untuk konten panjang
+       ========================================================= */
+    function applyDensity(article) {
+      if (!article) return;
+      if (article.__densityOrig) {
+        article.__densityOrig.forEach((val, el) => {
+          if (val.mb !== undefined) el.style.marginBottom = val.mb;
+          if (val.pt !== undefined) el.style.paddingTop = val.pt;
+          if (val.pb !== undefined) el.style.paddingBottom = val.pb;
+          if (val.mt !== undefined) el.style.marginTop = val.mt;
+        });
+        article.__densityOrig = null;
+      }
+      const h = article.offsetHeight;
+      let factor = 1;
+      if (h > 2400) factor = 0.72;
+      else if (h > 1900) factor = 0.82;
+      else if (h > 1400) factor = 0.9;
+      if (factor >= 1) return;
+
+      const orig = new Map();
+      const record = (el, props) => {
+        const entry = {};
+        props.forEach(p => { entry[p] = el.style[p] || ''; });
+        orig.set(el, entry);
+      };
+
+      article.querySelectorAll('.cv-entry').forEach(el => {
+        record(el, ['marginBottom']);
+        const v = parseFloat(getComputedStyle(el).marginBottom) || 0;
+        if (v > 0) el.style.marginBottom = (v * factor) + 'px';
+      });
+      article.querySelectorAll('section').forEach(el => {
+        record(el, ['paddingTop', 'paddingBottom']);
+        ['paddingTop','paddingBottom'].forEach(p => {
+          const v = parseFloat(getComputedStyle(el)[p]) || 0;
+          if (v > 0) el.style[p] = (v * factor) + 'px';
+        });
+      });
+      article.querySelectorAll('h2').forEach(el => {
+        record(el, ['marginBottom', 'marginTop']);
+        ['marginBottom','marginTop'].forEach(p => {
+          const v = parseFloat(getComputedStyle(el)[p]) || 0;
+          if (v > 0) el.style[p] = (v * factor) + 'px';
+        });
+      });
+      article.__densityOrig = orig;
+    }
+
+    /* =========================================================
+       AUTO-FIT SCHEDULER
+       ========================================================= */
+    let autoFitTimer = null;
+    function scheduleAutoFit() {
+      if (autoFitTimer) clearTimeout(autoFitTimer);
+      autoFitTimer = setTimeout(runAutoFit, 40);
+    }
+
+    function runAutoFit() {
+      const canvas = document.getElementById('cv-canvas');
+      if (!canvas || !canvas.offsetWidth) return;
+      const tpl = cvData.template;
+
+      if (tpl === 1) {
+        const l1 = canvas.querySelector('.tpl1-name-line1');
+        const l2 = canvas.querySelector('.tpl1-name-line2');
+        const role = canvas.querySelector('.tpl1-role');
+        let nameSize = 42.68;
+        let nameOverflow = false;
+        if (l1) { const r = computeFitSize(l1, 42.68, 20); nameSize = Math.min(nameSize, r.size); nameOverflow = nameOverflow || r.overflows; }
+        if (l2) { const r = computeFitSize(l2, 42.68, 20); nameSize = Math.min(nameSize, r.size); nameOverflow = nameOverflow || r.overflows; }
+        if (l1) applyFit(l1, { size: nameSize, overflows: nameOverflow });
+        if (l2) applyFit(l2, { size: nameSize, overflows: nameOverflow });
+        if (role) {
+          const r = computeFitSize(role, 21.89, 13);
+          applyFit(role, r);
+        }
+      } else if (tpl === 2) {
+        const name = canvas.querySelector('.tpl2-name');
+        const role = canvas.querySelector('.tpl2-role');
+        if (name) applyFit(name, computeFitSize(name, 32, 16));
+        if (role) applyFit(role, computeFitSize(role, 16, 11));
+      } else if (tpl === 3) {
+        const name = canvas.querySelector('.tpl3-name');
+        if (name) applyFit(name, computeFitSize(name, 52, 22));
+      }
+
+      const article = canvas.querySelector('article');
+      if (article) applyDensity(article);
+
+      applyZoom(currentZoom);
+    }
+
+    /* =========================================================
+       TEMPLATE RENDERERS
+       ========================================================= */
+    function renderCV() {
+      const canvas = document.getElementById('cv-canvas');
+      if (!canvas) return;
+      if (cvData.template === 1) canvas.innerHTML = renderTemplate1();
+      else if (cvData.template === 2) canvas.innerHTML = renderTemplate2();
+      else canvas.innerHTML = renderTemplate3();
+      refreshCanvasHeight();
+      updatePageCount();
+      scheduleAutoFit();
+    }
+
+    function refreshCanvasHeight() {
+      const canvas = document.getElementById('cv-canvas');
+      const container = document.getElementById('scale-container');
+      if (!canvas || !container) return;
+      const naturalH = canvas.offsetHeight || 1123;
+      container.style.height = `${naturalH * currentZoom}px`;
+      container.style.width  = `${794 * currentZoom}px`;
+    }
+
+    function updatePageCount() {
+      const canvas = document.getElementById('cv-canvas');
+      const pc = document.getElementById('page-count');
+      if (!canvas || !pc) return;
+      const h = canvas.offsetHeight || 1123;
+      const pages = Math.max(1, Math.ceil((h - 4) / 1123));
+      if (pages > 1) {
+        pc.textContent = `${pages} halaman`;
+        pc.className = 'text-amber-600 font-semibold text-[11px]';
+        pc.title = 'Konten melebihi 1 halaman A4. Halaman bertambah secara natural.';
+      } else {
+        pc.textContent = '1 halaman';
+        pc.className = 'text-emerald-600 font-semibold text-[11px]';
+        pc.title = 'Konten pas dalam 1 halaman A4.';
+      }
+    }
+
+    const photoAlt = () => cvData.fullName ? `Foto profil ${esc(cvData.fullName)}` : 'Foto profil';
+
+    /* ===== TEMPLATE 1 ===== */
+    function renderTemplate1() {
+      const rawName = (cvData.fullName || "NAMA ANDA").trim().toUpperCase();
+      const parts = rawName.split(/\s+/);
+      const firstLine = parts[0] || "";
+      const secondLine = parts.length > 1 ? parts.slice(1).join(" ") : "";
+
+      const eduItems = cvData.education.filter(e => hasText(e.institution) || hasText(e.degree) || hasText(e.period));
+      const expItems = cvData.experience.filter(e => hasText(e.position) || hasText(e.company) || hasText(e.period) || hasText(e.description) || hasText(e.bullets));
+      const skillItems = trimArr(cvData.skills).filter(hasText);
+
+      const eduHTML = eduItems.length ? eduItems.map(edu => `
+        <div class="cv-entry" style="margin-bottom: 18px;">
+          ${hasText(edu.institution) || hasText(edu.period) ? `<div style="font-size: 13.34px; color: #5d6064; line-height: 1.4;">${esc(edu.institution)}${hasText(edu.period) ? ` | ${esc(edu.period)}` : ''}</div>` : ''}
+          ${hasText(edu.degree) ? `<div style="font-size: 14.67px; font-weight: 700; color: #2e2c2c; margin-top: 3px; line-height: 1.35;">${esc(edu.degree)}</div>` : ''}
+          ${hasText(edu.description) ? `<p style="font-size: 13.34px; color: #2e2c2c; line-height: 1.62; margin-top: 4px; margin-bottom: 0;">${esc(edu.description)}</p>` : ''}
+        </div>`).join('') : `<p style="font-size: 13px; color: #5d6064; font-style: italic; margin: 0;">Belum ada riwayat pendidikan.</p>`;
+
+      const expHTML = expItems.length ? expItems.map(exp => {
+        const body = hasText(exp.description) ? exp.description : (exp.bullets || '').split('\n').filter(hasText).join(' • ');
+        return `
+        <div class="cv-entry" style="margin-bottom: 20px;">
+          ${hasText(exp.company) || hasText(exp.period) ? `<div style="font-size: 13.34px; color: #5d6064; line-height: 1.4;">${esc(exp.company)}${hasText(exp.period) ? ` | ${esc(exp.period)}` : ''}</div>` : ''}
+          ${hasText(exp.position) ? `<div style="font-size: 14.67px; font-weight: 700; color: #2e2c2c; margin-top: 3px; line-height: 1.35;">${esc(exp.position)}</div>` : ''}
+          ${hasText(body) ? `<p style="font-size: 13.34px; color: #2e2c2c; line-height: 1.62; margin-top: 4px; margin-bottom: 0;">${esc(body)}</p>` : ''}
+        </div>`;
+      }).join('') : `<p style="font-size: 13px; color: #5d6064; font-style: italic; margin: 0;">Belum ada pengalaman kerja.</p>`;
+
+      const skillsHTML = skillItems.length ? skillItems.map(skill => `
+        <li style="display: flex; align-items: flex-start; gap: 10px; margin-bottom: 12px; font-size: 13.34px; color: #2e2c2c; line-height: 1.55;">
+          <span aria-hidden="true" style="width: 4.5px; height: 4.5px; border-radius: 50%; background-color: #2e2c2c; margin-top: 8px; flex-shrink: 0;"></span>
+          <span style="min-width: 0;">${esc(skill)}</span>
+        </li>`).join('') : `<li style="font-size: 13px; color: #5d6064; font-style: italic;">Belum ada keahlian.</li>`;
+
+      return `
+        <article class="tpl1-font" aria-label="CV Desain 1" style="width: 794px; min-height: 1123px; background: #ffffff; color: #2e2c2c; padding: 72px 79px 55px 79px; box-sizing: border-box; position: relative;">
+          <header style="display: flex; justify-content: space-between; align-items: flex-start; min-height: 142px;">
+            <div style="padding-top: 4px; max-width: 450px; min-width: 0; flex: 1 1 0;">
+              <h1 class="tpl1-name-line1" style="font-size: 42.68px; font-weight: 800; line-height: 1.12; letter-spacing: 0.01em; color: #2e2c2c; margin: 0;">${esc(firstLine)}</h1>
+              ${secondLine ? `<h1 class="tpl1-name-line2" style="font-size: 42.68px; font-weight: 800; line-height: 1.12; letter-spacing: 0.01em; color: #2e2c2c; margin: 0;">${esc(secondLine)}</h1>` : ''}
+              ${hasText(cvData.role) ? `<p class="tpl1-role" style="font-size: 21.89px; font-weight: 400; color: #5d6064; margin: 10px 0 0 0; line-height: 1.2;">${esc(cvData.role)}</p>` : ''}
+            </div>
+            <div style="width: 159px; height: 136px; overflow: hidden; flex-shrink: 0; background: #e2e8f0;">
+              <img src="${cvData.photo || DEFAULT_PHOTO}" alt="${photoAlt()}" style="width: 100%; height: 100%; object-fit: contain; display: block;" />
+            </div>
+          </header>
+
+          <section aria-label="Kontak" style="margin-top: 22px; padding-bottom: 13px; border-bottom: 1px solid #2e2c2c; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 20px; font-size: 13.34px; color: #2e2c2c;">
+            ${hasText(cvData.phone) ? `<div style="display: flex; align-items: center; gap: 8px; min-width: 0;"><span>${esc(cvData.phone)}</span></div>` : ''}
+            ${hasText(cvData.email) ? `<div style="display: flex; align-items: center; gap: 8px; min-width: 0;"><span>${esc(cvData.email)}</span></div>` : ''}
+            ${hasText(cvData.address) ? `<div style="display: flex; align-items: center; gap: 8px; min-width: 0;"><span>${esc(cvData.address)}</span></div>` : ''}
+          </section>
+
+          ${hasText(cvData.profile) ? `
+          <section aria-labelledby="tpl1-profile-h" style="padding-top: 18px; padding-bottom: 20px; border-bottom: 1px solid #2e2c2c;">
+            <h2 id="tpl1-profile-h" style="font-size: 20.39px; font-weight: 700; letter-spacing: 0.02em; color: #2e2c2c; margin: 0 0 10px 0;">PROFIL</h2>
+            <p style="font-size: 13.34px; color: #2e2c2c; line-height: 1.65; margin: 0;">${esc(cvData.profile)}</p>
+          </section>` : ''}
+
+          <div style="display: flex;">
+            <section aria-labelledby="tpl1-edu-h" style="width: 282px; padding-top: 22px; padding-right: 24px; border-right: 1px solid #2e2c2c; box-sizing: border-box; flex-shrink: 0; min-width: 0;">
+              <h2 id="tpl1-edu-h" style="font-size: 18.67px; font-weight: 700; color: #2e2c2c; margin: 0 0 16px 0; letter-spacing: 0.01em;">RIWAYAT PENDIDIKAN</h2>
+              ${eduHTML}
+              <h2 id="tpl1-skill-h" style="font-size: 18.67px; font-weight: 700; color: #2e2c2c; margin: 22px 0 14px 0; letter-spacing: 0.01em;">KEAHLIAN</h2>
+              <ul aria-labelledby="tpl1-skill-h" style="list-style: none; padding: 0; margin: 0;">${skillsHTML}</ul>
+            </section>
+            <section aria-labelledby="tpl1-exp-h" style="flex: 1; padding-top: 22px; padding-left: 34px; box-sizing: border-box; min-width: 0;">
+              <h2 id="tpl1-exp-h" style="font-size: 18.67px; font-weight: 700; color: #2e2c2c; margin: 0 0 16px 0; letter-spacing: 0.01em;">PENGALAMAN KERJA</h2>
+              ${expHTML}
+            </section>
+          </div>
+        </article>`;
+    }
+
+    /* ===== TEMPLATE 2 ===== */
+    function renderTemplate2() {
+      const contactItems = [cvData.phone, cvData.email, cvData.website, cvData.address].filter(hasText).map(esc);
+      const contactHTML = contactItems.length ? contactItems.join(' &nbsp;|&nbsp; ') : '<span style="font-style: italic; color: #888;">Kontak belum diisi</span>';
+
+      const skillItems = trimArr(cvData.skills).filter(hasText);
+      const midIdx = Math.ceil(skillItems.length / 2);
+      const leftSkills = skillItems.slice(0, midIdx);
+      const rightSkills = skillItems.slice(midIdx);
+
+      const renderSkillCol = list => list.length ? list.map(s => `
+        <li style="display: flex; align-items: flex-start; gap: 11px; margin-bottom: 7px; font-size: 15.5px; color: #000; line-height: 1.45;">
+          <span aria-hidden="true" style="width: 4.5px; height: 4.5px; border-radius: 50%; background: #000; margin-top: 8px; flex-shrink: 0;"></span>
+          <span style="min-width: 0;">${esc(s)}</span>
+        </li>`).join('') : `<li style="font-size: 14px; font-style: italic; color: #888;">—</li>`;
+
+      const expItems = cvData.experience.filter(e => hasText(e.position) || hasText(e.company) || hasText(e.description) || hasText(e.bullets));
+      const expHTML = expItems.length ? expItems.map(exp => {
+        const bulletLines = (hasText(exp.bullets) ? exp.bullets : (exp.description || '')).split('\n').map(l => l.trim()).filter(Boolean);
+        return `
+          <div class="cv-entry" style="margin-bottom: 16px;">
+            <div style="display: flex; justify-content: space-between; align-items: baseline; gap: 12px; margin-bottom: 6px;">
+              <div style="font-size: 15.5px; font-weight: 700; color: #000; min-width: 0;">${esc(exp.position)}${hasText(exp.company) ? ` di ${esc(exp.company)}` : ''}</div>
+              ${hasText(exp.period) ? `<div style="font-size: 15px; color: #545454; white-space: nowrap; flex-shrink: 0;">${esc(exp.period)}</div>` : ''}
+            </div>
+            ${bulletLines.length ? `<ul style="list-style: none; padding: 0; margin: 0 0 0 13px;">${bulletLines.map(b => `
+              <li style="display: flex; align-items: flex-start; gap: 11px; margin-bottom: 5px; font-size: 15px; color: #000; line-height: 1.48;">
+                <span aria-hidden="true" style="width: 4.5px; height: 4.5px; border-radius: 50%; background: #000; margin-top: 8px; flex-shrink: 0;"></span>
+                <span style="min-width: 0;">${esc(b)}</span>
+              </li>`).join('')}</ul>` : ''}
+          </div>`;
+      }).join('') : `<p style="font-size: 14px; font-style: italic; color: #888; margin: 0;">Belum ada pengalaman kerja.</p>`;
+
+      const eduItems = cvData.education.filter(e => hasText(e.degree) || hasText(e.institution));
+      const eduHTML = eduItems.length ? eduItems.map(edu => `
+        <div class="cv-entry" style="display: flex; justify-content: space-between; align-items: baseline; gap: 12px; margin-bottom: 7px; padding-left: 13px;">
+          <div style="display: flex; align-items: flex-start; gap: 11px; font-size: 15.5px; font-weight: 700; color: #000; min-width: 0;">
+            <span aria-hidden="true" style="width: 4.5px; height: 4.5px; border-radius: 50%; background: #000; margin-top: 8px; flex-shrink: 0;"></span>
+            <span>${esc(edu.degree)}${hasText(edu.institution) ? ` ${esc(edu.institution)}` : ''}</span>
+          </div>
+          ${hasText(edu.period) ? `<div style="font-size: 15px; color: #545454; white-space: nowrap; flex-shrink: 0;">${esc(edu.period)}</div>` : ''}
+        </div>`).join('') : `<p style="font-size: 14px; font-style: italic; color: #888; margin: 0; padding-left: 13px;">Belum ada riwayat pendidikan.</p>`;
+
+      const portfolioLink = hasText(cvData.portfolioUrl) ? cvData.portfolioUrl : (hasText(cvData.website) ? cvData.website : '');
+
+      return `
+        <article class="tpl2-font" aria-label="CV Desain 2" style="width: 794px; min-height: 1123px; background: #fff; color: #000; padding: 44px 46px 40px 46px; box-sizing: border-box;">
+          <header style="text-align: center;">
+            <h1 class="tpl2-name" style="font-size: 32px; font-weight: 700; color: #000; margin: 0; line-height: 1.2;">${esc(cvData.fullName || 'NAMA ANDA')}</h1>
+            ${hasText(cvData.role) ? `<p class="tpl2-role" style="font-size: 16px; font-weight: 400; color: #000; margin: 6px 0 0 0;">${esc(cvData.role)}</p>` : ''}
+          </header>
+
+          <section aria-label="Kontak" style="margin-top: 14px; border-top: 1px solid #000; border-bottom: 1px solid #000; padding: 8px 6px; text-align: center; font-size: 14.5px; color: #545454;">
+            ${contactHTML}
+          </section>
+
+          ${hasText(cvData.profile) ? `
+          <section aria-labelledby="tpl2-profile-h" style="padding-top: 12px; padding-bottom: 14px; border-bottom: 1px solid #000;">
+            <h2 id="tpl2-profile-h" style="font-size: 18.67px; font-weight: 700; color: #000; margin: 0 0 10px 0;">Profil</h2>
+            <p style="font-size: 15.2px; color: #000; line-height: 1.56; margin: 0;">${esc(cvData.profile)}</p>
+          </section>` : ''}
+
+          ${skillItems.length ? `
+          <section aria-labelledby="tpl2-skill-h" style="padding-top: 12px; padding-bottom: 12px; border-bottom: 1px solid #000;">
+            <h2 id="tpl2-skill-h" style="font-size: 18.67px; font-weight: 700; color: #000; margin: 0 0 10px 0;">Kemampuan Utama</h2>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px; padding-left: 13px;">
+              <ul style="list-style: none; padding: 0; margin: 0;">${renderSkillCol(leftSkills)}</ul>
+              <ul style="list-style: none; padding: 0; margin: 0;">${renderSkillCol(rightSkills)}</ul>
+            </div>
+          </section>` : ''}
+
+          <section aria-labelledby="tpl2-exp-h" style="padding-top: 12px; padding-bottom: 4px; border-bottom: 1px solid #545454;">
+            <h2 id="tpl2-exp-h" style="font-size: 18.67px; font-weight: 700; color: #000; margin: 0 0 10px 0;">Pengalaman Kerja</h2>
+            ${expHTML}
+          </section>
+
+          <section aria-labelledby="tpl2-edu-h" style="padding-top: 10px; padding-bottom: 8px; border-bottom: 1px solid #545454;">
+            <h2 id="tpl2-edu-h" style="font-size: 18.67px; font-weight: 700; color: #000; margin: 0 0 8px 0;">Pendidikan</h2>
+            ${eduHTML}
+          </section>
+
+          ${hasText(portfolioLink) ? `
+          <section aria-labelledby="tpl2-port-h" style="padding-top: 10px;">
+            <h2 id="tpl2-port-h" style="font-size: 18.67px; font-weight: 700; color: #000; margin: 0 0 8px 0;">Portfolio</h2>
+            <div style="display: flex; align-items: center; gap: 11px; padding-left: 15px; min-width: 0;">
+              <span aria-hidden="true" style="width: 4.5px; height: 4.5px; border-radius: 50%; background: #004aad; flex-shrink: 0;"></span>
+              <span style="font-size: 15.5px; color: #004aad; min-width: 0;">${esc(portfolioLink)}</span>
+            </div>
+          </section>` : ''}
+        </article>`;
+    }
+
+    /* ===== TEMPLATE 3 ===== */
+    function renderTemplate3() {
+      const eduItems = cvData.education.filter(e => hasText(e.degree) || hasText(e.institution) || hasText(e.period));
+      const expItems = cvData.experience.filter(e => hasText(e.position) || hasText(e.company) || hasText(e.description) || hasText(e.bullets));
+      const skillItems = trimArr(cvData.skills).filter(hasText);
+      const certItems = trimArr(cvData.certifications || []).filter(hasText);
+
+      const eduHTML = eduItems.length ? eduItems.map(edu => `
+        <p class="cv-entry" style="font-size: 16px; color: #131111; line-height: 1.5; margin: 0 0 4px 0;">
+          ${esc(edu.degree)}${hasText(edu.institution) ? ` ${esc(edu.institution)}` : ''}${hasText(edu.period) ? `, ${esc(edu.period)}` : ''}
+        </p>`).join('') : `<p style="font-size: 15px; color: #555; font-style: italic; margin: 0;">Belum ada riwayat pendidikan.</p>`;
+
+      const expHTML = expItems.length ? expItems.map(exp => {
+        const body = hasText(exp.description) ? exp.description : (exp.bullets || '').split('\n').filter(hasText).join(' • ');
+        return `
+          <div class="cv-entry" style="margin-bottom: 14px;">
+            <p style="font-size: 16px; font-weight: 700; color: #131111; margin: 0 0 8px 0;">
+              ${esc(exp.position)}${hasText(exp.company) ? ` – ${esc(exp.company)}` : ''}${hasText(exp.period) ? ` ${esc(exp.period)}` : ''}
+            </p>
+            ${hasText(body) ? `<p style="font-size: 16px; color: #131111; line-height: 1.5; margin: 0;">${esc(body)}</p>` : ''}
+          </div>`;
+      }).join('') : `<p style="font-size: 15px; color: #555; font-style: italic; margin: 0;">Belum ada pengalaman kerja.</p>`;
+
+      const skillsHTML = skillItems.length ? skillItems.map(skill => `
+        <li style="display: flex; align-items: flex-start; gap: 13px; margin-bottom: 6px; font-size: 16px; color: #131111; line-height: 1.48;">
+          <span aria-hidden="true" style="width: 6px; height: 6px; border-radius: 50%; background: #131111; margin-top: 9px; flex-shrink: 0;"></span>
+          <span style="min-width: 0;">${esc(skill)}</span>
+        </li>`).join('') : `<li style="font-size: 15px; color: #555; font-style: italic;">Belum ada keahlian.</li>`;
+
+      const certsHTML = certItems.length ? certItems.map(cert => `
+        <li style="display: flex; align-items: flex-start; gap: 13px; margin-bottom: 6px; font-size: 16px; color: #131111; line-height: 1.48;">
+          <span aria-hidden="true" style="width: 6px; height: 6px; border-radius: 50%; background: #131111; margin-top: 9px; flex-shrink: 0;"></span>
+          <span style="min-width: 0;">${esc(cert)}</span>
+        </li>`).join('') : `<li style="font-size: 15px; color: #555; font-style: italic;">Belum ada sertifikasi.</li>`;
+
+      return `
+        <article class="tpl3-font" aria-label="CV Desain 3" style="width: 794px; min-height: 1123px; background: #fafafa; color: #131111; padding: 20px 50px 40px 56px; box-sizing: border-box;">
+          <header style="display: flex; justify-content: space-between; align-items: center; min-height: 136px;">
+            <h1 class="tpl3-name" style="font-size: 52px; font-weight: 800; color: #131111; margin: 0; line-height: 1.08; letter-spacing: -0.02em; max-width: 480px; min-width: 0; flex: 1 1 0;">
+              ${esc(cvData.fullName || 'Nama Anda')}
+            </h1>
+            <div style="width: 159px; height: 136px; overflow: hidden; flex-shrink: 0; background: #e2e8f0;">
+              <img src="${cvData.photo || DEFAULT_PHOTO}" alt="${photoAlt()}" style="width: 100%; height: 100%; object-fit: contain; display: block;" />
+            </div>
+          </header>
+
+          <section aria-label="Kontak" style="margin-top: 16px; padding-bottom: 24px; border-bottom: 1px solid #131111; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 20px; font-size: 15.5px; font-weight: 700; color: #131111;">
+            ${hasText(cvData.phone) ? `<div style="min-width: 0;"><span>${esc(cvData.phone)}</span></div>` : ''}
+            ${hasText(cvData.email) ? `<div style="min-width: 0;"><span>${esc(cvData.email)}</span></div>` : ''}
+            ${hasText(cvData.address) ? `<div style="min-width: 0;"><span>${esc(cvData.address)}</span></div>` : ''}
+          </section>
+
+          ${hasText(cvData.profile) ? `
+          <section aria-labelledby="tpl3-profile-h" style="padding-top: 30px; padding-bottom: 30px; border-bottom: 1px solid #131111;">
+            <h2 id="tpl3-profile-h" style="font-size: 21.34px; font-weight: 800; color: #131111; margin: 0 0 18px 0;">Profil Singkat</h2>
+            <p style="font-size: 16px; color: #131111; line-height: 1.52; margin: 0;">${esc(cvData.profile)}</p>
+          </section>` : ''}
+
+          <section aria-labelledby="tpl3-edu-h" style="padding-top: 18px; padding-bottom: 22px; border-bottom: 1px solid #131111;">
+            <h2 id="tpl3-edu-h" style="font-size: 21.34px; font-weight: 800; color: #131111; margin: 0 0 16px 0;">Pendidikan</h2>
+            ${eduHTML}
+          </section>
+
+          <section aria-labelledby="tpl3-exp-h" style="padding-top: 18px; padding-bottom: 16px; border-bottom: 1px solid #131111;">
+            <h2 id="tpl3-exp-h" style="font-size: 21.34px; font-weight: 800; color: #131111; margin: 0 0 16px 0;">Pengalaman</h2>
+            ${expHTML}
+          </section>
+
+          <section aria-labelledby="tpl3-skill-h" style="padding-top: 18px; padding-bottom: 20px; border-bottom: 1px solid #131111;">
+            <h2 id="tpl3-skill-h" style="font-size: 21.34px; font-weight: 800; color: #131111; margin: 0 0 16px 0;">Kemampuan</h2>
+            <ul style="list-style: none; padding: 0; margin: 0 0 0 8px;">${skillsHTML}</ul>
+          </section>
+
+          <section aria-labelledby="tpl3-cert-h" style="padding-top: 18px;">
+            <h2 id="tpl3-cert-h" style="font-size: 21.34px; font-weight: 800; color: #131111; margin: 0 0 16px 0;">Pelatihan dan Sertifikasi</h2>
+            <ul style="list-style: none; padding: 0; margin: 0 0 0 5px;">${certsHTML}</ul>
+          </section>
+        </article>`;
+    }
+
+    /* ===== ZOOM / RESPONSIVE ===== */
+    function applyZoom(scale) {
+      currentZoom = Math.max(0.35, Math.min(1.25, scale));
+      const canvas = document.getElementById('cv-canvas');
+      const container = document.getElementById('scale-container');
+      if (!canvas || !container) return;
+      const naturalH = canvas.offsetHeight || 1123;
+      canvas.style.transform = `scale(${currentZoom})`;
+      canvas.style.transformOrigin = 'top center';
+      container.style.width  = `${794 * currentZoom}px`;
+      container.style.height = `${naturalH * currentZoom}px`;
+      const z = document.getElementById('zoom-level-text');
+      if (z) z.textContent = `${Math.round(currentZoom * 100)}%`;
+    }
+    function adjustZoom(delta) { applyZoom(currentZoom + delta); }
+    function fitZoomToScreen() {
+      const wrapper = document.getElementById('preview-wrapper');
+      if (!wrapper || wrapper.clientWidth === 0) return;
+      const availW = wrapper.clientWidth - 32;
+      if (availW > 0) {
+        const ideal = Math.min(0.9, Math.max(0.35, availW / 794));
+        applyZoom(ideal);
+      }
+    }
+    function switchMobileView(view) {
+      const editor = document.getElementById('editor-panel');
+      const preview = document.getElementById('preview-wrapper');
+      const tabEd = document.getElementById('tab-editor');
+      const tabPr = document.getElementById('tab-preview');
+      const activate = (tab, panel, otherTab, otherPanel) => {
+        tab.setAttribute('aria-selected','true'); tab.tabIndex = 0;
+        tab.classList.add('bg-white','text-slate-900','shadow-sm'); tab.classList.remove('text-slate-600');
+        otherTab.setAttribute('aria-selected','false'); otherTab.tabIndex = -1;
+        otherTab.classList.remove('bg-white','text-slate-900','shadow-sm'); otherTab.classList.add('text-slate-600');
+        panel.classList.remove('hidden'); otherPanel.classList.add('hidden');
+      };
+      if (view === 'editor') {
+        activate(tabEd, editor, tabPr, preview);
+        preview.classList.remove('flex');
+      } else {
+        activate(tabPr, preview, tabEd, editor);
+        preview.classList.add('flex');
+        setTimeout(() => {
+          scheduleAutoFit();
+          fitZoomToScreen();
+        }, 40);
+      }
+    }
+    ['tab-editor','tab-preview'].forEach(id => {
+      document.getElementById(id).addEventListener('keydown', e => {
+        if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') {
+          e.preventDefault();
+          const other = id === 'tab-editor' ? 'preview' : 'editor';
+          switchMobileView(other);
+          document.getElementById(id === 'tab-editor' ? 'tab-preview' : 'tab-editor').focus();
+        }
+      });
+    });
+
+    function printCV() {
+      const preview = document.getElementById('preview-wrapper');
+      const wasHidden = preview.classList.contains('hidden');
+      if (wasHidden) preview.classList.remove('hidden');
+      const canvas = document.getElementById('cv-canvas');
+      const prevTransform = canvas.style.transform;
+      canvas.style.transform = 'none';
+      setTimeout(() => {
+        window.print();
+        canvas.style.transform = prevTransform;
+        if (wasHidden && window.innerWidth < 1024) preview.classList.add('hidden');
+      }, 50);
+    }
+
+    let resizeTimer;
+    window.addEventListener('resize', () => {
+      clearTimeout(resizeTimer);
+      resizeTimer = setTimeout(() => {
+        if (window.innerWidth >= 1024) {
+          document.getElementById('editor-panel').classList.remove('hidden');
+          document.getElementById('preview-wrapper').classList.remove('hidden');
+          document.getElementById('preview-wrapper').classList.add('flex');
+        }
+        fitZoomToScreen();
+        scheduleAutoFit();
+      }, 120);
+    });
+
+    window.addEventListener('DOMContentLoaded', () => {
+      populateForm();
+      selectTemplate(cvData.template || 1);
+      setTimeout(fitZoomToScreen, 80);
+      if (document.fonts && document.fonts.ready) {
+        document.fonts.ready.then(() => scheduleAutoFit());
+      }
+    });
+  </script>
+</body>
+</html>

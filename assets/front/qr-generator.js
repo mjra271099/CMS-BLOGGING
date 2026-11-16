@@ -5,9 +5,21 @@
 const $  = id => document.getElementById(id);
 const $$ = sel => Array.from(document.querySelectorAll(sel));
 
-/* Akar halaman + Direct Link iklan (opsional) dari Pengaturan CMS. */
+/* Akar halaman + konfigurasi publik dari Admin.
+   Prioritas: atribut data-config (admin) → atribut lama data-direct-url. */
 const ROOT = document.querySelector('.qr-app');
-const DIRECT_URL = ROOT ? (ROOT.dataset.directUrl || '').trim() : '';
+let CFG = {};
+try{ CFG = ROOT && ROOT.dataset.config ? JSON.parse(ROOT.dataset.config) : {}; }catch(e){ CFG = {}; }
+const DIRECT_URL = CFG.monetize && CFG.directUrl
+  ? String(CFG.directUrl).trim()
+  : (ROOT ? (ROOT.dataset.directUrl || '').trim() : '');
+const SUPPORT = {
+  enabled: CFG.supportEnabled !== false && CFG.supportEnabled !== 0,
+  title: CFG.title || 'Dukung Pengembangan Tools Ini',
+  desc: CFG.description || 'QR Code Generator ini gratis. Dukungan sukarela membantu biaya server dan pengembangan fitur berikutnya.',
+  qris: CFG.qris || '',
+  url: CFG.supportUrl || ''
+};
 
 
 function isHttpUrl(v){
@@ -167,7 +179,7 @@ const TYPES = [
 /* ================================================================== */
 /*  State                                                             */
 /* ================================================================== */
-const STORAGE_KEY = 'qr-generator-state-v1';
+const STORAGE_KEY = 'qr-generator-state-v2';
 const state = { type: 'url', customLogo: null, cfg: null };
 let renderSeq = 0;
 let timer = null;
@@ -757,12 +769,46 @@ function saveBlob(blob, filename){
   setTimeout(() => URL.revokeObjectURL(url), 4000);
 }
 
-async function download(fmt){
-  if(!window.QRCodeStyling){
-    toast('Pustaka QR belum siap', 'error');
-    return;
-  }
+/* ================================================================== */
+/*  Popup dukungan (QRIS DANA)                                       */
+/* ================================================================== */
+let supportResolve = null;
 
+function openSupport(){
+  return new Promise(resolve => {
+    const modal = document.getElementById('qrSupport');
+    if(!modal || !SUPPORT.enabled){ resolve(); return; }
+    const title = document.getElementById('qrSupportTitle');
+    const desc  = document.getElementById('qrSupportDesc');
+    const img   = document.getElementById('qrSupportImage');
+    const btn   = document.getElementById('qrSupportLink');
+    if(title) title.textContent = SUPPORT.title;
+    if(desc)  desc.textContent  = SUPPORT.desc;
+    if(img){
+      if(SUPPORT.qris){ img.src = SUPPORT.qris; img.alt = 'QRIS DANA'; img.parentElement.hidden = false; }
+      else { img.parentElement.hidden = true; }
+    }
+    if(btn){
+      if(/^https?:\/\//i.test(SUPPORT.url)){ btn.href = SUPPORT.url; btn.hidden = false; }
+      else btn.hidden = true;
+    }
+    supportResolve = resolve;
+    modal.hidden = false;
+    modal.classList.add('is-open');
+    document.documentElement.style.overflow = 'hidden';
+    const later = document.getElementById('qrSupportLater');
+    if(later) later.focus({ preventScroll: true });
+  });
+}
+
+function closeSupport(){
+  const modal = document.getElementById('qrSupport');
+  if(modal){ modal.hidden = true; modal.classList.remove('is-open'); }
+  document.documentElement.style.overflow = '';
+  if(supportResolve){ const r = supportResolve; supportResolve = null; r(); }
+}
+
+async function doDownload(fmt){
   await render();
 
   if(!state.cfg){
@@ -772,10 +818,6 @@ async function download(fmt){
 
   const size  = parseInt($('dlSize').value, 10) || 512;
   const label = fmt === 'jpeg' ? 'JPG' : fmt.toUpperCase();
-
-  /* Direct Link iklan (opsional): dibuka sinkron di dalam klik pengguna agar
-     tidak diblokir pop-up blocker. Kosong = tidak ada perubahan perilaku. */
-  openDirectLink();
 
   setStatus('Menyiapkan ' + label + '…');
   setBadge('Menyiapkan', '');
@@ -797,6 +839,43 @@ async function download(fmt){
     setBadge('Error', 'err');
     toast('Gagal mengunduh, coba lagi', 'error');
   }
+}
+
+/* Klik unduh: buka direct link (sinkron) + popup dukungan, lalu unduh tetap
+   dijalankan di halaman ini — pengguna tidak perlu kembali dari iklan. */
+async function download(fmt){
+  if(!window.QRCodeStyling){
+    toast('Pustaka QR belum siap', 'error');
+    return;
+  }
+  if(!state.cfg){
+    await render();
+    if(!state.cfg){ toast('Lengkapi data QR terlebih dahulu', 'error'); return; }
+  }
+
+  openDirectLink();
+  if(SUPPORT.enabled) await openSupport();
+  closeSupport();
+  await doDownload(fmt);
+}
+
+function bindSupport(){
+  const later = document.getElementById('qrSupportLater');
+  if(later) later.addEventListener('click', closeSupport);
+  const close = document.getElementById('qrSupportClose');
+  if(close) close.addEventListener('click', closeSupport);
+  const modal = document.getElementById('qrSupport');
+  if(modal){
+    modal.addEventListener('click', e => { if(e.target === modal) closeSupport(); });
+    // Cegah klik QRIS/teks menutup modal secara tak sengaja.
+    const card = modal.querySelector('.sa-modal-card');
+    if(card) card.addEventListener('click', e => e.stopPropagation());
+  }
+  const link = document.getElementById('qrSupportLink');
+  if(link) link.addEventListener('click', () => setTimeout(closeSupport, 150));
+  document.addEventListener('keydown', e => {
+    if(e.key === 'Escape' && modal && modal.classList.contains('is-open')) closeSupport();
+  });
 }
 
 /* ================================================================== */
@@ -1015,6 +1094,7 @@ function loadScript(src, timeout){
     buildPresets();
     enhanceAllInputs();
     bindEvents();
+    bindSupport();
     syncGradient();
     syncUploads();
     $('logoSizeVal').textContent = $('logoSize').value + '%';
