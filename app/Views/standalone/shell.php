@@ -19,6 +19,7 @@ declare(strict_types=1);
  */
 
 use App\Core\Lang;
+use App\Core\Settings;
 
 $page = is_array($page ?? null) ? $page : [];
 $home = (string)($page['home'] ?? $home ?? url());
@@ -26,6 +27,23 @@ $initial = mb_substr((string)($siteName ?? 'CMS'), 0, 1);
 $slug = (string)($page['slug'] ?? 'tools');
 $bodyClass = 'standalone-body page-' . $slug . ' ' . (string)($page['bodyClass'] ?? '');
 $favicon = (string)($favicon ?? Settings::get('favicon_url', '')) ?: url('favicon.ico');
+$canonical = (string)($page['canonical'] ?? '');
+if ($canonical === '') {
+    // Default: URL halaman alat itu sendiri, bukan beranda.
+    $reqPath = (string)(parse_url((string)($_SERVER['REQUEST_URI'] ?? '/'), PHP_URL_PATH) ?: '/');
+    $canonical = url(ltrim($reqPath, '/'));
+}
+$desc = (string)($page['desc'] ?? Settings::get('site_description', ''));
+$robots = (string)($page['robots'] ?? 'index,follow');
+// Zona widget opsional (mis. tools-header) agar konsisten dengan sales shell.
+$headZone = '';
+try {
+    if (class_exists(\App\Core\Widget::class)) {
+        $headZone = trim(\App\Core\Widget::renderSection('tools-header'));
+    }
+} catch (\Throwable) {
+    $headZone = '';
+}
 ?>
 <!doctype html>
 <html lang="<?= e((string)($page['lang'] ?? Lang::htmlLocale())) ?>">
@@ -34,17 +52,27 @@ $favicon = (string)($favicon ?? Settings::get('favicon_url', '')) ?: url('favico
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title><?= e($title) ?> — <?= e((string)$siteName) ?></title>
 <link rel="icon" href="<?= e($favicon) ?>">
-<link rel="stylesheet" href="<?= e(url('assets/front/base.css')) ?>">
+<?php if ($desc !== ''): ?>
+<meta name="description" content="<?= e($desc) ?>">
+<?php endif; ?>
+<link rel="canonical" href="<?= e($canonical) ?>">
+<meta property="og:type" content="website">
+<meta property="og:title" content="<?= e((string)$title) ?> — <?= e((string)$siteName) ?>">
+<?php if ($desc !== ''): ?>
+<meta property="og:description" content="<?= e($desc) ?>">
+<?php endif; ?>
+<meta name="twitter:card" content="summary">
+<link rel="stylesheet" href="<?= e(url('assets/front/base.css')) ?>?v=<?= (int)@filemtime(CMS_ROOT . '/assets/front/base.css') ?>">
 <link rel="stylesheet" href="<?= e(url('assets/front/standalone.css')) ?>?v=<?= (int)@filemtime(CMS_ROOT . '/assets/front/standalone.css') ?>">
 <?= (string)($page['head'] ?? '') ?>
-<meta name="robots" content="index,follow">
+<meta name="robots" content="<?= e($robots) ?>">
 </head>
 <body class="<?= e(trim($bodyClass)) ?>"<?= (string)($page['config'] ?? '') ?>>
 <header class="sa-header">
     <div class="sa-shell sa-header-inner">
         <a class="sa-brand" href="<?= e($home) ?>">
             <?php if ((string)($logo ?? '') !== ''): ?>
-                <img src="<?= e((string)$logo) ?>" alt="<?= e((string)$siteName) ?>" height="28">
+                <img src="<?= e((string)$logo) ?>" alt="<?= e((string)$siteName) ?>" width="120" height="28" style="width:auto;object-fit:contain">
             <?php else: ?>
                 <span class="sa-mark" aria-hidden="true"><?= e($initial) ?></span>
             <?php endif; ?>
@@ -56,6 +84,9 @@ $favicon = (string)($favicon ?? Settings::get('favicon_url', '')) ?: url('favico
         </a>
     </div>
 </header>
+<?php if ($headZone !== ''): ?>
+<div class="sa-nav-zone"><?= $headZone ?></div>
+<?php endif; ?>
 <?= $content ?>
 <?= (string)($page['scripts'] ?? '') ?>
 </body>

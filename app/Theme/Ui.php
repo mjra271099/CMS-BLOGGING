@@ -82,19 +82,41 @@ final class Ui
         }
         $head .= '<meta property="og:site_name" content="' . e($siteName) . '">';
         $head .= '<meta property="og:title" content="' . e((string)($meta['title'] ?? $siteName)) . '">';
-        $head .= '<meta property="og:description" content="' . e((string)($meta['description'] ?? '')) . '">';
-        $head .= '<meta property="og:type" content="' . e((string)($meta['type'] ?? 'website')) . '">';
+        if (!empty($meta['description'])) {
+            $head .= '<meta property="og:description" content="' . e((string)$meta['description']) . '">';
+        }
+        $ogType = (string)($meta['type'] ?? 'website');
+        $head .= '<meta property="og:type" content="' . e($ogType) . '">';
+        if ($ogType === 'article') {
+            if (!empty($meta['published'])) {
+                $head .= '<meta property="article:published_time" content="' . e((string)$meta['published']) . '">';
+            }
+            if (!empty($meta['modified'])) {
+                $head .= '<meta property="article:modified_time" content="' . e((string)$meta['modified']) . '">';
+            }
+        }
         if (!empty($meta['canonical'])) {
             $head .= '<meta property="og:url" content="' . e((string)$meta['canonical']) . '">';
         }
         if (!empty($meta['image'])) {
             $head .= '<meta property="og:image" content="' . e((string)$meta['image']) . '">';
+            if (!empty($meta['image_width'])) {
+                $head .= '<meta property="og:image:width" content="' . (int)$meta['image_width'] . '">';
+            }
+            if (!empty($meta['image_height'])) {
+                $head .= '<meta property="og:image:height" content="' . (int)$meta['image_height'] . '">';
+            }
             $head .= '<meta name="twitter:card" content="summary_large_image">';
             $head .= '<meta name="twitter:image" content="' . e((string)$meta['image']) . '">';
+        } else {
+            // Twitter tetap butuh kartu walau tanpa gambar agar tautan tampil rapi.
+            $head .= '<meta name="twitter:card" content="summary">';
         }
         $head .= '<meta property="og:locale" content="' . e((string)($meta['locale'] ?? 'id_ID')) . '">';
         $head .= '<meta name="twitter:title" content="' . e((string)($meta['title'] ?? $siteName)) . '">';
-        $head .= '<meta name="twitter:description" content="' . e((string)($meta['description'] ?? '')) . '">';
+        if (!empty($meta['description'])) {
+            $head .= '<meta name="twitter:description" content="' . e((string)$meta['description']) . '">';
+        }
         if (!empty($meta['twitter'])) {
             $head .= '<meta name="twitter:site" content="' . e((string)$meta['twitter']) . '">';
         }
@@ -109,6 +131,13 @@ final class Ui
         }
         $head .= '<link rel="icon" href="' . e($favicon) . '">';
         $head .= '<link rel="alternate" type="application/rss+xml" title="' . e($siteName) . ' RSS" href="' . e(url('feed.xml')) . '">';
+        // hreflang alternates: emiten di <head> sebagai <link rel="alternate">,
+        // bukan di dalam <body>. Di body, penanda ini hanya berada di dalam
+        // <a>, yang tidak dibaca mesin pencari sebagai isyarat hreflang.
+        foreach (array_keys(\App\Core\Lang::SUPPORTED) as $langCode) {
+            $head .= '<link rel="alternate" hreflang="' . e((string)$langCode) . '" href="' . e(url('language/' . $langCode)) . '">';
+        }
+        $head .= '<link rel="alternate" hreflang="x-default" href="' . e((string)($meta['canonical'] ?? url())) . '">';
         $head .= '<link rel="preconnect" href="https://fonts.googleapis.com">';
         $head .= '<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>';
 
@@ -122,9 +151,12 @@ final class Ui
         }
         $font = $this->theme->setting('font_pair');
         if ($font !== '' && str_starts_with($font, 'https://')) {
-            $head .= '<link rel="stylesheet" href="' . e($font) . '">';
-        }
-        $custom = $this->theme->customizerCss();
+            // Muat font tanpa memblokir render (menghindari render-blocking CSS
+            // pihak ketiga). base.css sudah menyediakan fallback system-font,
+            // jadi swap ini tidak menyebabkan layout shift yang berarti.
+            $head .= '<link rel="stylesheet" href="' . e($font) . '" media="print" onload="this.media=\'all\'">';
+            $head .= '<noscript><link rel="stylesheet" href="' . e($font) . '"></noscript>';
+        }        $custom = $this->theme->customizerCss();
         if (trim($custom) !== '') {
             $head .= '<style id="theme-customizer">' . $custom . '</style>';
         }
@@ -162,7 +194,9 @@ final class Ui
         if (Settings::get('footer_code') !== '') {
             $html .= Settings::get('footer_code');
         }
-        $html .= '<script src="' . e(url('assets/front/app.js')) . '" defer></script>';
+        $appJs = (defined('CMS_ROOT') ? CMS_ROOT : dirname(__DIR__, 2)) . '/assets/front/app.js';
+        $appVer = is_file($appJs) ? (int)filemtime($appJs) : 1;
+        $html .= '<script src="' . e(url('assets/front/app.js')) . '?v=' . $appVer . '" defer></script>';
         $html .= '</body></html>';
         return $html;
     }
@@ -202,7 +236,7 @@ final class Ui
         $out = '<header class="site-header header-' . e($style) . '"><div class="shell header-inner">';
         $out .= '<div class="brand">';
         if ($logo !== '') {
-            $out .= '<a class="brand-logo" href="' . e(url()) . '"><img src="' . e($logo) . '" alt="' . e($siteName) . '"></a>';
+            $out .= '<a class="brand-logo" href="' . e(url()) . '"><img src="' . e($logo) . '" alt="' . e($siteName) . '" height="34" style="width:auto;max-height:34px;object-fit:contain"></a>';
         } else {
             $out .= '<a class="brand-mark" href="' . e(url()) . '" aria-label="' . e($siteName) . '">' . e(mb_substr($siteName, 0, 1)) . '</a>';
         }
@@ -278,8 +312,14 @@ final class Ui
             $out .= $this->searchForm(__('search_placeholder'), 'header-search');
         } else {
             // Tag the real widget so CSS can hide it on mobile even if its
-            // markup differs from the built-in form.
-            $out .= (string)preg_replace('/\bwidget-area\b/', 'widget-area header-search', $search, 1);
+            // markup differs from the built-in form. The mobile panel already
+            // renders its own copy (see navigation()), so this desktop copy
+            // must carry the same class the responsive rule targets, otherwise
+            // it stays visible on mobile and overflows the header.
+            $tagged = (string)preg_replace('/\bwidget-area\b/', 'widget-area header-search', $search, 1);
+            // Hindari kelas ganda bila widget sudah memuat header-search.
+            $tagged = (string)preg_replace('/\bheader-search\s+header-search\b/', 'header-search', $tagged, 1);
+            $out .= $tagged;
         }
         $out .= '</div>';
         return $out;
@@ -307,7 +347,13 @@ final class Ui
 
     private function searchForm(string $placeholder, string $extraClass = ''): string
     {
-        return '<form class="header-search' . ($extraClass !== '' ? ' ' . e($extraClass) : '') . '" action="' . e(url('search')) . '" method="get" role="search">'
+        // Terima $extraClass yang menambahkan kelas; bila sama dengan kelas
+        // dasar (header-search), jangan hasilkan token kelas ganda.
+        $classes = 'header-search';
+        if ($extraClass !== '' && $extraClass !== 'header-search') {
+            $classes .= ' ' . e($extraClass);
+        }
+        return '<form class="' . $classes . '" action="' . e(url('search')) . '" method="get" role="search">'
             . '<input type="search" name="q" placeholder="' . e($placeholder) . '" aria-label="' . e(__('search_articles')) . '">'
             . '<button type="submit" aria-label="' . e(__('search')) . '">⌕</button></form>';
     }
@@ -362,7 +408,19 @@ final class Ui
 
     public function hasSidebar(): bool
     {
-        return Widget::forSection('sidebar') !== [];
+        // Visibilitas diperhitungkan: sidebar hanya dianggap ada bila setidaknya
+        // satu widget lolos filter halaman/perangkat/peran untuk konteks ini,
+        // sehingga tidak menyisakan kolom sidebar kosong.
+        $context = ($this->page['context'] ?? []) + [
+            'route' => $this->route(),
+            'slug' => (string)($this->page['slug'] ?? ''),
+        ];
+        foreach (Widget::forSection('sidebar') as $widget) {
+            if (Widget::isVisible($widget, $context)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**
@@ -383,6 +441,7 @@ final class Ui
         }
         $out .= $this->beforeContent();
         $out .= $this->widgetArea('ad-top');
+        $out .= $this->widgetArea('main');
         if ($sidebarVisible) {
             $out .= '<div class="layout-grid sidebar-' . e($position) . '">';
             if ($position === 'left') {
@@ -413,6 +472,7 @@ final class Ui
         $inner = (string)($this->page['content'] ?? '');
         $out = $this->beforeContent();
         $out .= $this->widgetArea('ad-top');
+        $out .= $this->widgetArea('main');
         $out .= '<div class="content-column full"><div class="content-inner">' . $inner . '</div>'
             . $this->widgetArea('middle-content')
             . $this->widgetArea('ad-bottom') . '</div>';
@@ -469,10 +529,46 @@ final class Ui
         );
     }
 
+    /** Kategori per post, di-cache per request agar tidak query berulang. */
+    private static array $cardCategoryCache = [];
+
+    /** Kategori untuk satu post (memakai cache bila sudah dimuat batch). */
+    private static function categoriesForPost(int $postId): array
+    {
+        if (array_key_exists($postId, self::$cardCategoryCache)) {
+            return self::$cardCategoryCache[$postId];
+        }
+        return self::$cardCategoryCache[$postId] = \App\Models\Taxonomy::postCategories($postId);
+    }
+
+    /**
+     * Muat kategori untuk sekumpulan post dalam SATU query, lalu isi cache per
+     * post. Menghindari N+1 pada grid/daftar artikel.
+     *
+     * @param array<int,array> $posts
+     */
+    private static function primeCategories(array $posts): void
+    {
+        $ids = [];
+        foreach ($posts as $post) {
+            $id = (int)($post['id'] ?? 0);
+            if ($id > 0 && !array_key_exists($id, self::$cardCategoryCache)) {
+                $ids[] = $id;
+            }
+        }
+        if ($ids === []) {
+            return;
+        }
+        $byPost = \App\Models\Taxonomy::categoriesForPosts($ids);
+        foreach ($ids as $id) {
+            self::$cardCategoryCache[$id] = $byPost[$id] ?? [];
+        }
+    }
+
     public function postCard(array $post, ?string $variant = null): string
     {
         $image = post_image_url($post);
-        $categories = \App\Models\Taxonomy::postCategories((int)$post['id']);
+        $categories = self::categoriesForPost((int)$post['id']);
         $author = (string)($post['author_name'] ?? $post['author'] ?? $post['username'] ?? '');
         $variant = $variant ?? $this->theme->setting('card_style', 'card');
         $classes = 'post-card card-' . $variant . (((string)($post['sticky'] ?? '0') === '1') ? ' is-sticky' : '');
@@ -514,6 +610,8 @@ final class Ui
         if ($posts === []) {
             return $this->emptyState(__('no_posts'));
         }
+        // Satu query untuk semua kategori kartu (hindari N+1).
+        self::primeCategories($posts);
         $out = '<div class="post-grid grid-' . e($variant) . '">';
         foreach ($posts as $post) {
             $out .= $this->postCard($post);
@@ -599,7 +697,7 @@ final class Ui
             . ' · ' . e(__('min_read', ['minutes' => max(1, (int)($post['reading_time'] ?? 1))])) . '</span></span></div>';
         $out .= '</header>';
         if ($image !== '') {
-            $out .= '<figure class="article-cover"><img src="' . e($image) . '" alt="' . e($post['title']) . '" loading="eager" decoding="async"></figure>';
+            $out .= '<figure class="article-cover"><img src="' . e($image) . '" alt="' . e($post['title']) . '" loading="eager" fetchpriority="high"></figure>';
         }
         $out .= '<div class="article-body prose" id="article-body">' . self::wrapTables((string)$post['body']) . '</div>';
         if ($tags) {
@@ -647,7 +745,7 @@ final class Ui
         $bio = (string)($post['author_bio'] ?? '');
         $avatar = (string)($post['author_avatar'] ?? '');
         $out = '<div class="author-box"><div class="author-avatar">';
-        $out .= $avatar !== '' ? '<img src="' . e($avatar) . '" alt="' . e($name) . '">' : e(mb_substr($name, 0, 1));
+        $out .= $avatar !== '' ? '<img src="' . e($avatar) . '" alt="' . e($name) . '" width="44" height="44" loading="lazy" decoding="async" style="width:100%;height:100%;object-fit:cover">' : e(mb_substr($name, 0, 1));
         $out .= '</div><div class="author-info"><h3>' . e($name) . '</h3>';
         $out .= '<p>' . e($bio !== '' ? $bio : __('author_bio', ['site' => Settings::get('site_name')])) . '</p>';
         $out .= '<a href="' . e(Helpers::authorUrl($name)) . '">' . e(__('view_all_articles')) . '</a></div></div>';

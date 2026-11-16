@@ -267,6 +267,7 @@ final class Widget
             'announcement' => 'Announcement Bar',
             'header' => 'Header',
             'menu' => 'Navigasi',
+            'search' => 'Pencarian',
             'top-banner' => 'Banner Atas',
             'featured' => 'Area Unggulan',
             'before-content' => 'Sebelum Konten',
@@ -317,6 +318,12 @@ final class Widget
     public static function isVisible(array $widget, array $context = []): bool
     {
         $visibility = (string)($widget['visibility'] ?? 'all');
+        // Kompatibilitas data lama: form sebelumnya menyimpan '404', sedangkan
+        // rute 404 di controller bernama 'not-found'. Normalisasi agar widget
+        // "Halaman 404" tidak bocor ke semua halaman.
+        if ($visibility === '404') {
+            $visibility = 'notfound';
+        }
         $route = (string)($context['route'] ?? '');
         $isMobile = self::detectMobile();
         $devices = array_filter(explode(',', (string)($widget['devices'] ?? 'all'))) ?: ['all'];
@@ -962,7 +969,7 @@ final class Widget
             throw new ValidationException('Widget tidak ditemukan.');
         }
         $key = 'custom-' . bin2hex(random_bytes(6));
-        return Database::insert('widgets', [
+        $newId = Database::insert('widgets', [
             'blog_id' => Context::blogId(),
             'widget_key' => $key,
             'title' => $widget['title'] . ' (salinan)',
@@ -977,5 +984,9 @@ final class Widget
             'devices' => $widget['devices'],
             'roles' => $widget['roles'],
         ]);
+        // Buang cache agar pembacaan berikutnya pada request yang sama
+        // langsung memuat salinan baru (bukan data basi).
+        self::flush();
+        return $newId;
     }
 }

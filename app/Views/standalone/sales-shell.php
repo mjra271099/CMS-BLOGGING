@@ -40,7 +40,19 @@ $initial = mb_substr((string)($siteName ?? 'CMS'), 0, 1);
 <title><?= e($title) ?> — <?= e((string)$siteName) ?></title>
 <?php $favicon = (string)($favicon ?? Settings::get('favicon_url', '')); ?>
 <link rel="icon" href="<?= e($favicon !== '' ? $favicon : url('favicon.ico')) ?>">
-<link rel="stylesheet" href="<?= e(url('assets/front/base.css')) ?>">
+<?php $desc = (string)($page['desc'] ?? Settings::get('site_description', '')); ?>
+<?php if ($desc !== ''): ?>
+<meta name="description" content="<?= e($desc) ?>">
+<?php endif; ?>
+<?php
+$canonical = (string)($page['canonical'] ?? '');
+if ($canonical === '') {
+    $reqPath = (string)(parse_url((string)($_SERVER['REQUEST_URI'] ?? '/'), PHP_URL_PATH) ?: '/');
+    $canonical = url(ltrim($reqPath, '/'));
+}
+?>
+<link rel="canonical" href="<?= e($canonical) ?>">
+<link rel="stylesheet" href="<?= e(url('assets/front/base.css')) ?>?v=<?= (int)@filemtime(CMS_ROOT . '/assets/front/base.css') ?>">
 <link rel="stylesheet" href="<?= e(url('assets/front/standalone.css')) ?>?v=<?= (int)@filemtime(CMS_ROOT . '/assets/front/standalone.css') ?>">
 <meta name="robots" content="index,follow">
 </head>
@@ -49,7 +61,7 @@ $initial = mb_substr((string)($siteName ?? 'CMS'), 0, 1);
     <div class="sa-shell sa-header-inner">
         <a class="sa-brand" href="<?= e($home) ?>">
             <?php if ((string)($logo ?? '') !== ''): ?>
-                <img src="<?= e((string)$logo) ?>" alt="<?= e((string)$siteName) ?>" height="30">
+                <img src="<?= e((string)$logo) ?>" alt="<?= e((string)$siteName) ?>" width="120" height="30" style="width:auto;object-fit:contain">
             <?php else: ?>
                 <span class="sa-mark" aria-hidden="true"><?= e($initial) ?></span>
                 <strong><?= e((string)$siteName) ?></strong>

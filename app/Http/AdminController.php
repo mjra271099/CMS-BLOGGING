@@ -725,7 +725,13 @@ final class AdminController
             $sections[$id] = ['label' => $label, 'widgets' => []];
         }
         foreach ($widgets as $widget) {
-            $sections[(string)$widget['section_id']]['widgets'][] = $widget;
+            $sid = (string)$widget['section_id'];
+            // Toleransi data lama: area yang tidak lagi terdaftar tetap
+            // ditampilkan sebagai area kustom agar widget tidak "hilang".
+            if (!isset($sections[$sid])) {
+                $sections[$sid] = ['label' => Widget::sectionLabel($sid), 'widgets' => []];
+            }
+            $sections[$sid]['widgets'][] = $widget;
         }
         $active = Theme::instance();
 
@@ -838,7 +844,7 @@ final class AdminController
         if (!$widget) {
             throw new \App\Core\ValidationException('Widget tidak ditemukan.');
         }
-        Database::update('widgets', ['enabled' => $widget['enabled'] === 1 ? 0 : 1], 'id = ?', [$id]);
+        Database::update('widgets', ['enabled' => $widget['enabled'] === 1 ? 0 : 1], 'id = ? AND blog_id = ?', [$id, Context::blogId()]);
         Widget::flush();
     }
 

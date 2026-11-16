@@ -54,7 +54,12 @@
   text-overflow: ellipsis;
   white-space: nowrap;
   max-width: 46vw;
+  min-width: 0;
+  flex-shrink: 1;
 }
+.sa-brand img { flex: none; }
+.sa-brand { flex-shrink: 1; max-width: 70%; }
+.sa-home { flex: none; }
 .sa-mark {
   width: 28px;
   height: 28px;

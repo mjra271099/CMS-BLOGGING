@@ -104,6 +104,38 @@ final class Taxonomy
         );
     }
 
+    /**
+     * Kategori untuk banyak post sekaligus dalam satu query (hindari N+1).
+     * Mengembalikan peta [post_id => [category,...]] dengan urutan nama.
+     *
+     * @param int[] $postIds
+     * @return array<int,array<int,array>>
+     */
+    public static function categoriesForPosts(array $postIds): array
+    {
+        $postIds = array_values(array_unique(array_filter(array_map('intval', $postIds))));
+        if ($postIds === []) {
+            return [];
+        }
+        $placeholders = implode(',', array_fill(0, count($postIds), '?'));
+        $params = $postIds;
+        $params[] = Context::blogId();
+        $rows = Database::fetchAll(
+            'SELECT pc.post_id, c.* FROM categories c
+             JOIN post_categories pc ON pc.category_id = c.id
+             WHERE pc.post_id IN (' . $placeholders . ') AND c.blog_id = ?
+             ORDER BY c.name',
+            $params
+        );
+        $map = [];
+        foreach ($rows as $row) {
+            $pid = (int)$row['post_id'];
+            unset($row['post_id']);
+            $map[$pid][] = $row;
+        }
+        return $map;
+    }
+
     public static function postTags(int $postId): array
     {
         return Database::fetchAll(

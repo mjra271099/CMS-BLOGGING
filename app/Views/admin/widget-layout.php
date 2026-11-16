@@ -202,10 +202,11 @@ $editingFields = (array)($types[$editingType]['fields'] ?? []);
                 </div>
                 <input type="hidden" name="config_json" value="<?= e(json_encode($editingConfig ?: new stdClass(), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?: '{}') ?>" data-config-json>
 
+                <?php $curVisibility = (string)($editingWidget['visibility'] ?? 'all'); ?>
                 <label for="visibility">Visibilitas</label>
                 <select id="visibility" name="visibility">
-                    <?php foreach (['all' => 'Semua halaman', 'home' => 'Beranda saja', 'post' => 'Artikel saja', 'page' => 'Halaman saja', 'archive' => 'Arsip/kategori', '404' => 'Halaman 404', 'none' => 'Disembunyikan'] as $value => $label): ?>
-                        <option value="<?= e((string)$value) ?>"<?= (string)($editingWidget['visibility'] ?? 'all') === $value ? ' selected' : '' ?>><?= e($label) ?></option>
+                    <?php foreach (['all' => 'Semua halaman', 'home' => 'Beranda saja', 'post' => 'Artikel saja', 'page' => 'Halaman saja', 'archive' => 'Arsip/kategori', 'search' => 'Hasil pencarian', 'notfound' => 'Halaman 404', 'custom' => 'Halaman tertentu (isi slug di bawah)', 'none' => 'Disembunyikan'] as $value => $label): ?>
+                        <option value="<?= e((string)$value) ?>"<?= $curVisibility === $value ? ' selected' : '' ?>><?= e($label) ?></option>
                     <?php endforeach; ?>
                 </select>
 
@@ -218,6 +219,12 @@ $editingFields = (array)($types[$editingType]['fields'] ?? []);
 
                 <label for="pages">Batasi ke halaman tertentu</label>
                 <input id="pages" type="text" name="pages" value="<?= e((string)($editingWidget['pages'] ?? '')) ?>" placeholder="slug1, slug2">
+                <p class="help" style="margin:-4px 0 0">Dipakai bila Visibilitas = "Halaman tertentu". Pisahkan dengan koma; gunakan <code>*</code> untuk semua halaman.</p>
+
+                <?php $curRoles = (string)($editingWidget['roles'] ?? 'all'); ?>
+                <label for="roles">Peran pengguna</label>
+                <input id="roles" type="text" name="roles" value="<?= e($curRoles) ?>" placeholder="all">
+                <p class="help" style="margin:-4px 0 0">Kosongkan atau isi <code>all</code> agar tampil untuk semua peran. Bisa diisi koma: <code>guest,member</code>.</p>
 
                 <label class="checkbox">
                     <input type="checkbox" name="enabled" value="1"<?= !empty($editingWidget['enabled']) || !$editingWidget ? ' checked' : '' ?>> Widget aktif

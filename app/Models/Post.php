@@ -37,9 +37,16 @@ final class Post
         return $post;
     }
 
+    /** Cache per-request: hindari query ulang slug yang sama (resolve() + post()). */
+    private static array $slugCache = [];
+
     public static function findBySlug(string $slug, ?int $blogId = null, bool $includeUnpublished = false): ?array
     {
         $blogId ??= Context::blogId();
+        $cacheKey = $blogId . '|' . ($includeUnpublished ? '1' : '0') . '|' . $slug;
+        if (array_key_exists($cacheKey, self::$slugCache)) {
+            return self::$slugCache[$cacheKey];
+        }
         $sql = 'SELECT p.*, u.username, u.display_name AS author_name, u.avatar AS author_avatar
                 FROM posts p JOIN users u ON u.id = p.author_id
                 WHERE p.slug = ? AND p.blog_id = ? AND p.status <> "trash"';
@@ -50,7 +57,7 @@ final class Post
         if ($post) {
             $post['id'] = (int)$post['id'];
         }
-        return $post;
+        return self::$slugCache[$cacheKey] = $post;
     }
 
     /**
@@ -463,6 +470,7 @@ final class Post
 
     public static function flushCaches(): void
     {
+        self::$slugCache = [];
         \App\Core\Cache::flushGroup('posts');
         \App\Core\Cache::flushGroup('sitemap');
     }
