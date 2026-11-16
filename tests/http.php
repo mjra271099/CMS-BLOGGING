@@ -212,7 +212,7 @@ if ($cv['status'] === 200) {
     check('CV Maker loads its own css + js', str_contains($cv['body'], 'assets/front/cv-maker.css') && str_contains($cv['body'], 'assets/front/cv-maker.js'));
     $cvHasTemplates = str_contains($cv['body'], '&quot;templates&quot;') || str_contains($cv['body'], '"templates"');
     check('CV Maker exposes admin config', str_contains($cv['body'], 'data-config=') && $cvHasTemplates);
-    check('CV Maker renders all sections and the paper', str_contains($cv['body'], 'id="cvApp"') && str_contains($cv['body'], 'id="cvDoc"'));
+    check('CV Maker renders all sections and the paper', str_contains($cv['body'], 'id="cvApp"') && str_contains($cv['body'], 'id="cvPages"') && str_contains($cv['body'], 'id="cvStage"'));
     check('CV Maker renders the support popup', str_contains($cv['body'], 'id="cvSupport"') && str_contains($cv['body'], 'id="cvSupportLater"'));
     check('CV Maker has a Home link to the site root', str_contains($cv['body'], 'class="sa-home"'));
     check('CV Maker has no sidebar/footer chrome', !str_contains($cv['body'], 'class="sidebar') && !str_contains($cv['body'], 'site-footer'));

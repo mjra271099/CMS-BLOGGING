@@ -34,9 +34,9 @@
   var PX_PER_MM = 96 / 25.4;
 
   var TEMPLATES = {
-    modern: { label: 'Desain 1 — Modern 2 Kolom + Foto', photo: true },
-    colored: { label: 'Desain 2 — Klasik Serif', photo: false },
-    minimal: { label: 'Desain 3 — Minimalis + Foto', photo: true },
+    modern: { label: 'Modern — Sidebar Gelap + Foto', photo: true },
+    colored: { label: 'Klasik Serif — Elegan & Formal', photo: false },
+    minimal: { label: 'Minimalis — Bersih + Foto', photo: true },
     ats: { label: 'ATS Friendly — Satu Kolom', photo: false },
     timeline: { label: 'Timeline — Riwayat Bergaris Waktu', photo: false }
   };
@@ -83,7 +83,7 @@
       if (raw[k] === undefined || raw[k] === null) return;
       if (Array.isArray(base[k])) {
         if (Array.isArray(raw[k])) {
-          base[k] = raw[k].filter(function (row) { return row && typeof row === 'object'; }).slice(0, 20).map(function (row) {
+          base[k] = raw[k].filter(function (row) { return row && typeof row === 'object'; }).slice(0, 100).map(function (row) {
             var out = {};
             (LIST_DEFS[k] ? LIST_DEFS[k].keys : []).forEach(function (kk) {
               out[kk] = String(row[kk] == null ? '' : row[kk]).slice(0, 1000);
@@ -350,12 +350,11 @@
     var p = paperSize();
     var w = Math.round(p.w * PX_PER_MM);
     var h = Math.round(p.h * PX_PER_MM);
-    var paper = $('#cvPaper');
-    var doc = $('#cvDoc');
-    if (paper) { paper.style.setProperty('--paper-w', w + 'px'); paper.style.setProperty('--paper-h', h + 'px'); }
-    if (doc) { doc.style.setProperty('--paper-w', w + 'px'); doc.style.setProperty('--paper-h', h + 'px'); }
-    // paperCss dipanggil di setiap render; jadwalkan penyesuaian skala di sini
-    // agar urutan dengan runFit tidak saling menimpa.
+    var root = $('#cvPages');
+    if (root) {
+      root.style.setProperty('--paper-w', w + 'px');
+      root.style.setProperty('--paper-h', h + 'px');
+    }
     scheduleFitScroll();
     return { w: w, h: h };
   }
@@ -509,14 +508,18 @@
 
   function headContacts(sep) { return contactLine(sep); }
 
-  function renderCV() {
-    var doc = $('#cvDoc');
-    if (!doc) return;
-    var tpl = TEMPLATES[state.template] ? state.template : 'modern';
+  function contactItems() {
+    return [state.email, state.phone, state.city, state.link].filter(function (v) { return String(v || '').trim() !== ''; });
+  }
+
+  /**
+   * Bangun HTML isi CV untuk satu template. Mengembalikan STRING markup template
+   * (belum dipaginasi). Setiap template memilih sendiri bagian mana di kolom mana.
+   */
+  function buildTemplate(tpl) {
     var s = sections();
     var name = String(state.name || '').trim() || 'Nama Anda';
     var role = String(state.role || '').trim();
-    var html = '';
 
     if (tpl === 'modern') {
       var side = renderSection('skills', s.skills)
@@ -528,68 +531,74 @@
         + renderSection('education', s.education)
         + renderSection('projects', s.projects)
         + renderSection('extra', s.extra);
-      html = '<div class="tpl-modern">'
-        + '<aside class="side">'
-        + (photo ? '<div class="photo"' + photoBox() + ' role="img" aria-label="Foto profil"></div>' : '<div class="photo" role="img" aria-label="Foto profil" style="display:grid;place-items:center;background:rgba(255,255,255,.1);font-weight:800;font-size:calc(var(--fs)*2)">' + esc(initials(name)) + '</div>')
-        + '<div><h1 class="name">' + esc(name) + '</h1>' + (role ? '<p class="role">' + esc(role) + '</p>' : '') + '</div>'
-        + '<div>' + renderSection('blank', { title: 'Kontak', html: headContacts('') }) + '</div>'
-        + side
-        + '</aside>'
-        + '<div class="main">'
-        + '<div><p class="role" style="margin-bottom:6px">' + esc([state.city, state.phone, state.email].filter(Boolean).join(' · ') || '') + '</p></div>'
-        + main
-        + '</div></div>';
-    } else if (tpl === 'colored') {
-      html = '<div class="tpl-colored">'
-        + '<header class="head"><h1 class="name">' + esc(name) + '</h1>' + (role ? '<p class="role">' + esc(role) + '</p>' : '') + headContacts() + '</header>'
-        + ['summary', 'experience', 'education', 'skills', 'projects', 'certs', 'awards', 'languages', 'extra'].map(function (k) { return renderSection(k, s[k]); }).join('')
-        + '</div>';
-    } else if (tpl === 'minimal') {
-      html = '<div class="tpl-minimal">'
-        + '<header class="head">'
-        + (photo ? '<div class="photo"' + photoBox() + ' role="img" aria-label="Foto profil"></div>' : '')
-        + '<div class="head-text"><h1 class="name">' + esc(name) + '</h1>' + (role ? '<p class="role">' + esc(role) + '</p>' : '') + headContacts() + '</div>'
-        + '</header>'
-        + ['summary', 'experience', 'education', 'skills', 'projects', 'certs', 'awards', 'languages', 'extra'].map(function (k) { return renderSection(k, s[k]); }).join('')
-        + '</div>';
-    } else if (tpl === 'ats') {
-      html = '<div class="tpl-ats">'
-        + '<header><h1 class="name">' + esc(name) + '</h1>' + (role ? '<p class="role">' + esc(role) + '</p>' : '') + headContacts() + '</header>'
-        + ['summary', 'skills', 'experience', 'education', 'projects', 'certs', 'awards', 'languages', 'extra'].map(function (k) { return renderSection(k, s[k]); }).join('')
-        + '</div>';
-    } else {
-      // timeline
-      var contactGrid = [state.email, state.phone, state.city, state.link].filter(Boolean).map(function (v) { return '<span>' + esc(v) + '</span>'; }).join('');
-      var left = ['summary', 'experience', 'projects'];
-      var right = ['education', 'skills', 'certs', 'awards', 'languages', 'extra'];
-      html = '<div class="tpl-timeline">'
-        + '<header class="head"><div><h1 class="name">' + esc(name) + '</h1>' + (role ? '<p class="role">' + esc(role) + '</p>' : '') + '</div>'
-        + (contactGrid ? '<div class="head-contact">' + contactGrid + '</div>' : '') + '</header>'
-        + left.map(function (k) {
-          if (!s[k].html) return '';
-          var inner = /experience|projects/.test(k) ? '<div class="tl">' + s[k].html + '</div>' : s[k].html;
-          return '<section data-section="' + k + '">' + secTitle(s[k].title) + inner + '</section>';
-        }).join('')
-        + '<div class="cols2">'
-        + right.map(function (k) {
-          if (!s[k].html) return '';
-          var inner = 'education'.indexOf(k) === 0 ? '<div class="tl">' + s[k].html + '</div>' : s[k].html;
-          return '<section data-section="' + k + '">' + secTitle(s[k].title) + inner + '</section>';
-        }).join('')
-        + '</div></div>';
+      var photoHtml = photo
+        ? '<div class="photo"' + photoBox() + ' role="img" aria-label="Foto profil"></div>'
+        : '<div class="photo photo-fallback" role="img" aria-label="Foto profil">' + esc(initials(name)) + '</div>';
+      var sideTop = '<div class="side-top">' + photoHtml
+        + '<h1 class="name">' + esc(name) + '</h1>'
+        + (role ? '<p class="role">' + esc(role) + '</p>' : '') + '</div>';
+      return '<div class="tpl-modern">'
+        + '<aside class="side">' + sideTop
+        + '<div>' + renderSection('contact', { title: 'Kontak', html: headContacts('') }) + '</div>'
+        + side + '</aside>'
+        + '<div class="main"><div class="headline">'
+        + '<h1 class="name-lg">' + esc(name) + '</h1>'
+        + (role ? '<p class="role-lg">' + esc(role) + '</p>' : '')
+        + '</div><div class="contact-row">' + headContacts('') + '</div>'
+        + main + '</div></div>';
     }
 
-    doc.className = 'cv-doc tpl-' + tpl;
-    doc.style.setProperty('--accent', CFG.accent || '#0f172a');
-    doc.innerHTML = html;
+    if (tpl === 'colored') {
+      return '<div class="tpl-colored">'
+        + '<header class="head"><h1 class="name">' + esc(name) + '</h1>'
+        + (role ? '<p class="role">' + esc(role) + '</p>' : '') + headContacts() + '</header>'
+        + ['summary', 'experience', 'education', 'skills', 'projects', 'certs', 'awards', 'languages', 'extra']
+            .map(function (k) { return renderSection(k, s[k]); }).join('')
+        + '</div>';
+    }
 
-    // Sinkronkan atribut ukuran kertas untuk CSS & cetak.
-    var size = paperCss();
-    document.documentElement.style.setProperty('--cv-print-w', size.w + 'px');
-    // Perbarui <style> @page agar PDF memakai ukuran kertas yang sama.
-    applyPageSize();
-    scheduleFit();
+    if (tpl === 'minimal') {
+      return '<div class="tpl-minimal">'
+        + '<header class="head">'
+        + (photo ? '<div class="photo"' + photoBox() + ' role="img" aria-label="Foto profil"></div>' : '')
+        + '<div class="head-text"><h1 class="name">' + esc(name) + '</h1>'
+        + (role ? '<p class="role">' + esc(role) + '</p>' : '') + headContacts() + '</div>'
+        + '</header>'
+        + '<div class="cv-head-rule"></div>'
+        + ['summary', 'experience', 'education', 'skills', 'projects', 'certs', 'awards', 'languages', 'extra']
+            .map(function (k) { return renderSection(k, s[k]); }).join('')
+        + '</div>';
+    }
+
+    if (tpl === 'ats') {
+      return '<div class="tpl-ats">'
+        + '<header><h1 class="name">' + esc(name) + '</h1>'
+        + (role ? '<p class="role">' + esc(role) + '</p>' : '') + headContacts() + '</header>'
+        + ['summary', 'skills', 'experience', 'education', 'projects', 'certs', 'awards', 'languages', 'extra']
+            .map(function (k) { return renderSection(k, s[k]); }).join('')
+        + '</div>';
+    }
+
+    // timeline
+    var contactGrid = contactItems().map(function (v) { return '<span>' + esc(v) + '</span>'; }).join('');
+    var left = ['summary', 'experience', 'projects'];
+    var right = ['education', 'skills', 'certs', 'awards', 'languages', 'extra'];
+    function tlSection(k, withTimeline) {
+      if (!s[k].html) return '';
+      var inner = withTimeline ? '<div class="tl">' + s[k].html + '</div>' : s[k].html;
+      return '<section data-section="' + k + '">' + secTitle(s[k].title) + inner + '</section>';
+    }
+    return '<div class="tpl-timeline">'
+      + '<header class="head"><div class="head-main"><h1 class="name">' + esc(name) + '</h1>'
+      + (role ? '<p class="role">' + esc(role) + '</p>' : '') + '</div>'
+      + (contactGrid ? '<div class="head-contact">' + contactGrid + '</div>' : '') + '</header>'
+      + left.map(function (k) { return tlSection(k, true); }).join('')
+      + '<div class="cols2">'
+      + right.map(function (k) { return tlSection(k, k === 'education'); }).join('')
+      + '</div></div>';
   }
+
+  /* ---------------- Paginasi multi-halaman ---------------- */
 
   var pageStyleEl = null;
   function applyPageSize() {
@@ -602,146 +611,54 @@
     pageStyleEl.textContent = '@page { size: ' + p.w + 'mm ' + p.h + 'mm; margin: 0; }';
   }
 
-  /* ---------------- Intelligent layout / auto-fit ---------------- */
-  var fitState = { fs: 1, gap: 1, pad: 1, overflow: false };
-
-  function scheduleFit() {
-    clearTimeout(fitTimer);
-    fitTimer = setTimeout(runFit, 60);
-  }
-
-  function runFit() {
-    var doc = $('#cvDoc');
-    if (!doc) return;
-    var box = paperCss();
-    var baseFs = 10.4 * (parseFloat(CFG.fontScale) > 0 ? parseFloat(CFG.fontScale) : 1);
-    var minFs = parseFloat(CFG.minFont) > 0 ? parseFloat(CFG.minFont) : 9.5;
-    var maxFs = Math.max(baseFs, minFs);
-
-    // Mulai dari keadaan longgar lalu rapatkan bertahap.
-    var steps = [
-      { fs: maxFs * 1.04, gap: 1.05, pad: 1.0 },
-      { fs: maxFs, gap: 1.0, pad: 1.0 },
-      { fs: maxFs * 0.96, gap: 0.92, pad: 0.96 },
-      { fs: maxFs * 0.92, gap: 0.84, pad: 0.92 },
-      { fs: maxFs * 0.88, gap: 0.76, pad: 0.88 },
-      { fs: Math.max(minFs, maxFs * 0.84), gap: 0.68, pad: 0.84 },
-      { fs: Math.max(minFs, maxFs * 0.80), gap: 0.6, pad: 0.8 },
-      { fs: minFs, gap: 0.54, pad: 0.76 },
-      { fs: minFs, gap: 0.48, pad: 0.7 },
-      { fs: minFs, gap: 0.42, pad: 0.64 }
-    ];
-    var chosen = steps[steps.length - 1];
-    var fits = false;
-    var measured = 0;
-
-    for (var i = 0; i < steps.length; i++) {
-      measured = applyStep(doc, steps[i]);
-      // Toleransi 2px untuk pembulatan subpiksel.
-      if (measured <= box.h + 2) { chosen = steps[i]; fits = true; break; }
-    }
-    if (!fits) {
-      // Rapikan ke tahap paling ketat (spacing minimum) sebelum menyerah.
-      chosen = steps[steps.length - 1];
-      measured = applyStep(doc, chosen);
-    }
-    // Koreksi akhir: nama besar bisa membuat dokumen lebih tinggi dari taksiran
-    // berbasis nilai padding; ukur ulang setelah semua gaya diterapkan.
-    finalMeasure(doc, box);
-
-    fitState = { fs: chosen.fs, gap: chosen.gap, pad: chosen.pad, overflow: !fits };
-    doc.classList.toggle('is-overflow', !fits);
-
-    var pages = Math.max(1, Math.ceil((doc.scrollHeight - 2) / box.h));
-    fits = doc.scrollHeight <= box.h + 2;
-    var count = $('#cvPageCount');
-    if (count) count.textContent = pages + ' halaman';
-
-    var notice = $('#cvFitNotice');
-    if (notice) {
-      if (fits) {
-        notice.hidden = true;
-        notice.textContent = '';
-        notice.className = 'cv-notice';
-      } else {
-        var excess = Math.round((doc.scrollHeight - box.h) / box.h * 100);
-        notice.hidden = false;
-        notice.className = 'cv-notice error';
-        notice.innerHTML = '<strong>Konten melebihi satu halaman.</strong> Layout sudah dirapatkan otomatis sampai batas keterbacaan (font ' +
-          esc(chosen.fs.toFixed(1)) + 'px), tetapi masih kelebihan ±' + Math.max(1, excess) + '%. Ringkas deskripsi pengalaman atau kurangi bagian yang kurang penting — CV yang padat tetap lebih baik daripada font terlalu kecil. ' +
-          'Untuk hasil terbaik, cetak dan pilih <em>Scale: Default / 100%</em>.';
-      }
-    }
-    fitScroll();
-  }
-
-  /**
-   * Ukur tinggi dokumen setelah step diterapkan. scrollHeight pada elemen blok
-   * menjumlahkan margin anak terakhir, jadi padding bawah container ikut
-   * dihitung dua kali; kita pakai tinggi konten nyata untuk keputusan.
-   */
-  function finalMeasure(doc, box) {
-    doc.classList.toggle('is-overflow', false);
-  }
-
+  /** Terapkan setelan layout (font/gap/pad) + sesuaikan ukuran nama. */
   function applyStep(doc, step) {
     doc.style.setProperty('--fs', step.fs.toFixed(2) + 'px');
-    doc.style.setProperty('--gap', (6.2 * step.gap).toFixed(2) + 'px');
-    doc.style.setProperty('--pad', (step.pad * 34).toFixed(2) + 'px');
-    doc.style.setProperty('--pad-x', (step.pad * 46).toFixed(2) + 'px');
-    doc.style.setProperty('--lh', (1.36 + 0.05 * step.gap).toFixed(2));
+    doc.style.setProperty('--gap', (6.4 * step.gap).toFixed(2) + 'px');
+    doc.style.setProperty('--pad', (step.pad * 32).toFixed(2) + 'px');
+    doc.style.setProperty('--pad-x', (step.pad * 48).toFixed(2) + 'px');
+    doc.style.setProperty('--lh', (1.34 + 0.06 * step.gap).toFixed(2));
+    fitNames(doc, step);
+  }
 
-    // Nama: ukur lebar, kecilkan hingga muat dalam satu baris bila perlu.
-    var center = false;
+  /** Kecilkan nama (tanpa melewati lantai) agar muat satu baris bila mungkin. */
+  function fitNames(doc, step) {
     var tpl = state.template;
-    var nameEl = doc.querySelector('.name');
-    if (nameEl) {
-      var scaleMap = { modern: 3.05, colored: 2.45, minimal: 2.55, ats: 2.1, timeline: 2.4 };
-      var scale = scaleMap[tpl] || 2.5;
+    var scaleMap = { modern: 2.1, colored: 2.45, minimal: 2.35, ats: 1.95, timeline: 2.3 };
+    var scale = scaleMap[tpl] || 2.1;
+    $$('.name, .name-lg', doc).forEach(function (nameEl) {
       nameEl.style.fontSize = '';
+      nameEl.style.whiteSpace = '';
+      nameEl.style.overflowWrap = '';
+      var baseFs = parseFloat(getComputedStyle(nameEl).fontSize) || (step.fs * scale);
+      var parent = nameEl.parentElement;
+      var avail = parent ? parent.clientWidth : nameEl.clientWidth;
+      if (avail <= 0) return;
       nameEl.style.whiteSpace = 'nowrap';
-      var natural = parseFloat(getComputedStyle(nameEl).fontSize) || (step.fs * scale);
-      var avail = nameEl.parentElement ? nameEl.parentElement.clientWidth : nameEl.clientWidth;
       var w = measureWidth(nameEl);
-      var floorSize = step.fs * (tpl === 'modern' ? 1.85 : 1.6);
-      if (avail > 0 && w > avail + 0.5) {
-        var fitted = Math.max(floorSize, natural * (avail / w) * 0.98);
+      // Lantai: minimal ~1.55x font isi agar tetap menonjol namun terbaca.
+      var floor = step.fs * 1.55;
+      if (w > avail + 0.5) {
+        var fitted = Math.max(floor, baseFs * (avail / w) * 0.985);
         nameEl.style.fontSize = fitted.toFixed(2) + 'px';
-        var w2 = measureWidth(nameEl);
-        if (w2 > avail + 0.5) {
-          fitted = Math.max(floorSize, fitted * (avail / w2) * 0.99);
-          nameEl.style.fontSize = fitted.toFixed(2) + 'px';
+        if (measureWidth(nameEl) > avail + 0.5) {
+          // Masih kurang: biarkan membungkus ke baris berikutnya, jangan
+          // mengecilkan sampai tak terbaca.
+          nameEl.style.whiteSpace = 'normal';
+          nameEl.style.overflowWrap = 'anywhere';
         }
-        // Jangan mengecilkan nama sampai tak terbaca: biarkan turun baris.
-        if (measureWidth(nameEl) > avail + 1) nameEl.style.whiteSpace = 'normal';
       }
-      center = tpl === 'colored';
-      nameEl.style.textAlign = center ? 'center' : '';
-    }
-
-    var roleEl = doc.querySelector('.tpl-modern .role, .tpl-minimal .role');
-    if (roleEl) roleEl.style.whiteSpace = 'nowrap';
-
-    return measureContent(doc);
+    });
   }
 
   /**
-   * Tinggi isi sesungguhnya. Dokumen ber-padding vertikal dan margin anak
-   * terakhir tidak terlipat di container ber-overflow, jadi scrollHeight
-   * selalu dianggap melebihi kertas walau isi masih muat. Karena itu dipakai
-   * tinggi nyata elemen isi (template) ditambah padding kecil.
+   * Ukur tinggi alami isi dokumen (tanpa batas kertas). Doc pada tahap ini
+   * dirender di dalam panggung ukur dengan tinggi bebas.
    */
   function measureContent(doc) {
     var first = doc.firstElementChild;
-    if (!first) {
-      return 0;
-    }
-    var cs = getComputedStyle(first);
-    // scrollHeight template menghitung padding bawahnya sendiri (aman karena
-    // template tidak auto-height); dipakai bila lebih besar.
-    var inner = first.scrollHeight;
-    var box = first.getBoundingClientRect();
-    return Math.max(inner, Math.ceil(box.height));
+    if (!first) return 0;
+    return Math.max(first.scrollHeight, Math.ceil(first.getBoundingClientRect().height));
   }
 
   function measureWidth(el) {
@@ -752,7 +669,7 @@
       'width:auto', 'max-width:none', 'white-space:nowrap', 'display:inline-block',
       'font-size:' + cs.fontSize, 'font-family:' + cs.fontFamily, 'font-weight:' + cs.fontWeight,
       'font-style:' + cs.fontStyle, 'letter-spacing:' + cs.letterSpacing,
-      'text-transform:' + cs.textTransform
+      'text-transform:' + cs.textTransform, 'margin:0'
     ].join(';');
     document.body.appendChild(clone);
     var w = clone.getBoundingClientRect().width;
@@ -760,40 +677,400 @@
     return w;
   }
 
+
   var fitScrollTimer = null;
   function fitScroll() {
     clearTimeout(fitScrollTimer);
     fitScrollTimer = setTimeout(runFitScroll, 30);
   }
 
-  /** Perkecil kertas agar muat lebar layar (pratinjau), tanpa memengaruhi cetak. */
+  var zoomMode = 'fit'; // 'fit' | 'full'
+
+  /**
+   * Skalakan semua halaman agar muat lebar panggung (mode "fit"), atau 100%
+   * dengan scroll horizontal (mode "full"). Transform tidak memengaruhi
+   * layout, jadi tinggi tiap halaman dicadangkan manual di .cv-page-slot.
+   */
   function runFitScroll() {
     var stage = $('#cvStage');
-    var paper = $('#cvPaper');
-    if (!stage || !paper) return;
-    // Ponsel/iPad memakai viewport CSS 980px; pakai lebar layar nyata agar
-    // kertas benar-benar muat tanpa scroll horizontal. clientWidth stage
-    // dipakai bila lebih kecil (desktop, kolom pratinjau).
+    var root = $('#cvPages');
+    if (!stage || !root) return;
     var viewWidth = document.documentElement.clientWidth || window.innerWidth;
     var stageW = Math.min(stage.clientWidth || viewWidth, viewWidth);
     var available = stageW - (window.innerWidth >= 1080 ? 30 : 16);
     if (available < 80) return;
     var size = paperSize();
-    // Lebar kertas dalam px diambil dari CSS (bisa berbeda pembulatan).
-    var paperPx = parseFloat(getComputedStyle(paper).getPropertyValue('--paper-w')) || size.w;
-    var scale = Math.min(1, available / Math.max(1, paperPx));
-    if (scale < 0.999) {
-      // Skala lewat CSS variable: transform tidak mengubah layout, jadi beri
-      // ruang setinggi hasil skala dan hindari scroll horizontal.
-      paper.style.setProperty('--paper-scale', scale.toFixed(4));
-      stage.style.height = Math.ceil(size.h * scale + 26) + 'px';
-      stage.style.alignItems = 'start';
+    var paperPx = parseFloat(getComputedStyle(root).getPropertyValue('--paper-w')) || size.w * PX_PER_MM;
+    var scale = zoomMode === 'full' ? 1 : Math.min(1, available / Math.max(1, paperPx));
+    root.style.setProperty('--paper-scale', scale.toFixed(4));
+    // `zoom` (bukan transform) supaya layout ikut menyusut — tinggi tiap
+    // halaman otomatis dicadangkan dengan benar.
+    $$('.cv-page', root).forEach(function (pg) {
+      pg.style.zoom = scale === 1 ? '' : scale.toFixed(4);
+    });
+  }
+
+  /* ---------------- Render CV + paginasi ---------------- */
+
+  /** Setelan auto-fit: pilih kombinasi font/spacing paling lega yang muat. */
+  var FIT_STEPS = [
+    { fs: 1.00, gap: 1.00, pad: 1.00 },
+    { fs: 0.97, gap: 0.90, pad: 0.95 },
+    { fs: 0.94, gap: 0.82, pad: 0.90 },
+    { fs: 0.91, gap: 0.74, pad: 0.86 },
+    { fs: 0.88, gap: 0.66, pad: 0.82 },
+    { fs: 0.86, gap: 0.60, pad: 0.78 }
+  ];
+
+  function baseFont() {
+    var scale = parseFloat(CFG.fontScale) > 0 ? parseFloat(CFG.fontScale) : 1;
+    return 10.6 * scale;
+  }
+
+  function renderCV() {
+    var root = $('#cvPages');
+    if (!root) return;
+    var tpl = TEMPLATES[state.template] ? state.template : 'modern';
+    var size = paperCss();
+    applyPageSize();
+
+    // Hitung layout: cari step paling lega yang membuat konten muat dalam SATU
+    // halaman. Bila tidak ada yang muat, pakai step ter ketat lalu pecah ke
+    // beberapa halaman secara wajar (tidak memotong konten).
+    var layout = pickLayout(tpl, size);
+    buildPages(tpl, layout, size);
+
+    root.className = 'cv-pages';
+    var count = $$('.cv-page', root).length || 1;
+    var counter = $('#cvPageCount');
+    if (counter) counter.textContent = count + ' halaman';
+
+    updateFitNotice(layout, count);
+    fitScroll();
+  }
+
+  /** Ukur tinggi template pada setelan tertentu memakai panggung tak terlihat. */
+  function measureLayout(tpl, step, size) {
+    var probe = document.createElement('div');
+    probe.className = 'cv-page cv-measure';
+    probe.style.cssText = 'position:absolute;left:-10000px;top:0;height:auto;opacity:0;pointer-events:none;transform:none;';
+    probe.style.setProperty('--paper-w', size.w + 'px');
+    probe.style.setProperty('--paper-h', '0px');
+    var doc = document.createElement('article');
+    doc.className = 'cv-doc';
+    doc.style.cssText = 'min-height:0;';
+    doc.style.setProperty('--accent', CFG.accent || '#0f172a');
+    doc.innerHTML = buildTemplate(tpl);
+    applyStep(doc, {
+      fs: baseFont() * step.fs,
+      gap: step.gap,
+      pad: step.pad
+    });
+    probe.appendChild(doc);
+    app.appendChild(probe);
+    var height = measureContent(doc);
+    app.removeChild(probe);
+    return height;
+  }
+
+  /**
+   * Pilih step layout.
+   * Kebijakan: tipografi yang nyaman lebih penting daripada memaksa 1 halaman.
+   * Hanya mengecilkan font sebatas "lantai terbaca" (≈ 6% dari ukuran dasar).
+   * Bila dengan font terbaca konten tetap > 1 halaman, biarkan beberapa
+   * halaman dengan font lega — jangan mengecilkan sampai sulit dibaca.
+   */
+  var FIT_SINGLE_PAGE_LIMIT = 3; // hanya 3 langkah teratas yang boleh untuk 1 halaman
+
+  function pickLayout(tpl, size) {
+    var results = FIT_STEPS.map(function (st) {
+      var hh = measureLayout(tpl, st, size);
+      return { step: st, height: hh, pages: Math.max(1, Math.ceil(hh / size.h)), fits1: hh <= size.h + 2 };
+    });
+
+    // 1) Upaya 1 halaman dengan pengecilan wajar (≤ FIT_SINGLE_PAGE_LIMIT langkah).
+    for (var i = 0; i < Math.min(FIT_SINGLE_PAGE_LIMIT, results.length); i++) {
+      if (results[i].fits1) {
+        return { step: results[i].step, fits: true, height: results[i].height };
+      }
+    }
+
+    // 2) Tidak muat tanpa mengecil berlebihan → pakai font paling terbaca
+    //    (langkah 0) dan biarkan konten mengalir ke beberapa halaman. Ini
+    //    lebih baik daripada font kecil yang sulit dibaca.
+    var best = results[0];
+    return { step: best.step, fits: false, height: best.height };
+  }
+
+  /**
+   * Bangun lembar halaman.
+   * • Template satu-alur (colored/minimal/ats/timeline): pecah pada batas
+   *   section/entry — tidak ada teks terpotong.
+   * • Template modern (dua kolom): halaman 1 memuat sidebar + header, kolom
+   *   utama dipecah; halaman lanjutan memakai satu kolom penuh (tanpa sidebar)
+   *   sehingga konten panjang tetap rapi dan terbaca.
+   */
+  function buildPages(tpl, layout, size) {
+    var root = $('#cvPages');
+    root.innerHTML = '';
+    var step = { fs: baseFont() * layout.step.fs, gap: layout.step.gap, pad: layout.step.pad };
+
+    if (tpl === 'modern') {
+      paginateModern(step, size, layout.fits);
+    } else if (layout.fits) {
+      root.appendChild(makePageDoc(tpl, step, size));
     } else {
-      paper.style.setProperty('--paper-scale', '1');
-      stage.style.removeProperty('height');
-      stage.style.removeProperty('align-items');
+      paginateSingleFlow(tpl, step, size);
     }
   }
+
+  function makePageDoc(tpl, step, size) {
+    var page = document.createElement('div');
+    page.className = 'cv-page';
+    page.style.setProperty('--paper-w', size.w + 'px');
+    page.style.setProperty('--paper-h', size.h + 'px');
+    var doc = document.createElement('article');
+    doc.className = 'cv-doc';
+    doc.style.setProperty('--accent', CFG.accent || '#0f172a');
+    doc.innerHTML = buildTemplate(tpl);
+    applyStep(doc, step);
+    page.appendChild(doc);
+    return page;
+  }
+
+  /** Bungkus satu node template ke dalam lembar halaman. */
+  function wrapPage(tpl, wrapper, step, size, idx) {
+    var page = document.createElement('div');
+    page.className = 'cv-page';
+    page.style.setProperty('--paper-w', size.w + 'px');
+    page.style.setProperty('--paper-h', size.h + 'px');
+    page.setAttribute('data-page', String(idx + 1));
+    var doc = document.createElement('article');
+    doc.className = 'cv-doc';
+    doc.style.setProperty('--accent', CFG.accent || '#0f172a');
+    doc.appendChild(wrapper);
+    applyStep(doc, step);
+    page.appendChild(doc);
+    return page;
+  }
+
+  /**
+   * Paginasi template modern: sidebar + kontak di halaman pertama; bagian
+   * utama dipecah per section/entry. Halaman lanjutan satu kolom penuh.
+   */
+  function paginateModern(step, size, fits) {
+    var root = $('#cvPages');
+
+    if (fits) {
+      root.appendChild(makePageDoc('modern', step, size));
+      return;
+    }
+
+    var work = makeWorkDoc('modern', step, size);
+    var tplEl = work.querySelector('.tpl-modern');
+    var sideEl = tplEl.querySelector('.side');
+    var mainEl = tplEl.querySelector('.main');
+
+    var headKids = Array.prototype.slice.call(mainEl.children);
+    var headerNodes = [];
+    var bodyNodes = [];
+    headKids.forEach(function (el) {
+      if (el.classList.contains('headline') || el.classList.contains('contact-row')) headerNodes.push(el);
+      else bodyNodes.push(el);
+    });
+
+    // Pecah section panjang menjadi unit entry agar tidak terpotong.
+    var units = [];
+    bodyNodes.forEach(function (el) {
+      if (el.tagName === 'SECTION' && el.querySelector('.cv-entry') && el.offsetHeight > size.h * 0.55) {
+        var t = el.querySelector('.cv-sec-title');
+        if (t) units.push(t);
+        Array.prototype.slice.call(el.querySelectorAll('.cv-entry')).forEach(function (e) { units.push(e); });
+      } else {
+        units.push(el);
+      }
+    });
+    // Lepaskan unit dari dokumen kerja agar tidak terukur di dua tempat.
+    units.forEach(function (n) { if (n.parentNode) n.parentNode.removeChild(n); });
+
+    var mainCs = getComputedStyle(mainEl);
+    // Pengukur live: meniru padding & lebar kolom utama, termasuk header.
+    // Dibungkus `.cv-doc` agar box-model (border-box) & variabel layout sama.
+    var mShell = document.createElement('div');
+    mShell.className = 'cv-page';
+    mShell.style.cssText = 'position:absolute;visibility:hidden;left:-99999px;top:0;height:auto;';
+    mShell.style.setProperty('--paper-w', size.w + 'px');
+    var mDoc = document.createElement('article');
+    mDoc.className = 'cv-doc';
+    mDoc.style.minHeight = '0';
+    mDoc.style.setProperty('--accent', CFG.accent || '#0f172a');
+    var measureWrap = document.createElement('div');
+    measureWrap.className = 'main';
+    measureWrap.style.boxSizing = 'border-box';
+    measureWrap.style.width = mainEl.offsetWidth + 'px';
+    measureWrap.style.padding = mainCs.padding;
+    headerNodes.forEach(function (n) { measureWrap.appendChild(n.cloneNode(true)); });
+    mDoc.appendChild(measureWrap);
+    mShell.appendChild(mDoc);
+    app.appendChild(mShell);
+    applyStep(mDoc, step);
+
+    var pages = distributeUnits(measureWrap, units, size.h, measureWrap);
+    app.removeChild(mShell);
+    app.removeChild(work);
+
+    // Halaman 1: sidebar + header + bagian utama pertama.
+    var p1 = document.createElement('div');
+    p1.className = 'tpl-modern';
+    p1.appendChild(sideEl.cloneNode(true));
+    var main1 = document.createElement('div');
+    main1.className = 'main';
+    headerNodes.forEach(function (n) { main1.appendChild(n.cloneNode(true)); });
+    (pages[0] || []).forEach(function (n) { main1.appendChild(n); });
+    p1.appendChild(main1);
+    root.appendChild(wrapPage('modern', p1, step, size, 0));
+
+    // Halaman lanjutan: satu kolom penuh (tanpa sidebar).
+    for (var p = 1; p < pages.length; p++) {
+      var wrap = document.createElement('div');
+      wrap.className = 'tpl-modern tpl-modern-cont';
+      var main = document.createElement('div');
+      main.className = 'main';
+      pages[p].forEach(function (n) { main.appendChild(n); });
+      wrap.appendChild(main);
+      root.appendChild(wrapPage('modern', wrap, step, size, p));
+    }
+  }
+
+  /**
+   * Bagikan node ke halaman dengan pengukuran LIVE: tambahkan satu per satu ke
+   * kolom pengukur; saat tinggi melebihi batas, unit pemicu pindah ke halaman
+   * baru. Memperhitungkan margin & kolaps secara akurat.
+   */
+  function distributeUnits(container, units, limit, measurer) {
+    var pages = [];
+    var cur = [];
+    for (var i = 0; i < units.length; i++) {
+      var node = units[i];
+      container.appendChild(node);
+      if (measurer.scrollHeight > limit + 1 && cur.length > 0) {
+        // Halaman penuh: buang item halaman ini dari pengukur, simpan, mulai baru.
+        cur.forEach(function (n) { if (n.parentNode === container) container.removeChild(n); });
+        pages.push(cur);
+        cur = [];
+        container.appendChild(node);
+      }
+      cur.push(node);
+    }
+    if (cur.length) pages.push(cur);
+
+    // Cegah "judul menggantung": bila sebuah halaman berakhir dengan judul
+    // section (tanpa isi), pindahkan judul itu ke halaman berikutnya.
+    for (var p = 0; p < pages.length - 1; p++) {
+      var last = pages[p][pages[p].length - 1];
+      if (last && last.classList && last.classList.contains('cv-sec-title')) {
+        pages[p].pop();
+        pages[p + 1].unshift(last);
+        last.classList.add('cv-continued');
+      }
+    }
+    return pages.filter(function (pg) { return pg.length; });
+  }
+
+  function makeWorkDoc(tpl, step, size) {
+    var work = document.createElement('article');
+    work.className = 'cv-doc';
+    work.style.cssText = 'position:absolute;left:-10000px;top:0;visibility:hidden;';
+    work.style.setProperty('--paper-w', size.w + 'px');
+    work.style.setProperty('--accent', CFG.accent || '#0f172a');
+    work.innerHTML = buildTemplate(tpl);
+    work.style.cssText += ';position:absolute;left:-10000px;top:0;visibility:hidden;';
+    applyStep(work, step);
+    app.appendChild(work);
+    return work;
+  }
+
+  /**
+   * Paginasi untuk template satu alur: distribusikan section (dan, untuk
+   * section yang sangat panjang, entry di dalamnya) ke halaman berurutan.
+   * Header hanya muncul di halaman pertama.
+   */
+  function paginateSingleFlow(tpl, step, size) {
+    var root = $('#cvPages');
+    var work = makeWorkDoc(tpl, step, size);
+    var tplEl = work.firstElementChild;
+    var headerEl = tplEl.querySelector('.head, header');
+    var usable = size.h;
+
+    // Unit yang dipindah: anak template selain header. Section yang lebih
+    // tinggi dari satu halaman dipecah per entry agar tidak terpotong.
+    var units = [];
+    Array.prototype.slice.call(tplEl.children).forEach(function (el) {
+      if (el === headerEl) return;
+      if (el.tagName === 'SECTION' && el.offsetHeight > usable * 0.55 && el.querySelector('.cv-entry')) {
+        var titleEl = el.querySelector('.cv-sec-title');
+        if (titleEl) units.push({ node: titleEl, title: true });
+        Array.prototype.slice.call(el.querySelectorAll('.cv-entry')).forEach(function (entry) {
+          units.push({ node: entry });
+        });
+        return;
+      }
+      units.push({ node: el });
+    });
+
+    // Pengukur live DIBANGUN DI DALAM struktur .cv-page > .cv-doc yang sama
+    // seperti halaman akhir, sehingga box-model & variabel layout identik.
+    var shell = document.createElement('div');
+    shell.className = 'cv-page';
+    shell.style.cssText = 'position:absolute;visibility:hidden;left:-99999px;top:0;height:auto;min-height:0;';
+    shell.style.setProperty('--paper-w', size.w + 'px');
+    shell.style.setProperty('--paper-h', '0px');
+    var shellDoc = document.createElement('article');
+    shellDoc.className = 'cv-doc';
+    shellDoc.style.cssText = 'min-height:0;';
+    shellDoc.style.setProperty('--accent', CFG.accent || '#0f172a');
+    var measureWrap = document.createElement('div');
+    if (tplEl.className) measureWrap.className = tplEl.className;
+    measureWrap.style.minHeight = '0';
+    shellDoc.appendChild(measureWrap);
+    shell.appendChild(shellDoc);
+    app.appendChild(shell);
+    applyStep(shellDoc, step);
+
+    var nodes = units.map(function (u) { return u.node; });
+    // Lepaskan dari dokumen kerja supaya tidak terukur ganda.
+    nodes.forEach(function (n) { if (n.parentNode) n.parentNode.removeChild(n); });
+    // Sertakan header di pengukur agar halaman 1 memperhitungkan tingginya.
+    if (headerEl) measureWrap.appendChild(headerEl.cloneNode(true));
+    var pages = distributeUnits(measureWrap, nodes, usable, measureWrap);
+    app.removeChild(shell);
+    app.removeChild(work);
+
+    pages.forEach(function (pg, idx) {
+      var wrapper = document.createElement('div');
+      if (tplEl.className) wrapper.className = tplEl.className;
+      if (idx === 0 && headerEl) wrapper.appendChild(headerEl.cloneNode(true));
+      pg.forEach(function (node) { wrapper.appendChild(node); });
+      root.appendChild(wrapPage(tpl, wrapper, step, size, idx));
+    });
+  }
+
+  function updateFitNotice(layout, pageCount) {
+    var notice = $('#cvFitNotice');
+    if (!notice) return;
+    if (pageCount <= 1) {
+      notice.hidden = true;
+      notice.textContent = '';
+      notice.className = 'cv-notice';
+      return;
+    }
+    notice.hidden = false;
+    notice.className = 'cv-notice';
+    notice.innerHTML = '<strong>CV ini terdiri dari ' + pageCount + ' halaman.</strong> '
+      + 'Pratinjau menampilkan semua halaman sesuai urutan — hasil PDF akan identik. '
+      + 'Bila ingin 1 halaman, ringkas deskripsi atau kurangi bagian kurang penting; font tidak akan dikecilkan di bawah batas keterbacaan.';
+  }
+
 
   /* ---------------- Input handler ---------------- */
   function onInput() {
@@ -806,8 +1083,8 @@
   /* ---------------- Download / print ---------------- */
   function doPrint() {
     // Pastikan ukuran halaman & layout sudah final sebelum dialog cetak.
+    if (dirtySincePrint) renderCV();
     applyPageSize();
-    runFit();
     dirtySincePrint = false;
     setTimeout(function () {
       try {
@@ -934,6 +1211,21 @@
     if (close) close.addEventListener('click', function () { set(false); });
   }
 
+  /* ---------------- Zoom pratinjau ---------------- */
+  function bindZoom() {
+    var btns = $$('[data-zoom]');
+    if (!btns.length) return;
+    btns.forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        zoomMode = btn.getAttribute('data-zoom') === 'full' ? 'full' : 'fit';
+        btns.forEach(function (b) {
+          b.setAttribute('aria-pressed', b === btn ? 'true' : 'false');
+        });
+        fitScroll();
+      });
+    });
+  }
+
   /* ---------------- Reset ---------------- */
   function bindReset() {
     var btn = $('#cvReset');
@@ -1027,6 +1319,7 @@
     bindPresets();
     bindDownload();
     bindPreviewToggle();
+    bindZoom();
     bindReset();
     hydrate();
     renderCV();

@@ -214,13 +214,15 @@ $templates = is_array($templates ?? null) ? $templates : ['modern'];
     <aside class="cv-preview" id="cvPreview" aria-label="Pratinjau CV">
       <div class="cv-preview-bar">
         <span class="cv-preview-title">Pratinjau</span>
+        <div class="cv-zoom" role="group" aria-label="Zoom pratinjau">
+          <button type="button" data-zoom="fit" aria-pressed="true">Muat</button>
+          <button type="button" data-zoom="full" aria-pressed="false">100%</button>
+        </div>
         <span class="cv-page-count" id="cvPageCount">1 halaman</span>
-        <button type="button" class="sa-btn" id="cvPreviewClose">Tutup</button>
+        <button type="button" class="sa-btn only-mobile" id="cvPreviewClose">Tutup</button>
       </div>
       <div class="cv-stage" id="cvStage">
-        <div class="cv-paper" id="cvPaper" aria-live="polite">
-          <article class="cv-doc" id="cvDoc"></article>
-        </div>
+        <div class="cv-pages" id="cvPages" aria-live="polite"></div>
       </div>
     </aside>
   </div>
