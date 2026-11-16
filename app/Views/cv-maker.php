@@ -240,14 +240,32 @@ $templates = is_array($templates ?? null) ? $templates : ['modern'];
 
 <!-- Modal dukungan (diisi dari data-config) -->
 <div class="sa-modal" id="cvSupport" role="dialog" aria-modal="true" aria-labelledby="cvSupportTitle" hidden>
-  <div class="sa-modal-card">
+  <div class="sa-modal-card sa-modal-wide">
     <button type="button" class="sa-modal-close" id="cvSupportClose" aria-label="Tutup">×</button>
     <h2 id="cvSupportTitle">Dukung Kami</h2>
     <p id="cvSupportDesc"></p>
+    <div class="sa-qris" id="cvSupportQris" hidden>
+      <div class="sa-qris-frame" id="cvSupportZoom" role="button" tabindex="0" aria-label="Perbesar gambar QRIS">
+        <img id="cvSupportImage" src="" alt="QRIS dukungan" loading="lazy">
+        <span class="sa-qris-zoom">🔍 Perbesar</span>
+      </div>
+      <a class="sa-btn" id="cvSupportOpen" href="#" target="_blank" rel="noopener" hidden style="font-size:.82rem;padding:7px 12px">Buka gambar ukuran penuh</a>
+    </div>
+    <p class="sa-note" id="cvSupportQrisNote" hidden style="margin:0 0 10px">Pindai QRIS di atas dengan aplikasi e-wallet atau mobile banking. Ketuk gambar untuk memperbesar. Dukungan sepenuhnya sukarela — CV tetap bisa diunduh tanpa membayar.</p>
     <div class="sa-modal-actions">
       <a class="sa-btn primary" id="cvSupportButton" href="#" target="_blank" rel="noopener" hidden>Dukung Kami</a>
       <button type="button" class="sa-btn" id="cvSupportLater">Nanti Dulu</button>
     </div>
+  </div>
+</div>
+
+<!-- Lightbox QRIS: gambar ukuran penuh agar kode jelas terbaca -->
+<div class="sa-lightbox" id="cvLightbox" hidden role="dialog" aria-modal="true" aria-label="QRIS ukuran penuh">
+  <button type="button" class="sa-lightbox-close" id="cvLightboxClose" aria-label="Tutup">×</button>
+  <img id="cvLightboxImage" src="" alt="QRIS dukungan ukuran penuh">
+  <div class="sa-lightbox-bar">
+    <a class="sa-btn" id="cvLightboxOpen" href="#" target="_blank" rel="noopener">Buka di tab baru</a>
+    <button type="button" class="sa-btn" id="cvLightboxDismiss">Tutup</button>
   </div>
 </div>
 

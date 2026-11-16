@@ -34,6 +34,7 @@ final class ToolConfig
         'tool_cv_support_desc' => ['CV Maker ini gratis. Kalau terbantu, dukungan sukarela Anda membuat alat seperti ini terus dikembangkan. Sepenuhnya opsional — CV tetap bisa diunduh.', 'textarea'],
         'tool_cv_support_button' => ['Dukung Kami', 'text'],
         'tool_cv_support_url' => ['', 'url'],
+        'tool_cv_qris_enabled' => ['1', 'bool'],
         'tool_cv_monetize' => ['0', 'bool'],
         'tool_cv_direct_url' => ['', 'url'],
 
@@ -243,6 +244,8 @@ final class ToolConfig
             $supportBase['accent'] = self::get('tool_cv_accent', '#0f172a');
             $supportBase['fontScale'] = (float)self::get('tool_cv_font_scale', '1') ?: 1.0;
             $supportBase['minFont'] = (float)self::get('tool_cv_min_font', '9.5') ?: 9.5;
+            $cvQris = self::qrisImage();
+            $supportBase['qris'] = self::bool('tool_cv_qris_enabled') && $cvQris !== '' ? $cvQris : '';
         }
         return $supportBase;
     }

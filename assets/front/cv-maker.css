@@ -688,7 +688,7 @@
 @media print {
   @page { margin: 0; }
   html, body.cv-standalone { background: #fff !important; height: auto !important; min-height: 0 !important; overflow: visible !important; }
-  .sa-header, .cv-toolbar, .cv-form, .cv-preview-bar, .sa-modal, .cv-mobile-bar { display: none !important; }
+  .sa-header, .cv-toolbar, .cv-form, .cv-preview-bar, .sa-modal, .cv-mobile-bar, .sa-lightbox { display: none !important; }
   .cv-app { padding: 0 !important; max-width: none !important; margin: 0 !important; }
   .cv-workspace { display: block !important; }
   /* Netralkan aturan pratinjau layar (termasuk overlay mobile fixed). */

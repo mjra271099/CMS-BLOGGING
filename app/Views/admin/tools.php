@@ -159,6 +159,8 @@ $activeTemplates = array_filter(explode(',', $v('tool_cv_templates')));
         </div>
         <label for="tool_cv_support_desc">Deskripsi popup</label>
         <textarea id="tool_cv_support_desc" name="cfg[tool_cv_support_desc]" rows="2"><?= e($v('tool_cv_support_desc')) ?></textarea>
+        <label class="checkbox"><input type="checkbox" name="cfg[tool_cv_qris_enabled]" value="1"<?= $checked('tool_cv_qris_enabled') ?>> Tampilkan gambar QRIS di popup (memakai gambar QRIS yang sama dengan QR Code Generator)</label>
+        <p class="help">Unggah/ganti gambar QRIS di kartu <strong>Gambar QRIS</strong> di bawah — dipakai bersama oleh CV Maker dan QR Code Generator.</p>
 
         <h3>Monetisasi</h3>
         <label class="checkbox"><input type="checkbox" name="cfg[tool_cv_monetize]" value="1"<?= $checked('tool_cv_monetize') ?>> Aktifkan direct link iklan CV Maker</label>

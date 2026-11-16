@@ -18,7 +18,12 @@
   if (!app) return;
 
   var CFG = {};
-  try { CFG = JSON.parse(app.getAttribute('data-config') || '{}') || {}; } catch (e) { CFG = {}; }
+  try {
+    // Konfigurasi admin ditempel di <body data-config> oleh shell; #cvApp
+    // hanya cadangan untuk kompatibilitas.
+    var cfgRaw = document.body.getAttribute('data-config') || app.getAttribute('data-config') || '{}';
+    CFG = JSON.parse(cfgRaw) || {};
+  } catch (e) { CFG = {}; }
 
   var STORE = 'cv_maker_state_v2';
   var PHOTO_KEY = 'cv_maker_photo_v1';
@@ -441,7 +446,8 @@
     if (![state.email, state.phone, state.city, state.link].some(function (v) { return String(v || '').trim(); })) return true;
     if (!String(state.summary || '').trim()) return true;
     if (!String(state.skills || '').trim()) return true;
-    return ['experience', 'education', 'certs', 'languages', 'projects', 'awards', 'extra'].some(function (k) {
+    if (!String(state.extra || '').trim()) return true;
+    return ['experience', 'education', 'certs', 'languages', 'projects', 'awards'].some(function (k) {
       var list = state[k];
       var real = Array.isArray(list) ? list.filter(function (r) { return nonEmptyRaw(r); }) : [];
       return !real.length;
@@ -1236,6 +1242,24 @@
           btn.hidden = true;
         }
       }
+      // Gambar QRIS (opsional, diatur admin) — hanya tampil bila tersedia.
+      var qris = CFG.qris && /^(https?:\/\/|\/)/i.test(CFG.qris) ? CFG.qris : '';
+      var qBox = $('#cvSupportQris');
+      var qImg = $('#cvSupportImage');
+      var qNote = $('#cvSupportQrisNote');
+      var qOpen = $('#cvSupportOpen');
+      if (qBox) {
+        if (qris) {
+          if (qImg) { qImg.src = qris; qImg.alt = 'QRIS dukungan'; }
+          if (qOpen) { qOpen.href = qris; qOpen.hidden = false; }
+          if (qNote) qNote.hidden = false;
+          qBox.hidden = false;
+        } else {
+          if (qImg) { qImg.removeAttribute('src'); }
+          if (qNote) qNote.hidden = true;
+          qBox.hidden = true;
+        }
+      }
       supportResolve = resolve;
       modal.hidden = false;
       modal.classList.add('is-open');
@@ -1287,6 +1311,39 @@
     });
 
     window.addEventListener('afterprint', fitScroll);
+  }
+
+  /* ---------------- Lightbox QRIS (perbesar gambar agar mudah dipindai) ---------------- */
+  function bindQrisLightbox() {
+    var box = $('#cvLightbox');
+    var img = $('#cvLightboxImage');
+    var open = $('#cvLightboxOpen');
+    if (box && !box.dataset.bound) {
+      box.dataset.bound = '1';
+      var close = function () { box.hidden = true; box.classList.remove('is-open'); };
+      var c1 = $('#cvLightboxClose'); if (c1) c1.addEventListener('click', close);
+      var c2 = $('#cvLightboxDismiss'); if (c2) c2.addEventListener('click', close);
+      box.addEventListener('click', function (ev) { if (ev.target === box) close(); });
+      document.addEventListener('keydown', function (ev) {
+        if (ev.key === 'Escape' && box.classList.contains('is-open')) close();
+      });
+    }
+    var trigger = $('#cvSupportZoom');
+    if (trigger && !trigger.dataset.bound) {
+      trigger.dataset.bound = '1';
+      var reveal = function () {
+        var qris = CFG.qris && /^(https?:\/\/|\/)/i.test(CFG.qris) ? CFG.qris : '';
+        if (!qris || !box) return;
+        if (img) img.src = qris;
+        if (open) open.href = qris;
+        box.hidden = false;
+        box.classList.add('is-open');
+      };
+      trigger.addEventListener('click', reveal);
+      trigger.addEventListener('keydown', function (ev) {
+        if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); reveal(); }
+      });
+    }
   }
 
   /* ---------------- Pratinjau mobile ---------------- */
@@ -1429,6 +1486,7 @@
     bindPhoto();
     bindPresets();
     bindDownload();
+    bindQrisLightbox();
     var setPreviewOpen = bindPreviewToggle();
     bindMobileBar(setPreviewOpen);
     bindZoom();
