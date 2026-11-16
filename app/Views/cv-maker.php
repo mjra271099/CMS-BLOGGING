@@ -55,9 +55,9 @@ $templates = is_array($templates ?? null) ? $templates : ['modern'];
         </div>
         <div class="cv-field cv-custom-size" id="cvCustomSize" hidden>
           <label for="cvPaperW">Lebar (mm)</label>
-          <input id="cvPaperW" type="number" min="105" max="500" step="1" value="210" inputmode="numeric">
+          <input id="cvPaperW" type="number" min="105" max="500" step="1" value="210" inputmode="numeric" placeholder="210">
           <label for="cvPaperH">Tinggi (mm)</label>
-          <input id="cvPaperH" type="number" min="148" max="600" step="1" value="297" inputmode="numeric">
+          <input id="cvPaperH" type="number" min="148" max="600" step="1" value="297" inputmode="numeric" placeholder="297">
         </div>
       </div>
 
@@ -70,16 +70,16 @@ $templates = is_array($templates ?? null) ? $templates : ['modern'];
           <div class="cv-grid">
             <div class="cv-field span2">
               <label for="p_name">Nama lengkap <span class="req">*</span></label>
-              <input id="p_name" type="text" data-bind="name" placeholder="Budi Santoso" maxlength="80" required>
+              <input id="p_name" type="text" data-bind="name" placeholder="Andini Prameswari" maxlength="80" required>
               <p class="cv-hint">Nama panjang otomatis menyesuaikan ukuran font agar tetap dalam satu baris.</p>
             </div>
             <div class="cv-field span2">
               <label for="p_role">Jabatan / posisi yang dilamar</label>
-              <input id="p_role" type="text" data-bind="role" placeholder="Frontend Developer" maxlength="90">
+              <input id="p_role" type="text" data-bind="role" placeholder="Senior Product Designer & Frontend Engineer" maxlength="90">
             </div>
             <div class="cv-field">
               <label for="p_email">Email</label>
-              <input id="p_email" type="email" data-bind="email" placeholder="nama@contoh.com" maxlength="120" autocomplete="email">
+              <input id="p_email" type="email" data-bind="email" placeholder="andini.prameswari@contoh.com" maxlength="120" autocomplete="email">
             </div>
             <div class="cv-field">
               <label for="p_phone">Telepon</label>
@@ -87,11 +87,11 @@ $templates = is_array($templates ?? null) ? $templates : ['modern'];
             </div>
             <div class="cv-field">
               <label for="p_city">Kota / lokasi</label>
-              <input id="p_city" type="text" data-bind="city" placeholder="Jakarta, Indonesia" maxlength="80">
+              <input id="p_city" type="text" data-bind="city" placeholder="Jakarta Selatan, Indonesia" maxlength="80">
             </div>
             <div class="cv-field">
               <label for="p_link">Website / LinkedIn / Portofolio</label>
-              <input id="p_link" type="text" data-bind="link" placeholder="linkedin.com/in/nama" maxlength="120">
+              <input id="p_link" type="text" data-bind="link" placeholder="linkedin.com/in/andiniprameswari" maxlength="120">
             </div>
           </div>
         </div>
@@ -121,7 +121,7 @@ $templates = is_array($templates ?? null) ? $templates : ['modern'];
         <div class="cv-sec-body">
           <div class="cv-field">
             <label for="p_summary">Ringkasan (2–4 kalimat)</label>
-            <textarea id="p_summary" rows="4" data-bind="summary" maxlength="900" placeholder="Profesional dengan pengalaman 5 tahun di bidang …, terbiasa …, dan berhasil …"></textarea>
+            <textarea id="p_summary" rows="4" data-bind="summary" maxlength="900" placeholder="Product Designer & Frontend Engineer dengan 8 tahun pengalaman membangun produk digital berskala besar. Terbiasa memimpin tim lintas fungsi dan meningkatkan konversi melalui riset pengguna."></textarea>
             <p class="cv-hint"><span data-count="summary">0</span>/900 karakter</p>
           </div>
         </div>
@@ -151,7 +151,7 @@ $templates = is_array($templates ?? null) ? $templates : ['modern'];
         <div class="cv-sec-body">
           <div class="cv-field">
             <label for="p_skills">Daftar keterampilan</label>
-            <textarea id="p_skills" rows="2" data-bind="skills" maxlength="400" placeholder="JavaScript, React, MySQL, Figma"></textarea>
+            <textarea id="p_skills" rows="2" data-bind="skills" maxlength="400" placeholder="Figma, Design System, React, TypeScript, User Research, A/B Testing"></textarea>
             <p class="cv-hint">Pisahkan dengan koma. Ditampilkan sebagai tag agar hemat ruang.</p>
           </div>
         </div>
@@ -199,7 +199,7 @@ $templates = is_array($templates ?? null) ? $templates : ['modern'];
         <div class="cv-sec-body">
           <div class="cv-field">
             <label for="p_extra">Catatan tambahan</label>
-            <textarea id="p_extra" rows="3" data-bind="extra" maxlength="600" placeholder="Ketersediaan, preferensi kerja, atau informasi relevan lainnya"></textarea>
+            <textarea id="p_extra" rows="3" data-bind="extra" maxlength="600" placeholder="Tersedia mulai 1 bulan ke depan · Bersedia bekerja hybrid di Jakarta · Portofolio tersedia atas permintaan."></textarea>
           </div>
         </div>
       </details>
@@ -214,6 +214,7 @@ $templates = is_array($templates ?? null) ? $templates : ['modern'];
     <aside class="cv-preview" id="cvPreview" aria-label="Pratinjau CV">
       <div class="cv-preview-bar">
         <span class="cv-preview-title">Pratinjau</span>
+        <span class="cv-demo-badge" id="cvDemoBadge" hidden>Contoh</span>
         <div class="cv-zoom" role="group" aria-label="Zoom pratinjau">
           <button type="button" data-zoom="fit" aria-pressed="true">Muat</button>
           <button type="button" data-zoom="full" aria-pressed="false">100%</button>
@@ -225,6 +226,15 @@ $templates = is_array($templates ?? null) ? $templates : ['modern'];
         <div class="cv-pages" id="cvPages" aria-live="polite"></div>
       </div>
     </aside>
+  </div>
+
+  <!-- Bilah aksi cepat khusus mobile: selalu terjangkau saat menggulir form -->
+  <div class="cv-mobile-bar" aria-label="Aksi cepat">
+    <button type="button" class="sa-btn" data-mobile-action="preview" aria-pressed="false">Pratinjau</button>
+    <button type="button" class="sa-btn primary" data-mobile-action="download">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12"/><path d="m7 11 5 5 5-5"/><path d="M5 21h14"/></svg>
+      Download
+    </button>
   </div>
 </div>
 
@@ -330,8 +340,8 @@ $templates = is_array($templates ?? null) ? $templates : ['modern'];
       </div>
     </div>
     <div class="cv-grid">
-      <div class="cv-field"><label>Nama proyek</label><input type="text" data-k="title" placeholder="Sistem Inventori" maxlength="90"></div>
-      <div class="cv-field"><label>Peran / tahun</label><input type="text" data-k="meta" placeholder="Lead Developer · 2023" maxlength="60"></div>
+      <div class="cv-field"><label>Nama proyek</label><input type="text" data-k="title" placeholder="Design System &quot;Nusa UI&quot;" maxlength="90"></div>
+      <div class="cv-field"><label>Peran / tahun</label><input type="text" data-k="meta" placeholder="Lead Designer · 2023" maxlength="60"></div>
       <div class="cv-field span2"><label>Deskripsi</label><textarea rows="2" data-k="desc" maxlength="600" placeholder="Masalah, solusi, teknologi, dan hasil terukur."></textarea></div>
     </div>
   </div>
@@ -347,8 +357,8 @@ $templates = is_array($templates ?? null) ? $templates : ['modern'];
     </div>
     <div class="cv-grid">
       <div class="cv-field span2"><label>Nama penghargaan</label><input type="text" data-k="title" placeholder="Juara 1 Hackathon Nasional" maxlength="120"></div>
-      <div class="cv-field"><label>Penerbit</label><input type="text" data-k="issuer" placeholder="Kementerian" maxlength="90"></div>
-      <div class="cv-field"><label>Tahun</label><input type="text" data-k="year" placeholder="2022" maxlength="24"></div>
+      <div class="cv-field"><label>Penerbit</label><input type="text" data-k="issuer" placeholder="Indonesia Design Award" maxlength="90"></div>
+      <div class="cv-field"><label>Tahun</label><input type="text" data-k="year" placeholder="2023" maxlength="24"></div>
     </div>
   </div>
 </template>

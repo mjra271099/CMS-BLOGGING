@@ -106,6 +106,7 @@
 
   var state = blank();
   var photo = '';
+  var previewDemo = true; // true → pratinjau memakai data contoh saat field kosong
   var saveTimer = null;
   var fitTimer = null;
   var dirtySincePrint = false;
@@ -372,6 +373,96 @@
     });
   }
 
+  /* ---------------- Data contoh (placeholder pratinjau) ----------------
+     Saat pengguna belum mengisi apa pun, pratinjau menampilkan CV contoh yang
+     lengkap agar bentuk akhir tiap desain langsung terlihat. Begitu pengguna
+     mengetik, nilai nyata menggantikan data contoh per-field. Data contoh
+     TIDAK pernah disimpan ke localStorage. */
+  var DEMO = {
+    name: 'Andini Prameswari',
+    role: 'Senior Product Designer & Frontend Engineer',
+    email: 'andini.prameswari@contoh.com',
+    phone: '+62 812 3456 7890',
+    city: 'Jakarta Selatan, Indonesia',
+    link: 'linkedin.com/in/andiniprameswari',
+    summary: 'Product Designer & Frontend Engineer dengan 8 tahun pengalaman membangun produk digital berskala besar. Terbiasa memimpin tim lintas fungsi, menyusun design system, dan meningkatkan konversi melalui riset pengguna dan pengujian A/B.',
+    skills: 'Product Design, UI/UX, Design System, Figma, React, TypeScript, Next.js, HTML/CSS, A/B Testing, User Research, Accessibility, Agile',
+    extra: 'Tersedia mulai 1 bulan ke depan · Bersedia bekerja hybrid di Jakarta · Portofolio lengkap tersedia atas permintaan.',
+    experience: [
+      { title: 'Lead Product Designer', company: 'PT Nusantara Digital', place: 'Jakarta', start: '2021', end: 'Sekarang', desc: 'Memimpin tim desain 6 orang merancang ulang aplikasi utama.\nMeningkatkan konversi onboarding 38% melalui riset pengguna.\nMenyusun design system yang dipakai 4 tim produk.\nMentoring 5 desainer junior hingga naik level.' },
+      { title: 'Frontend Engineer', company: 'Startup Teknologi Cerdas', place: 'Bandung', start: '2018', end: '2021', desc: 'Membangun antarmuka React untuk 2 juta pengguna aktif.\nMemangkas waktu muat halaman 42% dengan optimasi render.\nBerkolaborasi erat dengan produk dan backend.' },
+      { title: 'UI/UX Designer', company: 'Kreatif Studio', place: 'Yogyakarta', start: '2016', end: '2018', desc: 'Merancang aplikasi mobile untuk klien ritel dan fintech.\nMembuat prototipe interaktif dan panduan gaya produk.' }
+    ],
+    education: [
+      { degree: 'S1 Desain Komunikasi Visual', school: 'Institut Teknologi Bandung', place: 'Bandung', start: '2012', end: '2016', note: 'IPK 3.72 / 4.00' }
+    ],
+    certs: [
+      { title: 'Google UX Design Professional', issuer: 'Google', year: '2022' },
+      { title: 'AWS Certified Cloud Practitioner', issuer: 'Amazon Web Services', year: '2023' }
+    ],
+    languages: [
+      { name: 'Bahasa Indonesia', level: 'Bahasa ibu' },
+      { name: 'Bahasa Inggris', level: 'Profesional' },
+      { name: 'Bahasa Jepang', level: 'Menengah' }
+    ],
+    projects: [
+      { title: 'Design System "Nusa UI"', meta: 'Lead Designer · 2023', desc: 'Library komponen lintas platform dengan 120+ komponen dan dokumentasi lengkap.' },
+      { title: 'Aplikasi Mobile "Warungku"', meta: 'Product Designer · 2022', desc: 'Aplikasi kasir UMKM dengan 50 ribu pengguna aktif bulanan.' }
+    ],
+    awards: [
+      { title: 'Best Product Design', issuer: 'Indonesia Design Award', year: '2023' },
+      { title: 'Innovation Award', issuer: 'TechFest Asia', year: '2021' }
+    ]
+  };
+
+  /** Ada sama sekali data nyata (di luar pilihan tema/kertas)? */
+  function hasAnyData() {
+    var s = state;
+    if (String(s.name || '').trim() || String(s.role || '').trim() || String(s.email || '').trim()
+      || String(s.phone || '').trim() || String(s.city || '').trim() || String(s.link || '').trim()
+      || String(s.summary || '').trim() || String(s.skills || '').trim() || String(s.extra || '').trim()) {
+      return true;
+    }
+    return ['experience', 'education', 'certs', 'languages', 'projects', 'awards'].some(function (k) {
+      return Array.isArray(s[k]) && s[k].some(function (r) { return nonEmptyRaw(r); });
+    });
+  }
+
+  function nonEmptyRaw(row) {
+    if (!row || typeof row !== 'object') return false;
+    return Object.keys(row).some(function (k) { return String(row[k] || '').trim() !== ''; });
+  }
+
+  /** Apakah pratinjau saat ini memakai sebagian data contoh? */
+  function demoInUse() {
+    if (!hasAnyData()) return true;
+    if (!String(state.name || '').trim() && DEMO.name) return true;
+    if (!String(state.role || '').trim() && DEMO.role) return true;
+    if (![state.email, state.phone, state.city, state.link].some(function (v) { return String(v || '').trim(); })) return true;
+    if (!String(state.summary || '').trim()) return true;
+    if (!String(state.skills || '').trim()) return true;
+    return ['experience', 'education', 'certs', 'languages', 'projects', 'awards', 'extra'].some(function (k) {
+      var list = state[k];
+      var real = Array.isArray(list) ? list.filter(function (r) { return nonEmptyRaw(r); }) : [];
+      return !real.length;
+    });
+  }
+
+  /** Nilai pratinjau: pakai data nyata bila ada, selain itu contohnya. */
+  function pv(key) {
+    var v = String(state[key] || '').trim();
+    if (v) return v;
+    return DEMO[key] != null ? DEMO[key] : '';
+  }
+
+  /** Daftar pratinjau: data nyata bila ada isinya, selain itu daftar contoh. */
+  function pvList(key) {
+    var list = state[key];
+    var real = Array.isArray(list) ? list.filter(function (r) { return nonEmptyRaw(r); }) : [];
+    if (real.length) return real;
+    return (DEMO[key] || []).slice();
+  }
+
   function initials(name) {
     return name.trim().split(/\s+/).slice(0, 2).map(function (w) { return w.charAt(0).toUpperCase(); }).join('');
   }
@@ -401,11 +492,11 @@
   }
 
   function skills() {
-    return String(state.skills || '').split(/[,;\n]/).map(function (s) { return s.trim(); }).filter(Boolean).slice(0, 60);
+    return String(pv('skills') || '').split(/[,;\n]/).map(function (s) { return s.trim(); }).filter(Boolean).slice(0, 60);
   }
 
   function contactLine(sep) {
-    var items = [state.email, state.phone, state.city, state.link].filter(function (v) { return String(v || '').trim() !== ''; });
+    var items = [pv('email'), pv('phone'), pv('city'), pv('link')].filter(function (v) { return String(v || '').trim() !== ''; });
     if (!items.length) return '';
     return '<div class="cv-contact">' + items.map(function (v) { return '<span>' + esc(v) + '</span>'; }).join(sep || '') + '</div>';
   }
@@ -472,12 +563,12 @@
   }
 
   function summaryBlock() {
-    var s = String(state.summary || '').trim();
+    var s = String(pv('summary') || '').trim();
     return s ? '<p>' + esc(s) + '</p>' : '';
   }
 
   function extraBlock() {
-    var s = String(state.extra || '').trim();
+    var s = String(pv('extra') || '').trim();
     return s ? '<p>' + esc(s).replace(/\n/g, '<br>') + '</p>' : '';
   }
 
@@ -490,13 +581,13 @@
   function sections() {
     return {
       summary: { title: 'Ringkasan Profesional', html: summaryBlock() },
-      experience: { title: 'Pengalaman Kerja', html: expBlock(state.experience) },
-      education: { title: 'Pendidikan', html: eduBlock(state.education) },
+      experience: { title: 'Pengalaman Kerja', html: expBlock(pvList('experience')) },
+      education: { title: 'Pendidikan', html: eduBlock(pvList('education')) },
       skills: { title: 'Keterampilan', html: skillsBlock() },
-      certs: { title: 'Sertifikasi', html: certBlock(state.certs) },
-      languages: { title: 'Bahasa', html: langBlock(state.languages) },
-      projects: { title: 'Proyek', html: projectBlock(state.projects) },
-      awards: { title: 'Penghargaan', html: awardBlock(state.awards) },
+      certs: { title: 'Sertifikasi', html: certBlock(pvList('certs')) },
+      languages: { title: 'Bahasa', html: langBlock(pvList('languages')) },
+      projects: { title: 'Proyek', html: projectBlock(pvList('projects')) },
+      awards: { title: 'Penghargaan', html: awardBlock(pvList('awards')) },
       extra: { title: 'Informasi Tambahan', html: extraBlock() }
     };
   }
@@ -509,7 +600,7 @@
   function headContacts(sep) { return contactLine(sep); }
 
   function contactItems() {
-    return [state.email, state.phone, state.city, state.link].filter(function (v) { return String(v || '').trim() !== ''; });
+    return [pv('email'), pv('phone'), pv('city'), pv('link')].filter(function (v) { return String(v || '').trim() !== ''; });
   }
 
   /**
@@ -518,8 +609,8 @@
    */
   function buildTemplate(tpl) {
     var s = sections();
-    var name = String(state.name || '').trim() || 'Nama Anda';
-    var role = String(state.role || '').trim();
+    var name = String(pv('name') || '').trim() || 'Nama Anda';
+    var role = String(pv('role') || '').trim();
 
     if (tpl === 'modern') {
       var side = renderSection('skills', s.skills)
@@ -731,6 +822,9 @@
     var root = $('#cvPages');
     if (!root) return;
     var tpl = TEMPLATES[state.template] ? state.template : 'modern';
+    // Pratinjau selalu tampil penuh: field yang masih kosong memakai data
+    // contoh, sedangkan field yang sudah diisi memakai data nyata pengguna.
+    previewDemo = demoInUse();
     var size = paperCss();
     applyPageSize();
 
@@ -744,6 +838,8 @@
     var count = $$('.cv-page', root).length || 1;
     var counter = $('#cvPageCount');
     if (counter) counter.textContent = count + ' halaman';
+    var badge = $('#cvDemoBadge');
+    if (badge) badge.hidden = !previewDemo;
 
     updateFitNotice(layout, count);
     fitScroll();
@@ -1201,7 +1297,10 @@
     function set(open) {
       if (!preview) return;
       preview.classList.toggle('is-open', open);
+      var appEl = $('#cvApp');
+      if (appEl) appEl.classList.toggle('preview-open', open);
       if (toggle) toggle.setAttribute('aria-pressed', open ? 'true' : 'false');
+      $$('[data-mobile-action="preview"]').forEach(function (b) { b.setAttribute('aria-pressed', open ? 'true' : 'false'); });
       document.documentElement.style.overflow = open && window.innerWidth < 1080 ? 'hidden' : '';
       if (open) setTimeout(fitScroll, 80);
     }
@@ -1209,6 +1308,18 @@
       set(!preview.classList.contains('is-open'));
     });
     if (close) close.addEventListener('click', function () { set(false); });
+    return set;
+  }
+
+  /** Bilah aksi cepat mobile meneruskan aksi ke tombol utama. */
+  function bindMobileBar(setPreviewOpen) {
+    $$('[data-mobile-action]').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var action = btn.getAttribute('data-mobile-action');
+        if (action === 'preview') setPreviewOpen(!$('#cvPreview').classList.contains('is-open'));
+        else if (action === 'download') { var d = $('#cvDownload'); if (d) d.click(); }
+      });
+    });
   }
 
   /* ---------------- Zoom pratinjau ---------------- */
@@ -1318,7 +1429,8 @@
     bindPhoto();
     bindPresets();
     bindDownload();
-    bindPreviewToggle();
+    var setPreviewOpen = bindPreviewToggle();
+    bindMobileBar(setPreviewOpen);
     bindZoom();
     bindReset();
     hydrate();

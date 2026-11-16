@@ -7,14 +7,17 @@
 .cv-standalone { background: #eef1f7; }
 
 .cv-app { max-width: 1400px; margin: 0 auto; padding: 16px clamp(10px, 2.5vw, 22px) 60px; }
+@media (max-width: 1079px) {
+  /* Ruang untuk bilah aksi cepat yang menempel di bawah. */
+  .cv-app { padding-bottom: calc(76px + env(safe-area-inset-bottom, 0px)); }
+}
 
 .cv-toolbar {
   display: flex;
-  flex-wrap: wrap;
+  flex-direction: column;
   gap: 12px;
-  align-items: flex-end;
-  justify-content: space-between;
-  margin: 4px 0 16px;
+  align-items: stretch;
+  margin: 4px 0 14px;
 }
 .cv-toolbar-text { min-width: 0; }
 .cv-kicker {
@@ -25,9 +28,26 @@
   color: #2563eb;
   margin: 0 0 4px;
 }
-.cv-toolbar h1 { font-size: clamp(1.35rem, 3.4vw, 1.85rem); margin: 0 0 4px; letter-spacing: -.02em; color: #0f172a; }
+.cv-toolbar h1 { font-size: clamp(1.3rem, 4.6vw, 1.85rem); margin: 0 0 4px; letter-spacing: -.02em; color: #0f172a; line-height: 1.2; }
 .cv-lead { margin: 0; font-size: .88rem; color: #5b6472; max-width: 62ch; }
-.cv-toolbar-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+
+/* Mobile: aksi utama sebagai dua tombol besar sejajar penuh lebar. */
+.cv-toolbar-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+.cv-toolbar-actions .sa-btn { min-height: 46px; }
+
+@media (min-width: 640px) {
+  .cv-toolbar { flex-direction: row; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; }
+  .cv-toolbar-actions {
+    grid-template-columns: none;
+    display: flex;
+    flex-wrap: wrap;
+  }
+  .cv-toolbar-actions .sa-btn { min-height: 0; }
+}
 
 .cv-workspace { display: grid; gap: 16px; grid-template-columns: 1fr; align-items: start; }
 @media (min-width: 1080px) {
@@ -205,6 +225,19 @@
   background: #fff;
 }
 .cv-preview-title { font-weight: 650; font-size: .88rem; }
+.cv-demo-badge {
+  font-size: .68rem;
+  font-weight: 700;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  color: #92400e;
+  background: #fef3c7;
+  border: 1px solid #fde68a;
+  border-radius: 999px;
+  padding: 2px 8px;
+  line-height: 1.4;
+}
+.cv-demo-badge[hidden] { display: none; }
 .cv-page-count { font-size: .76rem; color: #64748b; margin-left: auto; }
 .cv-preview-bar .sa-btn { padding: 5px 9px; font-size: .76rem; }
 .cv-zoom { display: inline-flex; gap: 2px; border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden; }
@@ -220,6 +253,27 @@
 }
 @media (max-width: 1079px) {
   .cv-preview-bar .cv-zoom { display: none; }
+}
+
+/* Bilah aksi cepat mobile — hanya tampil di layar kecil. */
+.cv-mobile-bar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 60;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  padding: 10px clamp(10px, 2.5vw, 22px) calc(10px + env(safe-area-inset-bottom, 0px));
+  background: rgba(255, 255, 255, .92);
+  backdrop-filter: blur(8px);
+  border-top: 1px solid #e2e8f0;
+  box-shadow: 0 -6px 20px -12px rgba(15, 23, 42, .35);
+}
+.cv-mobile-bar .sa-btn { min-height: 46px; }
+@media (min-width: 1080px) {
+  .cv-mobile-bar { display: none; }
 }
 
 /* Panggung: menampung semua lembar halaman dengan skala seragam. */
@@ -280,6 +334,8 @@
     padding-bottom: 20px;
   }
   .cv-preview.is-open { display: block; }
+  /* Sembunyikan bilah aksi cepat saat pratinjau layar penuh terbuka. */
+  .cv-app.preview-open .cv-mobile-bar { display: none; }
   .cv-preview-bar {
     display: flex;
     flex: none;
@@ -632,7 +688,7 @@
 @media print {
   @page { margin: 0; }
   html, body.cv-standalone { background: #fff !important; height: auto !important; min-height: 0 !important; overflow: visible !important; }
-  .sa-header, .cv-toolbar, .cv-form, .cv-preview-bar, .sa-modal { display: none !important; }
+  .sa-header, .cv-toolbar, .cv-form, .cv-preview-bar, .sa-modal, .cv-mobile-bar { display: none !important; }
   .cv-app { padding: 0 !important; max-width: none !important; margin: 0 !important; }
   .cv-workspace { display: block !important; }
   /* Netralkan aturan pratinjau layar (termasuk overlay mobile fixed). */
