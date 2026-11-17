@@ -138,19 +138,171 @@ final class Theme
      *
      * @return array<string,string> url => label
      */
+    /**
+     * Katalog font siap pakai. Nilai = URL stylesheet Google Fonts sehingga
+     * tetap kompatibel dengan penyimpanan `font_pair` lama (tanpa migrasi data).
+     * Setiap entri menyimpan kategori agar fallback CSS-nya cocok (serif tetap
+     * serif meski font eksternal gagal dimuat).
+     *
+     * @return array<string,array{label:string,category:string,note:string}>
+     */
+    public static function fontCatalog(): array
+    {
+        // Setiap entri: URL Google Fonts (kompatibel dengan data lama),
+        // label, kategori fallback, catatan singkat, dan peran font.
+        // `body`/`heading` ditulis eksplisit karena urutan `family=` pada URL
+        // tidak menjamin font mana yang dipakai untuk teks.
+        $catalog = [];
+
+        // --- Satu font untuk semua (tanpa eksternal + sans populer) ----------
+        $catalog[''] = ['label' => 'Tanpa font eksternal (paling cepat)', 'category' => 'sans',
+            'note' => 'Memakai font bawaan perangkat.', 'families' => [], 'body' => '', 'heading' => ''];
+
+        $single = [
+            ['Inter', 'Inter:wght@400;500;600;700', 'Inter', 'sans', 'Netral, terbaca di semua ukuran.'],
+            ['Plus Jakarta Sans', 'Plus+Jakarta+Sans:wght@400;500;600;700;800', 'Plus Jakarta Sans', 'sans', 'Modern, cocok untuk startup.'],
+            ['Poppins', 'Poppins:wght@400;500;600;700', 'Poppins', 'sans', 'Geometris dan ramah.'],
+            ['Nunito', 'Nunito:wght@400;600;700;800', 'Nunito', 'sans', 'Membulat, terasa akrab.'],
+            ['Manrope', 'Manrope:wght@400;500;600;700;800', 'Manrope', 'sans', 'Rapi dan profesional.'],
+            ['DM Sans', 'DM+Sans:wght@400;500;700', 'DM Sans', 'sans', 'Bersih dengan kesan lembut.'],
+            ['Work Sans', 'Work+Sans:wght@400;500;600;700', 'Work Sans', 'sans', 'Jelas untuk teks panjang.'],
+            ['Rubik', 'Rubik:wght@400;500;600;700', 'Rubik', 'sans', 'Sedikit membulat, tegas.'],
+            ['Outfit', 'Outfit:wght@400;500;600;700', 'Outfit', 'sans', 'Judul besar yang menonjol.'],
+            ['Figtree', 'Figtree:wght@400;500;600;700', 'Figtree', 'sans', 'Netral masa kini.'],
+            ['Public Sans', 'Public+Sans:wght@400;500;600;700', 'Public Sans', 'sans', 'Praktis untuk konten padat.'],
+            ['Be Vietnam Pro', 'Be+Vietnam+Pro:wght@400;500;600;700', 'Be Vietnam Pro', 'sans', 'Modern dan bersih.'],
+            ['Sora', 'Sora:wght@400;500;600;700', 'Sora', 'sans', 'Teknis, cocok untuk topik teknologi.'],
+            ['Space Grotesk', 'Space+Grotesk:wght@400;500;600;700', 'Space Grotesk', 'sans', 'Berani dan berbeda.'],
+            ['Roboto', 'Roboto:wght@400;500;700', 'Roboto', 'sans', 'Familiar di Android.'],
+            ['Open Sans', 'Open+Sans:wght@400;600;700', 'Open Sans', 'sans', 'Aman dan netral.'],
+            ['Lato', 'Lato:wght@400;700', 'Lato', 'sans', 'Hangat dan mudah dibaca.'],
+            ['Karla', 'Karla:wght@400;500;600;700', 'Karla', 'sans', 'Ringkas dan sedikit jenaka.'],
+            ['Montserrat', 'Montserrat:wght@400;500;600;700', 'Montserrat', 'sans', 'Kuat untuk judul.'],
+            ['Raleway', 'Raleway:wght@400;500;600;700', 'Raleway', 'sans', 'Elegan dan tipis.'],
+            ['Urbanist', 'Urbanist:wght@400;500;600;700', 'Urbanist', 'sans', 'Minimalis dan modern.'],
+            ['Lexend', 'Lexend:wght@400;500;600;700', 'Lexend', 'sans', 'Dirancang untuk kenyamanan baca.'],
+        ];
+        foreach ($single as [$label, $query, $family, $category, $note]) {
+            $url = 'https://fonts.googleapis.com/css2?family=' . $query . '&display=swap';
+            $catalog[$url] = ['label' => $label, 'category' => $category, 'note' => $note,
+                'families' => [$family], 'body' => $family, 'heading' => $family];
+        }
+
+        // --- Pasangan teks + judul ------------------------------------------
+        // [label, query teks, query judul, keluarga teks, keluarga judul, kategori, catatan]
+        $pairs = [
+            ['Inter + Plus Jakarta Sans', 'Inter:wght@400;500;600;700', 'Plus+Jakarta+Sans:wght@500;600;700;800', 'Inter', 'Plus Jakarta Sans', 'sans', 'Bawaan. Netral dan sangat terbaca.'],
+            ['Source Sans + Source Serif', 'Source+Sans+3:wght@400;500;600;700', 'Source+Serif+4:wght@600;700', 'Source Sans 3', 'Source Serif 4', 'serif', 'Rapi seperti penerbitan daring.'],
+            ['Merriweather + Open Sans', 'Open+Sans:wght@400;600;700', 'Merriweather:wght@400;700', 'Open Sans', 'Merriweather', 'serif', 'Klasik untuk blog bacaan panjang.'],
+            ['Lora + Nunito Sans', 'Nunito+Sans:wght@400;600;700', 'Lora:wght@400;600;700', 'Nunito Sans', 'Lora', 'serif', 'Bernuansa sastra.'],
+            ['Roboto + Roboto Slab', 'Roboto:wght@400;500;700', 'Roboto+Slab:wght@500;700', 'Roboto', 'Roboto Slab', 'serif', 'Judul tebal bergaya koran.'],
+            ['Playfair Display + Source Sans', 'Source+Sans+3:wght@400;600;700', 'Playfair+Display:wght@500;600;700', 'Source Sans 3', 'Playfair Display', 'serif', 'Mewah, cocok untuk mode/fesyen.'],
+            ['Libre Baskerville + PT Sans', 'PT+Sans:wght@400;700', 'Libre+Baskerville:wght@400;700', 'PT Sans', 'Libre Baskerville', 'serif', 'Formal dan tepercaya.'],
+            ['Crimson Pro + Karla', 'Karla:wght@400;600;700', 'Crimson+Pro:wght@400;600;700', 'Karla', 'Crimson Pro', 'serif', 'Hangat, seperti buku cetak.'],
+            ['Noto Serif + Noto Sans', 'Noto+Sans:wght@400;600;700', 'Noto+Serif:wght@400;600;700', 'Noto Sans', 'Noto Serif', 'serif', 'Dukungan aksara paling luas.'],
+            ['Bitter + Public Sans', 'Public+Sans:wght@400;600;700', 'Bitter:wght@400;600;700', 'Public Sans', 'Bitter', 'serif', 'Tegas namun tetap santai.'],
+            ['Inter + JetBrains Mono', 'Inter:wght@400;500;600;700', 'JetBrains+Mono:wght@400;500;700', 'Inter', 'JetBrains Mono', 'mono', 'Untuk blog pemrograman.'],
+            ['IBM Plex Sans + Plex Mono', 'IBM+Plex+Sans:wght@400;500;600;700', 'IBM+Plex+Mono:wght@400;500;600', 'IBM Plex Sans', 'IBM Plex Mono', 'mono', 'Rapi, nuansa teknis.'],
+        ];
+        foreach ($pairs as [$label, $bodyQuery, $headingQuery, $bodyFamily, $headingFamily, $category, $note]) {
+            $url = 'https://fonts.googleapis.com/css2?family=' . $bodyQuery . '&family=' . $headingQuery . '&display=swap';
+            $catalog[$url] = ['label' => $label, 'category' => $category, 'note' => $note,
+                'families' => [$bodyFamily, $headingFamily], 'body' => $bodyFamily, 'heading' => $headingFamily];
+        }
+
+        return $catalog;
+    }
+
+    /**
+     * Pasangan font untuk `<select>`: url => label, terurut agar mudah dicari.
+     *
+     * @return array<string,string>
+     */
     public static function fontPairs(): array
     {
+        $groups = ['sans' => 'Sans-serif (modern)', 'serif' => 'Serif (klasik)', 'mono' => 'Monospace (teknis)'];
+        $byCategory = ['sans' => [], 'serif' => [], 'mono' => []];
+        foreach (self::fontCatalog() as $url => $meta) {
+            $category = (string)($meta['category'] ?? 'sans');
+            $byCategory[$category][$url] = (string)$meta['label'];
+        }
+        $flat = ['' => self::fontCatalog()['']['label']];
+        foreach ($groups as $category => $heading) {
+            foreach ($byCategory[$category] as $url => $label) {
+                $flat[$url] = $label;
+            }
+        }
+        return $flat;
+    }
+
+    /**
+     * Urutan keluarga font untuk teks dan judul dari sebuah pasangan.
+     * Peran ditulis eksplisit di katalog (`body`/`heading`) karena urutan
+     * `family=` pada URL Google Fonts tidak menjamin font mana untuk teks.
+     *
+     * @return array{body:array<int,string>,heading:array<int,string>,fallback:string}
+     */
+    public static function fontFamilies(string $pair): array
+    {
+        $meta = self::fontPairMeta($pair);
+        $fallback = match ($meta['category']) {
+            'serif' => 'Georgia, "Times New Roman", Times, serif',
+            'mono' => '"SFMono-Regular", Consolas, "Liberation Mono", monospace',
+            default => 'system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
+        };
+        $declared = [];
+        foreach ($meta['families'] as $family) {
+            $declared[] = (string)$family;
+        }
+        // Pasangan lama/kustom tidak ada di katalog: baca dari URL.
+        if ($declared === []) {
+            $declared = self::familiesFromUrl($pair);
+        }
+        if ($declared === []) {
+            return ['body' => [], 'heading' => [], 'fallback' => $fallback];
+        }
+        $body = $meta['body'] !== '' && in_array($meta['body'], $declared, true)
+            ? $meta['body']
+            : $declared[0];
+        $heading = $meta['heading'] !== '' && in_array($meta['heading'], $declared, true)
+            ? $meta['heading']
+            : $body;
         return [
-            '' => 'Tanpa font eksternal (paling cepat)',
-            'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap' => 'Inter + Plus Jakarta Sans (bawaan)',
-            'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap' => 'Inter saja (netral)',
-            'https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&family=Roboto+Slab:wght@500;700&display=swap' => 'Roboto + Roboto Slab (klasik)',
-            'https://fonts.googleapis.com/css2?family=Source+Sans+3:wght@400;500;600;700&family=Source+Serif+4:wght@600;700&display=swap' => 'Source Sans + Source Serif (editorial)',
-            'https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap' => 'Nunito (ramah)',
-            'https://fonts.googleapis.com/css2?family=Merriweather:wght@400;700&family=Open+Sans:wght@400;600;700&display=swap' => 'Merriweather + Open Sans (blog)',
-            'https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap' => 'Poppins (modern)',
-            'https://fonts.googleapis.com/css2?family=Lora:wght@400;600;700&family=Nunito+Sans:wght@400;600;700&display=swap' => 'Lora + Nunito Sans (sastra)',
+            'body' => array_values(array_unique(array_merge([$body], $declared))),
+            'heading' => array_values(array_unique(array_merge([$heading], $declared))),
+            'fallback' => $fallback,
         ];
+    }
+
+    /**
+     * Keterangan singkat + kategori untuk sebuah pasangan font.
+     *
+     * @return array{label:string,category:string,note:string}
+     */
+    public static function fontPairMeta(string $url): array
+    {
+        return self::fontCatalog()[$url]
+            ?? ['label' => 'Kustom', 'category' => 'sans', 'note' => '', 'families' => [], 'body' => '', 'heading' => ''];
+    }
+
+    /**
+     * Untuk pasangan di luar katalog (mis. URL lama yang dipilih manual),
+     * tebak keluarga font dari URL agar tipografi tetap bekerja.
+     *
+     * @return array<int,string>
+     */
+    private static function familiesFromUrl(string $url): array
+    {
+        $families = [];
+        if ($url !== '' && preg_match_all('/family=([^&:]+)/i', $url, $matches)) {
+            foreach ($matches[1] as $raw) {
+                $name = trim(str_replace('+', ' ', rawurldecode($raw)));
+                if ($name !== '' && preg_match('/^[a-z0-9 ]+$/i', $name)) {
+                    $families[] = $name;
+                }
+            }
+        }
+        return $families;
     }
 
     public function slug(): string
@@ -329,30 +481,42 @@ final class Theme
 
     /**
      * Turunkan CSS font stack dari URL Google Fonts pada `font_pair`.
-     * Font pertama = teks, font kedua (bila ada) = judul; bila hanya satu,
-     * keduanya memakai font yang sama. Tanpa URL → stack sistem yang aman.
+     * Font pertama = teks, font kedua (bila ada) = judul. Fallback mengikuti
+     * kategori pasangan (sans/serif/mono) supaya jenis huruf tetap konsisten
+     * bila font eksternal gagal dimuat.
+     *
+     * @param string      $key  'font_family' (teks) atau 'font_heading' (judul)
+     * @param string|null $pair Pasangan font; null = pakai setting tersimpan
      */
-    private static function fontStackFor(string $url, string $key): string
+    public static function fontStackFor(string $url, string $key, ?string $pair = null): string
     {
-        $fallback = '"Inter", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif';
-        $families = [];
-        if ($url !== '' && preg_match_all('/family=([^&:]+)/i', $url, $matches)) {
-            foreach ($matches[1] as $raw) {
-                $name = trim(str_replace('+', ' ', rawurldecode($raw)));
-                if ($name !== '' && preg_match('/^[a-z0-9 ]+$/i', $name)) {
-                    $families[] = $name;
-                }
+        $pair ??= $url;
+        $roles = self::fontFamilies($pair);
+        $candidates = $key === 'font_heading' ? $roles['heading'] : $roles['body'];
+        if ($candidates === []) {
+            return $roles['fallback'];
+        }
+        // Bangun stack: font utama, cadangan pasangannya, lalu fallback kategori.
+        $stack = [];
+        $seen = [];
+        foreach ($candidates as $family) {
+            $lower = strtolower($family);
+            if ($lower === '' || isset($seen[$lower])) {
+                continue;
             }
+            $seen[$lower] = true;
+            $stack[] = '"' . $family . '"';
         }
-        if ($families === []) {
-            return $key === 'font_heading'
-                ? '"Plus Jakarta Sans", "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif'
-                : $fallback;
+        foreach (explode(',', $roles['fallback']) as $fallbackFamily) {
+            $fallbackFamily = trim($fallbackFamily);
+            $lower = strtolower(trim($fallbackFamily, '"\''));
+            if ($fallbackFamily === '' || isset($seen[$lower])) {
+                continue;
+            }
+            $seen[$lower] = true;
+            $stack[] = $fallbackFamily;
         }
-        $primary = $key === 'font_heading'
-            ? ($families[1] ?? $families[0])
-            : $families[0];
-        return '"' . $primary . '", ' . $fallback;
+        return implode(', ', $stack);
     }
 
     /**
@@ -415,8 +579,7 @@ final class Theme
                 if ($derived !== '') {
                     $value = $derived;
                 }
-            }
-            // `primary_dark` is a shade of the brand color. Kalau admin tidak
+            }            // `primary_dark` is a shade of the brand color. Kalau admin tidak
             // memilihnya sendiri, hitung otomatis dari `primary_color` supaya
             // pemula cukup memilih satu warna. Nilai eksplisit tetap menang.
             if ($key === 'primary_dark' && trim($value) === '') {

@@ -277,6 +277,14 @@ try {
     check('Supported sections come from bundled themes', in_array('sidebar', Widget::supportedSections(), true));
 
     section('Builder');
+    // Item-list blocks must expose visual field metadata so the admin can edit
+    // them as rows instead of hand-written JSON.
+    $builderTypes = Builder::blockTypes();
+    $withItems = array_filter($builderTypes, static fn(array $def): bool => !empty($def['itemFields']));
+    check('Item-list blocks declare visual fields', isset($withItems['features'], $withItems['faq'], $withItems['testimonials'], $withItems['gallery']));
+    check('FAQ rows ask for question and answer', ($builderTypes['faq']['itemFields']['question']['label'] ?? '') !== '' && ($builderTypes['faq']['itemFields']['answer']['label'] ?? '') !== '');
+    check('Gallery rows accept image URL and alt text', ($builderTypes['gallery']['itemFields']['src']['type'] ?? '') === 'image' && isset($builderTypes['gallery']['itemFields']['alt']));
+    check('Item blocks name their row label', ($builderTypes['features']['itemLabel'] ?? '') !== '' && ($builderTypes['testimonials']['itemLabel'] ?? '') !== '');
     $document = Builder::normalize((string)json_encode([
         'version' => 1,
         'sections' => [[
@@ -406,6 +414,55 @@ try {
     // Font pairs: curated list, and the choice must drive the CSS font stacks.
     $pairs = Theme::fontPairs();
     check('Theme exposes curated font pairs', count($pairs) > 3 && array_key_exists('', $pairs));
+    check('Font catalog offers a wide choice', count($pairs) >= 30);
+    // Font roles: heading must never silently fall back to the body font of a
+    // serif/mono pair, and fallbacks must match the pair's category.
+    $playfair = '';
+    $lora = '';
+    $plexMono = '';
+    foreach (Theme::fontCatalog() as $url => $meta) {
+        if ($meta['label'] === 'Playfair Display + Source Sans') {
+            $playfair = $url;
+        }
+        if ($meta['label'] === 'Lora + Nunito Sans') {
+            $lora = $url;
+        }
+        if ($meta['label'] === 'Inter + JetBrains Mono') {
+            $plexMono = $url;
+        }
+    }
+    $playfairRoles = Theme::fontFamilies($playfair);
+    check('Heading role is explicit, not guessed from URL order', $playfairRoles['heading'][0] === 'Playfair Display' && $playfairRoles['body'][0] === 'Source Sans 3');
+    check('Serif pair falls back to serif', str_contains(Theme::fontStackFor($lora, 'font_family'), 'serif') && !str_contains(Theme::fontStackFor($lora, 'font_family'), 'sans-serif'));
+    check('Mono pair falls back to monospace', str_contains(Theme::fontStackFor($plexMono, 'font_heading'), 'monospace'));
+    $noDuplicates = true;
+    foreach ([$playfair, $lora, $plexMono] as $pairUrl) {
+        foreach (['font_family', 'font_heading'] as $fontKey) {
+            $familiesInStack = array_map(
+                static fn(string $part): string => strtolower(trim($part, " \"'")),
+                explode(',', Theme::fontStackFor($pairUrl, $fontKey))
+            );
+            if (count($familiesInStack) !== count(array_unique($familiesInStack))) {
+                $noDuplicates = false;
+            }
+        }
+    }
+    check('Font stacks contain no duplicate families', $noDuplicates);
+    check('Every catalog font pair saves and validates', (static function (): bool {
+        $t = Theme::make('amp-theme');
+        $original = $t->setting('font_pair');
+        foreach (Theme::fontPairs() as $url => $label) {
+            $t->saveSettings(['font_pair' => $url]);
+            Theme::reset();
+            if (Theme::make('amp-theme')->setting('font_pair') !== $url) {
+                Theme::make('amp-theme')->saveSettings(['font_pair' => $original]);
+                return false;
+            }
+        }
+        Theme::make('amp-theme')->saveSettings(['font_pair' => $original]);
+        Theme::reset();
+        return true;
+    })());
     $customizerTheme = Theme::make('amp-theme');
     $prevPair = $customizerTheme->setting('font_pair');
     $poppins = '';

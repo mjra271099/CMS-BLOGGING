@@ -87,7 +87,17 @@ $dirty = $themeSlug !== $activeSlug;
                         }
                         ?>
                         <label for="<?= e($inputId) ?>"><?= e($label) ?></label>
-                        <select id="<?= e($inputId) ?>" name="settings[<?= e($key) ?>]" data-live-setting="<?= e($key) ?>"<?= ($field['source'] ?? '') === 'font_pairs' ? ' data-font-pair' : '' ?>>
+                        <select id="<?= e($inputId) ?>" name="settings[<?= e($key) ?>]" data-live-setting="<?= e($key) ?>"<?= ($field['source'] ?? '') === 'font_pairs' ? ' data-font-pair' : '' ?>
+                                data-font-meta="<?= e(json_encode(array_map(
+                                    static fn(array $meta): array => [
+                                        'c' => $meta['category'],
+                                        'n' => $meta['note'],
+                                        'f' => array_values($meta['families']),
+                                        'b' => $meta['body'],
+                                        'h' => $meta['heading'],
+                                    ],
+                                    \App\Core\Theme::fontCatalog()
+                                ), JSON_UNESCAPED_UNICODE | JSON_HEX_QUOT)) ?>">
                             <?php foreach ($fieldOptions as $option => $optionLabel): ?>
                                 <?php $optionValue = is_array($optionLabel) ? (string)($optionLabel['value'] ?? '') : (string)$option ?>
                                 <option value="<?= e($optionValue) ?>"<?= $value === $optionValue ? ' selected' : '' ?>>
@@ -95,7 +105,12 @@ $dirty = $themeSlug !== $activeSlug;
                                 </option>
                             <?php endforeach; ?>
                         </select>
-                        <?php if (!empty($field['description'])): ?>
+                        <?php if (($field['source'] ?? '') === 'font_pairs'): ?>
+                            <p class="help" data-font-pair-note>
+                                <?php $pairNote = \App\Core\Theme::fontPairMeta((string)$value); ?>
+                                <?= e($pairNote['note'] !== '' ? $pairNote['note'] : 'Pilih pasangan font di atas.') ?>
+                            </p>
+                        <?php elseif (!empty($field['description'])): ?>
                             <p class="help"><?= e((string)$field['description']) ?></p>
                         <?php endif; ?>
                     <?php elseif ($type === 'color'): ?>
