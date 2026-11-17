@@ -74,6 +74,9 @@ final class Ui
         if (!empty($meta['description'])) {
             $head .= '<meta name="description" content="' . e((string)$meta['description']) . '">';
         }
+        if (!empty($meta['keywords'])) {
+            $head .= '<meta name="keywords" content="' . e((string)$meta['keywords']) . '">';
+        }
         if (!empty($meta['robots'])) {
             $head .= '<meta name="robots" content="' . e((string)$meta['robots']) . '">';
         }

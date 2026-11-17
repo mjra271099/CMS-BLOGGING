@@ -40,6 +40,9 @@ final class Seo
                 trim((string)($page['description'] ?? '')) !== '' ? (string)$page['description'] : $siteDescription,
                 160
             ),
+            'keywords' => trim((string)($page['keywords'] ?? '')) !== ''
+                ? (string)$page['keywords']
+                : Settings::get('seo_keywords', ''),
             'canonical' => $canonical,
             'image' => $image,
             'type' => $type,

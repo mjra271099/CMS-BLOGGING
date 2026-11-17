@@ -303,6 +303,17 @@ try {
     $homeMetaFallback = Seo::meta(['title' => Settings::get('seo_title', '')]);
     check('Seo::meta falls back to site name', (string)$homeMetaFallback['title'] === $siteName);
     Settings::set('seo_title', $prevSeoTitle);
+    // seo_keywords must reach the rendered <head>.
+    $prevKeywords = Settings::get('seo_keywords', '');
+    Settings::set('seo_keywords', 'zz-alpha, zz-beta');
+    $kwMeta = Seo::meta([]);
+    check('Seo::meta carries seo_keywords', (string)($kwMeta['keywords'] ?? '') === 'zz-alpha, zz-beta');
+    $kwHtml = (new \App\Theme\Ui(Theme::instance(), ['meta' => $kwMeta, 'route' => 'home']))->head();
+    check('Head renders keywords meta', str_contains($kwHtml, '<meta name="keywords" content="zz-alpha, zz-beta">'));
+    Settings::set('seo_keywords', '');
+    $noKwHtml = (new \App\Theme\Ui(Theme::instance(), ['meta' => Seo::meta([]), 'route' => 'home']))->head();
+    check('Head omits empty keywords', !str_contains($noKwHtml, 'name="keywords"'));
+    Settings::set('seo_keywords', $prevKeywords);
     check('Seo::clamp limits length', mb_strlen(Seo::clamp(str_repeat('kata ', 80), 160)) <= 163);
     check('Sitemap includes a <urlset>', str_contains(Seo::sitemap(), '<urlset'));
     check('Sitemap includes a published post', str_contains(Seo::sitemap(), (string)$published['slug']));
