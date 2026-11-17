@@ -601,6 +601,21 @@ try {
     section('Security');
     check('Guest cannot publish posts', !Auth::can('post.publish'));
     check('No user is authenticated in CLI', !Auth::check());
+    // Failed login must not leak account existence through timing.
+    $timeAttempt = static function (string $login): float {
+        $start = microtime(true);
+        try {
+            Auth::attempt($login, 'zz-wrong-password');
+        } catch (Throwable) {
+            // Lockout/security exceptions are irrelevant to the timing sample.
+        }
+        return microtime(true) - $start;
+    };
+    $tMissing = $timeAttempt('zz-no-such-user-' . bin2hex(random_bytes(3)));
+    $tExisting = $timeAttempt((string)Database::value('SELECT username FROM users WHERE status = "active" ORDER BY id LIMIT 1'));
+    $ratio = $tExisting > 0 ? $tMissing / $tExisting : 1.0;
+    check('Login timing does not reveal account existence', $ratio > 0.5 && $ratio < 2.0);
+    Database::delete('login_attempts', '1 = 1', []);
 } catch (Throwable $exception) {
     $failed++;
     $failures[] = 'Uncaught ' . $exception::class . ': ' . $exception->getMessage();

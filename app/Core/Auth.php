@@ -10,6 +10,13 @@ final class Auth
 {
     public const ROLES = ['admin', 'editor', 'author', 'contributor'];
 
+    /**
+     * Hash bcrypt valid untuk username yang tidak ada. password_verify()
+     * terhadap hash ini tetap menghabiskan waktu yang sama dengan verifikasi
+     * sungguhan, sehingga kegagalan login tidak membocorkan keberadaan akun.
+     */
+    private const DUMMY_HASH = '$2y$10$5Y5p0pMgOlhBY2vNRUnlFuKS8jN4oK5E4Z2sDz4HfHkVbqUcA/vz2';
+
     private static ?array $user = null;
     private static bool $resolved = false;
 
@@ -130,7 +137,11 @@ final class Auth
             'SELECT id, password_hash, status FROM users WHERE username = ? OR email = ? LIMIT 1',
             [$login, $login]
         );
-        $verified = $account && password_verify($password, (string)$account['password_hash']);
+        // Selalu jalankan password_verify, termasuk saat akun tidak ada, agar
+        // waktu respons tidak membocorkan apakah username/email terdaftar
+        // (user enumeration lewat timing).
+        $hash = $account ? (string)$account['password_hash'] : self::DUMMY_HASH;
+        $verified = password_verify($password, $hash) && $account !== null;
         if ($verified) {
             if (($account['status'] ?? 'active') !== 'active') {
                 throw new SecurityException('Akun tidak aktif.', 403);
