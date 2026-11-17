@@ -179,6 +179,13 @@ try {
     check('Page::save creates a page', $pageId > 0);
     $page = Page::find($pageId);
     check('Page::findBySlug works', $page !== null && Page::findBySlug((string)$page['slug']) !== null);
+    // Page edits must invalidate the cached sitemap, else new pages stay invisible.
+    Seo::sitemap();
+    $probeSlug = 'zz-sitemap-probe-' . bin2hex(random_bytes(3));
+    $probeId = Page::save(['title' => 'ZZ Sitemap Probe', 'slug' => $probeSlug, 'body' => '<p>x</p>', 'status' => 'published', 'visibility' => 'public', 'author_id' => 1]);
+    check('Saved page appears in sitemap immediately', str_contains(Seo::sitemap(), $probeSlug));
+    Page::delete($probeId);
+    check('Deleted page leaves the sitemap immediately', !str_contains(Seo::sitemap(), $probeSlug));
 
     /*
      * Halaman QR Code Generator: fitur Page dengan template `qr-generator`.

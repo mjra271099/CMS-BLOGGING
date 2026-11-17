@@ -81,7 +81,7 @@ final class Page
             'custom_script' => $customScript ?: null,
             'published_at' => $publishedAt,
         ];
-        return Database::transaction(static function () use ($id, $payload, $data): int {
+        $pageId = Database::transaction(static function () use ($id, $payload, $data): int {
             if ($id > 0) {
                 $previous = self::find($id);
                 if (!$previous) {
@@ -103,6 +103,8 @@ final class Page
             $payload['author_id'] = (int)($data['author_id'] ?? ($_SESSION['user_id'] ?? 1));
             return Database::insert('pages', $payload);
         });
+        self::flushCaches();
+        return $pageId;
     }
 
     private static function publishedAt(mixed $input, string $status, int $id): ?string
@@ -128,6 +130,7 @@ final class Page
     {
         Database::run('DELETE FROM revisions WHERE entity_type = "page" AND entity_id = ? AND blog_id = ?', [$id, Context::blogId()]);
         Database::delete('pages', 'id = ? AND blog_id = ?', [$id, Context::blogId()]);
+        self::flushCaches();
     }
 
     public static function revisions(int $pageId): array
@@ -156,6 +159,16 @@ final class Page
             return $branch;
         };
         return $build($pages);
+    }
+
+    /**
+     * Halaman ikut memengaruhi sitemap dan menu navigasi, jadi cache terkait
+     * harus dibersihkan setiap kali halaman disimpan atau dihapus.
+     */
+    public static function flushCaches(): void
+    {
+        \App\Core\Cache::flushGroup('sitemap');
+        \App\Core\Cache::flushGroup('pages');
     }
 
     public static function templates(): array
