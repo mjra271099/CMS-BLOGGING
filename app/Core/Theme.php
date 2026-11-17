@@ -130,6 +130,29 @@ final class Theme
         return $items;
     }
 
+    /**
+     * Kurasi pasangan font siap pakai. Nilai = URL stylesheet Google Fonts,
+     * sehingga tetap kompatibel dengan penyimpanan `font_pair` yang lama
+     * (tidak perlu migrasi data) sekaligus menghilangkan kebutuhan admin
+     * mengetik URL/CSS font secara manual.
+     *
+     * @return array<string,string> url => label
+     */
+    public static function fontPairs(): array
+    {
+        return [
+            '' => 'Tanpa font eksternal (paling cepat)',
+            'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap' => 'Inter + Plus Jakarta Sans (bawaan)',
+            'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap' => 'Inter saja (netral)',
+            'https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&family=Roboto+Slab:wght@500;700&display=swap' => 'Roboto + Roboto Slab (klasik)',
+            'https://fonts.googleapis.com/css2?family=Source+Sans+3:wght@400;500;600;700&family=Source+Serif+4:wght@600;700&display=swap' => 'Source Sans + Source Serif (editorial)',
+            'https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap' => 'Nunito (ramah)',
+            'https://fonts.googleapis.com/css2?family=Merriweather:wght@400;700&family=Open+Sans:wght@400;600;700&display=swap' => 'Merriweather + Open Sans (blog)',
+            'https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap' => 'Poppins (modern)',
+            'https://fonts.googleapis.com/css2?family=Lora:wght@400;600;700&family=Nunito+Sans:wght@400;600;700&display=swap' => 'Lora + Nunito Sans (sastra)',
+        ];
+    }
+
     public function slug(): string
     {
         return $this->slug;
@@ -256,8 +279,12 @@ final class Theme
                 // Options may be a value => label map or a list of
                 // {value, label} arrays; validate against the value, never the
                 // label, otherwise a valid choice is silently dropped.
+                $options = (array)($definition['options'] ?? []);
+                if (($definition['source'] ?? '') === 'font_pairs') {
+                    $options = self::fontPairs();
+                }
                 $allowed = [];
-                foreach ((array)($definition['options'] ?? []) as $optionKey => $optionLabel) {
+                foreach ($options as $optionKey => $optionLabel) {
                     $allowed[] = is_array($optionLabel)
                         ? (string)($optionLabel['value'] ?? '')
                         : (string)$optionKey;
@@ -274,6 +301,49 @@ final class Theme
         }
         $this->settings = $this->resolveSettings();
         Cache::flushGroup('theme');
+    }
+
+    /**
+     * Hapus semua pengaturan kustomisasi tema ini sehingga kembali ke nilai
+     * bawaan dari theme.json. Baris lama (mis. font_family) juga dihapus agar
+     * nilainya benar-benar kembali ke default.
+     */
+    public function resetSettings(): void
+    {
+        Database::run(
+            'DELETE FROM theme_settings WHERE blog_id = ? AND theme = ?',
+            [Context::blogId(), $this->slug]
+        );
+        $this->settings = $this->resolveSettings();
+        Cache::flushGroup('theme');
+    }
+
+    /**
+     * Turunkan CSS font stack dari URL Google Fonts pada `font_pair`.
+     * Font pertama = teks, font kedua (bila ada) = judul; bila hanya satu,
+     * keduanya memakai font yang sama. Tanpa URL → stack sistem yang aman.
+     */
+    private static function fontStackFor(string $url, string $key): string
+    {
+        $fallback = '"Inter", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif';
+        $families = [];
+        if ($url !== '' && preg_match_all('/family=([^&:]+)/i', $url, $matches)) {
+            foreach ($matches[1] as $raw) {
+                $name = trim(str_replace('+', ' ', rawurldecode($raw)));
+                if ($name !== '' && preg_match('/^[a-z0-9 ]+$/i', $name)) {
+                    $families[] = $name;
+                }
+            }
+        }
+        if ($families === []) {
+            return $key === 'font_heading'
+                ? '"Plus Jakarta Sans", "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif'
+                : $fallback;
+        }
+        $primary = $key === 'font_heading'
+            ? ($families[1] ?? $families[0])
+            : $families[0];
+        return '"' . $primary . '", ' . $fallback;
     }
 
     /**
@@ -303,6 +373,17 @@ final class Theme
         $rules = [];
         foreach ($mapping as $key => $variable) {
             $value = $this->setting($key);
+            // `font_family`/`font_heading` are no longer edited directly; they
+            // are derived from the chosen `font_pair`. Nilai derived menang atas
+            // baris lama (font_family/font_heading) agar pasangan font yang
+            // dipilih admin benar-benar berlaku, sementara baris lama dibiarkan
+            // di database demi kompatibilitas mundur.
+            if (in_array($key, ['font_family', 'font_heading'], true)) {
+                $derived = self::fontStackFor($this->setting('font_pair'), $key);
+                if ($derived !== '') {
+                    $value = $derived;
+                }
+            }
             if ($value === '') {
                 continue;
             }
@@ -314,10 +395,6 @@ final class Theme
                 $value = (int)$value . $unit;
             }
             $rules[] = $variable . ':' . $value;
-        }
-        $layout = [];
-        if ($this->setting('sidebar_position') !== '') {
-            $layout[] = 'data-sidebar="' . $this->setting('sidebar_position') . '"';
         }
         $css = $rules ? ':root{' . implode(';', $rules) . '}' : '';
         if ($this->setting('custom_css') !== '') {

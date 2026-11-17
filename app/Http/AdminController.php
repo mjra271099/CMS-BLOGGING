@@ -411,6 +411,7 @@ final class AdminController
             'tag.delete' => Taxonomy::deleteTag((int)($_POST['id'] ?? 0)),
             'theme.activate' => $this->activateTheme(),
             'theme.customize' => $this->saveCustomizer(),
+            'theme.reset' => $this->resetCustomizer(),
             'theme.duplicate' => ThemeEngine::duplicate((string)($_POST['slug'] ?? ''), (string)($_POST['name'] ?? 'Tema Salinan')),
             'theme.delete' => ThemeEngine::remove((string)($_POST['slug'] ?? '')),
             'theme.import' => $this->installTheme(),
@@ -761,6 +762,17 @@ final class AdminController
         Auth::requirePermission('theme.activate');
         ThemeEngine::activate((string)($_POST['slug'] ?? ''));
         \App\Core\Response::redirect(url('admin/index.php?view=themes'));
+    }
+
+    private function resetCustomizer(): void
+    {
+        Auth::requirePermission('theme.customize');
+        $slug = (string)($_POST['theme'] ?? '');
+        $theme = Theme::make($slug);
+        $theme->resetSettings();
+        log_activity('theme.reset', $slug);
+        $_SESSION['flash'][] = ['type' => 'success', 'message' => 'Kustomisasi dikembalikan ke bawaan.'];
+        \App\Core\Response::redirect(url('admin/index.php?view=customize&theme=' . rawurlencode($slug)));
     }
 
     private function saveCustomizer(): void

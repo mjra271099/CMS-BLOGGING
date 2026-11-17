@@ -41,6 +41,8 @@ $dirty = $themeSlug !== $activeSlug;
     </div>
 </div>
 
+<?= \App\Core\View::render('admin/_appearance-tabs', ['appearanceActive' => 'customize']) ?>
+
 <?php if ($dirty): ?>
     <div class="notice">
         Anda sedang mengedit <strong><?= e($theme->name()) ?></strong>, bukan tema aktif.
@@ -75,15 +77,24 @@ $dirty = $themeSlug !== $activeSlug;
                             <?= e($label) ?>
                         </label>
                     <?php elseif ($type === 'select'): ?>
+                        <?php
+                        $fieldOptions = (array)($field['options'] ?? []);
+                        if (($field['source'] ?? '') === 'font_pairs') {
+                            $fieldOptions = \App\Core\Theme::fontPairs();
+                        }
+                        ?>
                         <label for="<?= e($inputId) ?>"><?= e($label) ?></label>
-                        <select id="<?= e($inputId) ?>" name="settings[<?= e($key) ?>]" data-live-setting="<?= e($key) ?>">
-                            <?php foreach ((array)($field['options'] ?? []) as $option => $optionLabel): ?>
+                        <select id="<?= e($inputId) ?>" name="settings[<?= e($key) ?>]" data-live-setting="<?= e($key) ?>"<?= ($field['source'] ?? '') === 'font_pairs' ? ' data-font-pair' : '' ?>>
+                            <?php foreach ($fieldOptions as $option => $optionLabel): ?>
                                 <?php $optionValue = is_array($optionLabel) ? (string)($optionLabel['value'] ?? '') : (string)$option ?>
                                 <option value="<?= e($optionValue) ?>"<?= $value === $optionValue ? ' selected' : '' ?>>
                                     <?= e(is_array($optionLabel) ? (string)($optionLabel['label'] ?? $optionValue) : (string)$optionLabel) ?>
                                 </option>
                             <?php endforeach; ?>
                         </select>
+                        <?php if (!empty($field['description'])): ?>
+                            <p class="help"><?= e((string)$field['description']) ?></p>
+                        <?php endif; ?>
                     <?php elseif ($type === 'color'): ?>
                         <label for="<?= e($inputId) ?>"><?= e($label) ?></label>
                         <div class="color-field">
@@ -114,9 +125,18 @@ $dirty = $themeSlug !== $activeSlug;
 
         <div class="customizer-actions">
             <button type="submit">Simpan Kustomisasi</button>
-            <a class="btn secondary" href="<?= e($adminBase . '?view=customize&theme=' . rawurlencode($themeSlug)) ?>">Reset Form</a>
+            <a class="btn secondary" href="<?= e($adminBase . '?view=customize&theme=' . rawurlencode($themeSlug)) ?>">Batal</a>
             <span class="muted" data-save-state></span>
         </div>
+    </form>
+
+    <form method="post" action="<?= e($adminBase . '?view=customize&theme=' . rawurlencode($themeSlug)) ?>" style="margin-top:12px"
+          onsubmit="return confirm('Kembalikan seluruh kustomisasi tema ini ke nilai bawaan?');">
+        <input type="hidden" name="action" value="theme.reset">
+        <input type="hidden" name="theme" value="<?= e($themeSlug) ?>">
+        <?= \App\Core\Csrf::field() ?>
+        <button type="submit" class="btn secondary small">Kembalikan ke bawaan</button>
+        <span class="muted">Mengembalikan warna, font, dan tata letak ke pengaturan awal tema.</span>
     </form>
 
     <div class="customizer-preview">

@@ -384,6 +384,30 @@ try {
     $activeTheme = Theme::instance();
     check('Active theme has metadata', (string)$activeTheme->name() !== '');
     check('Customizer CSS emits variables', str_contains($activeTheme->customizerCss(), ':root'));
+    // Font pairs: curated list, and the choice must drive the CSS font stacks.
+    $pairs = Theme::fontPairs();
+    check('Theme exposes curated font pairs', count($pairs) > 3 && array_key_exists('', $pairs));
+    $customizerTheme = Theme::make('amp-theme');
+    $prevPair = $customizerTheme->setting('font_pair');
+    $poppins = '';
+    foreach ($pairs as $url => $label) {
+        if (str_contains($label, 'Poppins')) {
+            $poppins = $url;
+        }
+    }
+    $customizerTheme->saveSettings(['font_pair' => $poppins]);
+    Theme::reset();
+    check('Font pair drives the text font stack', str_contains(Theme::make('amp-theme')->customizerCss(), '"Poppins"'));
+    $customizerTheme->saveSettings(['font_pair' => 'javascript:alert(1)']);
+    Theme::reset();
+    check('Invalid font pair is rejected', Theme::make('amp-theme')->setting('font_pair') === $poppins);
+    // Reset returns the theme to its schema defaults.
+    $customizerTheme->saveSettings(['primary_color' => '#ff0000']);
+    $customizerTheme->resetSettings();
+    Theme::reset();
+    check('Theme::resetSettings restores defaults', Theme::make('amp-theme')->setting('primary_color') !== '#ff0000');
+    Theme::make('amp-theme')->saveSettings(['font_pair' => $prevPair]);
+    Theme::reset();
 
     /*
      * Structured Data: the theme decides how far the JSON-LD graph goes. A

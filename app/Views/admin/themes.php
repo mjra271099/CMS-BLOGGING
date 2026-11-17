@@ -27,6 +27,8 @@ foreach ($catalog as $theme) {
     </div>
 </div>
 
+<?= \App\Core\View::render('admin/_appearance-tabs', ['appearanceActive' => 'themes']) ?>
+
 <div class="card">
     <h2>Impor Tema</h2>
     <form method="post" action="<?= e($adminBase . '?view=themes') ?>" enctype="multipart/form-data" class="row">

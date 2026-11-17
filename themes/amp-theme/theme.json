@@ -102,24 +102,11 @@
         },
         {
             "key": "font_pair",
-            "label": "Pasangan font (URL stylesheet)",
-            "type": "text",
+            "label": "Pasangan font",
+            "type": "select",
+            "source": "font_pairs",
             "default": "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap",
-            "description": "Biarkan kosong untuk tetap nol permintaan font (paling cepat, disarankan untuk AMP).",
-            "group": "Tipografi"
-        },
-        {
-            "key": "font_family",
-            "label": "Font teks",
-            "type": "text",
-            "default": "\"Inter\", system-ui, -apple-system, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
-            "group": "Tipografi"
-        },
-        {
-            "key": "font_heading",
-            "label": "Font judul",
-            "type": "text",
-            "default": "\"Plus Jakarta Sans\", \"Inter\", system-ui, -apple-system, \"Segoe UI\", Roboto, sans-serif",
+            "description": "Pilih pasangan font siap pakai. Pilihan tanpa font eksternal memuat paling cepat.",
             "group": "Tipografi"
         },
         {

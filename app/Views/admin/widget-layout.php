@@ -32,6 +32,8 @@ $editingFields = (array)($types[$editingType]['fields'] ?? []);
     <span class="muted"><?= count($sections) ?> area widget · tema <?= e(\App\Core\Theme::instance()->name()) ?></span>
 </div>
 
+<?= \App\Core\View::render('admin/_appearance-tabs', ['appearanceActive' => 'layout']) ?>
+
 <div class="notice">
     Seret kartu widget untuk mengubah urutan. Perubahan urutan disimpan otomatis.
 </div>

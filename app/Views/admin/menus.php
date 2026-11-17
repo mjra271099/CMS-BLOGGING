@@ -39,6 +39,8 @@ foreach ($menus as $menu) {
     </div>
 </div>
 
+<?= \App\Core\View::render('admin/_appearance-tabs', ['appearanceActive' => 'menus']) ?>
+
 <div class="dashboard-cols">
     <div class="card">
         <h2><?= $currentMenu ? 'Item Menu: ' . e((string)$currentMenu['name']) : 'Item Menu' ?></h2>

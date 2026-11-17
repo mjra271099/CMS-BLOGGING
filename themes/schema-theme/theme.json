@@ -146,24 +146,11 @@
         },
         {
             "key": "font_pair",
-            "label": "Pasangan font (URL stylesheet)",
-            "type": "text",
-            "default": "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap",
-            "description": "Biarkan kosong untuk memakai font sistem tanpa permintaan jaringan.",
-            "group": "Tipografi"
-        },
-        {
-            "key": "font_family",
-            "label": "Font teks",
-            "type": "text",
-            "default": "\"Inter\", system-ui, -apple-system, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
-            "group": "Tipografi"
-        },
-        {
-            "key": "font_heading",
-            "label": "Font judul",
-            "type": "text",
-            "default": "\"Inter\", system-ui, -apple-system, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif",
+            "label": "Pasangan font",
+            "type": "select",
+            "source": "font_pairs",
+            "default": "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap",
+            "description": "Pilih pasangan font siap pakai. Pilihan tanpa font eksternal memuat paling cepat.",
             "group": "Tipografi"
         },
         {
