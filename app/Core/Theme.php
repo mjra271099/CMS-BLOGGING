@@ -271,6 +271,15 @@ final class Theme
             }
             $value = $values[$key];
             $type = (string)($definition['type'] ?? 'text');
+            // Field opsional (mis. primary_dark) boleh dikosongkan agar nilai
+            // diturunkan otomatis; hapus barisnya supaya fallback berlaku.
+            if (trim((string)$value) === '' && !empty($definition['optional'])) {
+                Database::run(
+                    'DELETE FROM theme_settings WHERE blog_id = ? AND theme = ? AND setting_key = ?',
+                    [Context::blogId(), $this->slug, $key]
+                );
+                continue;
+            }
             if ($type === 'checkbox') {
                 $value = $value ? '1' : '0';
             } elseif ($type === 'color' && !preg_match('/^#[0-9a-f]{3,8}$/i', (string)$value)) {

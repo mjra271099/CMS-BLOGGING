@@ -96,11 +96,21 @@ $dirty = $themeSlug !== $activeSlug;
                             <p class="help"><?= e((string)$field['description']) ?></p>
                         <?php endif; ?>
                     <?php elseif ($type === 'color'): ?>
+                        <?php
+                        // Field opsional yang kosong berarti "otomatis": tampilkan
+                        // nilai turunan sebagai placeholder supaya tidak tampak hitam.
+                        $autoValue = '';
+                        if (!empty($field['optional']) && trim((string)$value) === '' && $key === 'primary_dark') {
+                            $autoValue = (string)(\App\Core\Theme::darkenHex((string)($values['primary_color'] ?? '')) ?? '');
+                        }
+                        ?>
                         <label for="<?= e($inputId) ?>"><?= e($label) ?></label>
                         <div class="color-field">
-                            <input id="<?= e($inputId) ?>" type="color" name="settings[<?= e($key) ?>]" value="<?= e($value ?: '#000000') ?>"
-                                   data-live-setting="<?= e($key) ?>">
-                            <input type="text" value="<?= e($value) ?>" data-color-echo aria-label="<?= e($label) ?> hex">
+                            <input id="<?= e($inputId) ?>" type="color" name="settings[<?= e($key) ?>]"
+                                   value="<?= e($value !== '' ? $value : ($autoValue !== '' ? $autoValue : '#000000')) ?>"
+                                   data-live-setting="<?= e($key) ?>"<?= $autoValue !== '' ? ' data-auto-value="' . e($autoValue) . '"' : '' ?>>
+                            <input type="text" value="<?= e($value) ?>" data-color-echo aria-label="<?= e($label) ?> hex"
+                                   placeholder="<?= e($autoValue !== '' ? 'otomatis: ' . $autoValue : '') ?>">
                         </div>
                         <?php if (!empty($field['optional'])): ?>
                             <p class="help">

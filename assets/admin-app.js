@@ -415,52 +415,123 @@
   // ---------------------------------------------------------------
   const previewFrame = $('[data-preview-frame]');
   if (previewFrame) {
+    // Semua pengaturan kustomisasi yang dipetakan ke CSS variable, termasuk
+    // turunan (font dari pasangan font, primary_dark dari warna utama) supaya
+    // pratinjau benar-benar mencerminkan hasil akhir.
+    const previewMapping = {
+      primary_color: '--t-primary',
+      primary_dark: '--t-primary-dark',
+      accent_color: '--t-accent',
+      background_color: '--t-bg',
+      surface_color: '--t-surface',
+      text_color: '--t-text',
+      muted_color: '--t-muted',
+      border_color: '--t-border',
+      font_size: '--t-base-size',
+      radius: '--t-radius',
+      content_width: '--t-width',
+      header_style: '--t-header-style',
+      footer_style: '--t-footer-style',
+      card_style: '--t-card-style',
+      spacing: '--t-space'
+    };
+    const pxKeys = ['font_size', 'radius', 'content_width', 'spacing'];
+    // Cermin dari App\Core\Theme::fontStackFor(): ubah URL Google Fonts menjadi
+    // nama keluarga font agar pratinjau memakai font yang dipilih.
+    const familiesFromPair = (url) => {
+      const families = [];
+      const re = /family=([^&:]+)/gi;
+      let match;
+      while ((match = re.exec(url || '')) !== null) {
+        const name = decodeURIComponent(match[1].replace(/\+/g, ' ')).trim();
+        if (/^[a-z0-9 ]+$/i.test(name)) families.push(name);
+      }
+      return families;
+    };
+    const darken = (hex, amount = 0.22) => {
+      const match = /^#([0-9a-f]{3}|[0-9a-f]{6})$/i.exec((hex || '').trim());
+      if (!match) return '';
+      let body = match[1];
+      if (body.length === 3) body = body.split('').map((c) => c + c).join('');
+      const parts = [0, 2, 4].map((i) => {
+        const channel = Math.round(parseInt(body.slice(i, i + 2), 16) * (1 - amount));
+        return Math.max(0, Math.min(255, channel)).toString(16).padStart(2, '0');
+      });
+      return '#' + parts.join('');
+    };
+    const fieldFor = (key) => $(`[data-live-setting="${key}"]`);
+    // A colour field in "auto" mode keeps a data-auto-value marker; live edits
+    // to the source colour must then re-derive rather than trust the input.
+    const autoKeys = new Set();
+    $$('[data-auto-value]').forEach((el) => autoKeys.add(el.dataset.liveSetting));
     const applyPreview = () => {
       const doc = previewFrame.contentDocument;
       if (!doc) return;
       const root = doc.documentElement;
-      const mapping = {
-        primary_color: '--t-primary',
-        primary_dark: '--t-primary-dark',
-        accent_color: '--t-accent',
-        background_color: '--t-bg',
-        surface_color: '--t-surface',
-        text_color: '--t-text',
-        muted_color: '--t-muted',
-        border_color: '--t-border',
-        font_family: '--t-font',
-        font_heading: '--t-font-head'
-      };
-      $$('[data-live-setting]').forEach((field) => {
-        const variable = mapping[field.dataset.liveSetting];
-        if (!variable) return;
-        let value = field.type === 'checkbox' ? (field.checked ? '1' : '0') : field.value;
-        if (!value) return;
+      Object.entries(previewMapping).forEach(([key, variable]) => {
+        const field = fieldFor(key);
+        if (!field) return;
+        let value = field.value;
+        if (key === 'primary_dark' && (autoKeys.has(key) || value === '')) {
+          const base = fieldFor('primary_color')?.value || '';
+          value = darken(base);
+        }
+        if (value === '') return;
+        if (pxKeys.includes(key)) value = parseInt(value, 10) + 'px';
         root.style.setProperty(variable, value);
       });
+      // Tipografi berasal dari pasangan font, bukan field terpisah.
+      const pairField = fieldFor('font_pair');
+      if (pairField) {
+        const families = familiesFromPair(pairField.value);
+        const fallback = '"Inter", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif';
+        if (families.length) {
+          root.style.setProperty('--t-font', '"' + families[0] + '", ' + fallback);
+          root.style.setProperty('--t-font-head', '"' + (families[1] || families[0]) + '", ' + fallback);
+        }
+      }
     };
     previewFrame.addEventListener('load', applyPreview);
     $$('[data-live-setting]').forEach((field) => {
+      // Mode otomatis berakhir saat admin memilih warna sendiri.
+      field.addEventListener('input', () => {
+        if (field.type === 'color' && autoKeys.has(field.dataset.liveSetting)) {
+          autoKeys.delete(field.dataset.liveSetting);
+          field.removeAttribute('data-auto-value');
+        }
+      });
       field.addEventListener('input', debounce(applyPreview, 120));
+      field.addEventListener('change', debounce(applyPreview, 120));
     });
-    // Optional color fields (e.g. primary_dark) can be reset to "automatic".
-    // The browser color input cannot be blank, so we mark the field disabled
-    // and clear the paired hex echo; the disabled input is not submitted, which
-    // makes the backend fall back to the derived value.
+    // Optional colour fields (e.g. primary_dark) can be reset to "automatic".
+    // The browser colour input cannot be blank, so we mark the key as auto and
+    // disable the input (disabled inputs are not submitted), letting the backend
+    // derive the shade. We intentionally do not dispatch 'input' here to avoid
+    // re-entering the debounced preview.
     $$('[data-clear-setting]').forEach((link) => {
       link.addEventListener('click', (event) => {
         event.preventDefault();
         const key = link.dataset.clearSetting;
         const color = document.querySelector(`input[type="color"][name="settings[${key}]"]`);
-        const echo = document.querySelector(`[data-color-echo][aria-label]`);
+        autoKeys.add(key);
         if (color) {
-          color.value = '#000000';
           color.disabled = true;
-          color.dispatchEvent(new Event('input', { bubbles: true }));
+          // Disabled fields are not submitted; keep a hidden empty value so the
+          // backend can detect "automatic" and drop the stored override.
+          let carrier = document.querySelector(`input[type="hidden"][data-auto-carrier="${key}"]`);
+          if (!carrier) {
+            carrier = document.createElement('input');
+            carrier.type = 'hidden';
+            carrier.dataset.autoCarrier = key;
+            carrier.name = `settings[${key}]`;
+            color.closest('.color-field')?.appendChild(carrier);
+          }
+          carrier.value = '';
         }
         document.querySelectorAll('[data-color-echo]').forEach((el) => {
           if (color && el.previousElementSibling === color) el.value = '';
         });
+        applyPreview();
         link.textContent = 'Otomatis aktif';
         link.classList.add('muted');
       });
@@ -492,7 +563,9 @@
       if (!picker || !hex) return;
       picker.addEventListener('input', () => {
         hex.value = picker.value;
-        picker.dispatchEvent(new Event('input', { bubbles: false }));
+        // Jangan dispatch 'input' dari sini: listener ini sendiri yang
+        // menanganinya, sehingga event akan berulang tanpa henti
+        // (RangeError: Maximum call stack size exceeded). Cukup perbarui preview.
         applyPreview();
       });
       hex.addEventListener('change', () => {
