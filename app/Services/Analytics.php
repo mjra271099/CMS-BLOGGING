@@ -28,10 +28,6 @@ final class Analytics
             'media' => \App\Models\Media::stats(),
             'traffic' => $traffic,
             'views_total' => $stats['views'],
-            'views_today' => (int)Database::value(
-                "SELECT COUNT(*) FROM posts WHERE blog_id = ? AND DATE(updated_at) = CURDATE()",
-                [$blogId]
-            ),
         ];
     }
 
