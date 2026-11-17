@@ -5,26 +5,54 @@ declare(strict_types=1);
  * Site settings grouped into tabs: identity, reading, comments, media,
  * social, integrations and advanced HTML injection.
  *
+ * Tabs use the existing `.filter-tabs` pattern and a `tab` query parameter so
+ * the page works without JavaScript and each group can be reset to defaults.
+ *
  * @var array $settings
  * @var array $defaults
  */
 
+use App\Http\AdminController;
 use App\Http\AdminUi;
 
 $settings = $settings ?? [];
 $defaults = $defaults ?? [];
 $adminBase = url('admin/index.php');
 $value = static fn(string $key): string => (string)($settings[$key] ?? ($defaults[$key] ?? ''));
+
+$groups = AdminController::settingsGroups();
+$tabLabels = [
+    'identity' => 'Identitas',
+    'reading' => 'Membaca',
+    'comments' => 'Komentar',
+    'media' => 'Media',
+    'seo' => 'SEO',
+    'social' => 'Sosial',
+    'email' => 'Email',
+    'advanced' => 'Lanjutan',
+];
+$activeTab = (string)($_GET['tab'] ?? 'identity');
+if (!isset($groups[$activeTab])) {
+    $activeTab = 'identity';
+}
+$tabUrl = static fn(string $tab): string => $adminBase . '?view=settings&tab=' . rawurlencode($tab);
 ?>
 <div class="toolbar">
     <h1>Pengaturan</h1>
     <span class="muted">Berlaku untuk blog aktif</span>
 </div>
 
-<form method="post" action="<?= e($adminBase . '?view=settings') ?>">
+<nav class="filter-tabs" style="margin-bottom:16px" aria-label="Bagian pengaturan">
+    <?php foreach ($tabLabels as $key => $label): ?>
+        <a class="filter-tab<?= $key === $activeTab ? ' active' : '' ?>" href="<?= e($tabUrl($key)) ?>"><?= e($label) ?></a>
+    <?php endforeach; ?>
+</nav>
+
+<form method="post" action="<?= e($adminBase . '?view=settings&tab=' . rawurlencode($activeTab)) ?>">
     <input type="hidden" name="action" value="settings.save">
     <?= \App\Core\Csrf::field() ?>
 
+    <?php if ($activeTab === 'identity'): ?>
     <div class="card">
         <h2>Identitas Situs</h2>
         <div class="row">
@@ -73,7 +101,7 @@ $value = static fn(string $key): string => (string)($settings[$key] ?? ($default
             </div>
         </div>
     </div>
-
+    <?php elseif ($activeTab === 'reading'): ?>
     <div class="card">
         <h2>Membaca &amp; Permalink</h2>
         <div class="row">
@@ -88,6 +116,7 @@ $value = static fn(string $key): string => (string)($settings[$key] ?? ($default
                         <option value="<?= e($code) ?>"<?= $value('permalink_format') === $code ? ' selected' : '' ?>><?= e($label) ?></option>
                     <?php endforeach; ?>
                 </select>
+                <p class="help">Mengubah format hanya memengaruhi tautan baru. URL lama tetap berfungsi lewat redirect.</p>
             </div>
             <div>
                 <label for="homepage_mode">Beranda</label>
@@ -100,7 +129,7 @@ $value = static fn(string $key): string => (string)($settings[$key] ?? ($default
         <label for="footer_text">Teks footer</label>
         <input id="footer_text" type="text" name="footer_text" value="<?= e($value('footer_text')) ?>">
     </div>
-
+    <?php elseif ($activeTab === 'comments'): ?>
     <div class="card">
         <h2>Komentar</h2>
         <label class="checkbox"><input type="checkbox" name="allow_comments" value="1"<?= $value('allow_comments') === '1' ? ' checked' : '' ?>> Izinkan komentar</label>
@@ -116,7 +145,7 @@ $value = static fn(string $key): string => (string)($settings[$key] ?? ($default
             </div>
         </div>
     </div>
-
+    <?php elseif ($activeTab === 'media'): ?>
     <div class="card">
         <h2>Media &amp; Kinerja</h2>
         <div class="row">
@@ -135,14 +164,7 @@ $value = static fn(string $key): string => (string)($settings[$key] ?? ($default
         </div>
         <label class="checkbox"><input type="checkbox" name="media_webp" value="1"<?= $value('media_webp') === '1' ? ' checked' : '' ?>> Buat versi WebP otomatis</label>
     </div>
-
-    <div class="card">
-        <h2>Direct Link Iklan (QR Code)</h2>
-        <label for="qr_download_direct_url">URL Direct Link untuk tombol unduh QR</label>
-        <input id="qr_download_direct_url" type="url" name="qr_download_direct_url" value="<?= e($value('qr_download_direct_url')) ?>" placeholder="https://direct-link-iklan.example/">
-        <p class="help">Opsional. Bila diisi, tautan ini dibuka di tab baru setiap pengunjung menekan tombol unduh di halaman QR Code Generator. Kosongkan untuk unduhan langsung tanpa perantara.</p>
-    </div>
-
+    <?php elseif ($activeTab === 'seo'): ?>
     <div class="card">
         <h2>SEO Default</h2>
         <div class="row">
@@ -195,7 +217,7 @@ $value = static fn(string $key): string => (string)($settings[$key] ?? ($default
         <label for="robots_txt">robots.txt kustom</label>
         <textarea id="robots_txt" name="robots_txt" rows="5" placeholder="User-agent: *&#10;Disallow: /admin/&#10;Sitemap: …"><?= e($value('robots_txt')) ?></textarea>
     </div>
-
+    <?php elseif ($activeTab === 'social'): ?>
     <div class="card">
         <h2>Sosial</h2>
         <div class="row">
@@ -207,7 +229,7 @@ $value = static fn(string $key): string => (string)($settings[$key] ?? ($default
             <?php endforeach; ?>
         </div>
     </div>
-
+    <?php elseif ($activeTab === 'email'): ?>
     <div class="card">
         <h2>Email</h2>
         <div class="row">
@@ -221,7 +243,13 @@ $value = static fn(string $key): string => (string)($settings[$key] ?? ($default
             </div>
         </div>
     </div>
-
+    <?php elseif ($activeTab === 'advanced'): ?>
+    <div class="card">
+        <h2>Direct Link Iklan (QR Code)</h2>
+        <label for="qr_download_direct_url">URL Direct Link untuk tombol unduh QR</label>
+        <input id="qr_download_direct_url" type="url" name="qr_download_direct_url" value="<?= e($value('qr_download_direct_url')) ?>" placeholder="https://direct-link-iklan.example/">
+        <p class="help">Opsional. Bila diisi, tautan ini dibuka di tab baru setiap pengunjung menekan tombol unduh di halaman QR Code Generator. Kosongkan untuk unduhan langsung tanpa perantara.</p>
+    </div>
     <div class="card">
         <h2>Lanjutan</h2>
         <label class="checkbox"><input type="checkbox" name="maintenance_mode" value="1"<?= $value('maintenance_mode') === '1' ? ' checked' : '' ?>> Mode perawatan (situs tertutup untuk pengunjung)</label>
@@ -233,9 +261,18 @@ $value = static fn(string $key): string => (string)($settings[$key] ?? ($default
         <label for="footer_code">HTML tambahan sebelum &lt;/body&gt;</label>
         <textarea id="footer_code" name="footer_code" rows="3"><?= e($value('footer_code')) ?></textarea>
     </div>
+    <?php endif; ?>
 
     <div class="customizer-actions">
         <button type="submit">Simpan Pengaturan</button>
         <span class="muted">Cache dibersihkan otomatis setelah menyimpan.</span>
     </div>
+</form>
+
+<form method="post" action="<?= e($adminBase . '?view=settings&tab=' . rawurlencode($activeTab)) ?>" style="margin-top:12px"
+      onsubmit="return confirm('Kembalikan pengaturan bagian ini ke nilai bawaan?');">
+    <input type="hidden" name="action" value="settings.reset">
+    <?= \App\Core\Csrf::field() ?>
+    <input type="hidden" name="group" value="<?= e($activeTab) ?>">
+    <button type="submit" class="btn secondary small">Reset bagian ini ke bawaan</button>
 </form>

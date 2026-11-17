@@ -104,6 +104,81 @@ final class AdminController
         ];
     }
 
+    /**
+     * Grouped settings fields — single source of truth shared by the settings
+     * view (tab rendering) and the reset-to-default action. Keys must match
+     * Settings::defaults() and the extra keys accepted by saveSettings().
+     *
+     * @return array<string,array<string,string>> group => [key => label]
+     */
+    public static function settingsGroups(): array
+    {
+        return [
+            'identity' => [
+                'site_name' => 'Nama situs',
+                'tagline' => 'Tagline',
+                'site_description' => 'Deskripsi situs',
+                'site_url' => 'URL situs',
+                'language' => 'Bahasa',
+                'timezone' => 'Zona waktu',
+                'logo_url' => 'Logo',
+                'favicon_url' => 'Favicon',
+                'social_image' => 'Gambar sosial default',
+            ],
+            'reading' => [
+                'posts_per_page' => 'Artikel per halaman',
+                'permalink_format' => 'Format permalink',
+                'homepage_mode' => 'Beranda',
+                'footer_text' => 'Teks footer',
+            ],
+            'comments' => [
+                'allow_comments' => 'Izinkan komentar',
+                'comment_moderation' => 'Moderasi komentar baru',
+                'comments_per_page' => 'Komentar per halaman',
+                'comments_closed_message' => 'Pesan saat komentar ditutup',
+            ],
+            'media' => [
+                'media_max_mb' => 'Ukuran unggahan maks (MB)',
+                'cache_ttl' => 'Cache TTL (detik)',
+                'cdn_url' => 'CDN URL',
+                'media_webp' => 'Versi WebP otomatis',
+            ],
+            'seo' => [
+                'seo_title' => 'Judul SEO',
+                'meta_title_suffix' => 'Sufiks judul',
+                'seo_description' => 'Deskripsi SEO',
+                'seo_keywords' => 'Kata kunci',
+                'google_site_verification' => 'Google verification',
+                'bing_site_verification' => 'Bing verification',
+                'yandex_site_verification' => 'Yandex verification',
+                'robots_policy' => 'Robots',
+                'feed_items' => 'Item feed',
+                'twitter_site' => 'Akun Twitter',
+                'sitemap_enabled' => 'Sitemap XML',
+                'robots_txt' => 'robots.txt kustom',
+            ],
+            'social' => [
+                'social_facebook' => 'Facebook',
+                'social_instagram' => 'Instagram',
+                'social_youtube' => 'YouTube',
+                'social_twitter' => 'Twitter/X',
+                'social_linkedin' => 'LinkedIn',
+            ],
+            'email' => [
+                'email_from' => 'Alamat pengirim',
+                'email_name' => 'Nama pengirim',
+            ],
+            'advanced' => [
+                'maintenance_mode' => 'Mode perawatan',
+                'registration_enabled' => 'Registrasi publik',
+                'qr_download_direct_url' => 'Direct link iklan (QR)',
+                'analytics_code' => 'Kode analytics',
+                'header_code' => 'HTML di head',
+                'footer_code' => 'HTML sebelum </body>',
+            ],
+        ];
+    }
+
     public function handle(): string
     {
         $view = (string)($_GET['view'] ?? 'dashboard');
@@ -302,6 +377,7 @@ final class AdminController
             str_starts_with($action, 'blog.') => 'Blog diperbarui.',
             str_starts_with($action, 'user.') => 'Pengguna diperbarui.',
             str_starts_with($action, 'redirect.') => 'Redirect disimpan.',
+            $action === 'settings.reset' => 'Pengaturan dikembalikan ke nilai bawaan.',
             str_starts_with($action, 'settings.') => 'Pengaturan disimpan.',
             str_starts_with($action, 'backup.') => 'Backup selesai.',
             str_starts_with($action, 'builder.') => 'Halaman builder disimpan.',
@@ -358,6 +434,7 @@ final class AdminController
             'redirect.save' => Seo::saveRedirect(['from_path' => $_POST['from_path'] ?? '', 'to_path' => $_POST['to_path'] ?? '', 'status_code' => $_POST['status_code'] ?? 301]),
             'redirect.delete' => $this->deleteRedirect(),
             'settings.save' => $this->saveSettings(),
+            'settings.reset' => $this->resetSettings(),
             'backup.create' => $this->createBackup(),
             'backup.delete' => $this->deleteBackup(),
             'backup.restore' => $this->restoreBackup(),
@@ -1135,6 +1212,24 @@ final class AdminController
         log_activity('settings.save', 'Pengaturan situs diperbarui');
     }
 
+    private function resetSettings(): void
+    {
+        Auth::requirePermission('settings.manage');
+        // Optional: reset hanya bagian tertentu (tab) bila "group" dikirim.
+        $group = (string)($_POST['group'] ?? '');
+        $groups = self::settingsGroups();
+        if ($group !== '' && isset($groups[$group])) {
+            Settings::reset(array_keys($groups[$group]));
+            log_activity('settings.reset', 'Pengaturan direset: ' . $group);
+            return;
+        }
+        Settings::reset();
+        \App\Core\Lang::reset();
+        Cache::flushGroup('settings');
+        Cache::flushGroup('theme');
+        log_activity('settings.reset', 'Semua pengaturan direset ke bawaan');
+    }
+
     private function createBackup(): void
     {
         $payload = Backup::create();
@@ -1263,6 +1358,7 @@ final class AdminController
 
     private function ajaxMediaList(): string
     {
+        Auth::requirePermission('media.upload');
         $items = Media::all(['type' => (string)($_GET['type'] ?? 'all'), 'search' => (string)($_GET['q'] ?? '')], 120);
         $out = [];
         foreach ($items as $item) {
@@ -1306,6 +1402,7 @@ final class AdminController
 
     private function ajaxSearchPosts(): string
     {
+        Auth::requirePermission('post.edit');
         $term = trim((string)($_GET['q'] ?? ''));
         if ($term === '') {
             return \App\Core\Response::json(['ok' => true, 'items' => []]);
@@ -1320,6 +1417,7 @@ final class AdminController
 
     private function ajaxSlugCheck(): string
     {
+        Auth::requirePermission('post.create');
         $table = (string)($_GET['table'] ?? 'posts');
         if (!in_array($table, ['posts', 'pages'], true)) {
             return \App\Core\Response::error('Tabel tidak valid.');

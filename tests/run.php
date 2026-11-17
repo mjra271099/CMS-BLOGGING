@@ -106,6 +106,33 @@ try {
     check('Cache::set/get round-trip', Cache::get('zztest.cache') === ['ok' => true]);
     Cache::forget('zztest.cache');
     check('Cache::forget removes key', Cache::get('zztest.cache') === null);
+    // Bulk reset must preserve the active theme and integration secrets.
+    $prevTheme = Settings::get('theme', '');
+    $prevToken = Settings::get('tmdb_api_token', '');
+    $prevPerPage = Settings::get('posts_per_page', '9');
+    $prevSiteName = Settings::get('site_name', '');
+    Settings::set('site_name', 'ZZ Reset Probe');
+    Settings::set('theme', 'amp-theme');
+    Settings::set('tmdb_api_token', 'secret-token-xyz');
+    Settings::reset();
+    check('Settings::reset restores default', Settings::get('site_name') === Settings::defaults()['site_name']);
+    check('Settings::reset keeps active theme', Settings::get('theme') === 'amp-theme');
+    check('Settings::reset keeps integration secrets', Settings::get('tmdb_api_token') === 'secret-token-xyz');
+    // Group reset only touches the named keys.
+    Settings::set('site_name', 'ZZ Group Probe');
+    Settings::set('posts_per_page', '42');
+    Settings::reset(['site_name']);
+    check('Settings::reset(keys) restores that key', Settings::get('site_name') === Settings::defaults()['site_name']);
+    check('Settings::reset(keys) leaves others untouched', Settings::get('posts_per_page') === '42');
+    // Restore the real values we probed.
+    Settings::set('theme', $prevTheme);
+    if ($prevToken === '') {
+        Settings::forget('tmdb_api_token');
+    } else {
+        Settings::set('tmdb_api_token', $prevToken);
+    }
+    Settings::set('posts_per_page', $prevPerPage);
+    Settings::set('site_name', $prevSiteName);
 
     section('Posts');
     $postId = Post::save([

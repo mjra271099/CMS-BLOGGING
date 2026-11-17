@@ -78,6 +78,52 @@ final class Settings
         Cache::flushGroup('settings');
     }
 
+    /**
+     * Kunci yang TIDAK boleh ikut direset otomatis: identitas aktif (tema),
+     * rahasia integrasi, dan status yang memengaruhi keamanan/penagihan.
+     * Reset eksplisit per-kunci masih diizinkan bila pemanggil menyebutnya.
+     */
+    private const RESET_PROTECTED = ['theme', 'default_role'];
+
+    /**
+     * Kembalikan pengaturan ke nilai bawaan. Bila $keys diberikan, hanya kunci
+     * tersebut yang direset; jika null, seluruh pengaturan blog direset.
+     * Nilai default disimpan eksplisit (bukan dihapus) agar nilai kosong
+     * ("") pada default tetap berlaku dan tidak jatuh ke fallback kode.
+     *
+     * Saat reset massal ($keys === null) kunci sensitif seperti `theme` dan
+     * rahasia integrasi (mis. token API) dikecualikan agar konfigurasi aktif
+     * dan kredensial tidak hilang tanpa sengaja.
+     *
+     * @param string[]|null $keys
+     */
+    public static function reset(?array $keys = null, ?int $blogId = null): void
+    {
+        $blogId ??= Context::blogId();
+        $defaults = self::defaults();
+        if ($keys === null) {
+            foreach (self::RESET_PROTECTED as $protected) {
+                unset($defaults[$protected]);
+            }
+            // Jangan reset rahasia integrasi yang tidak ada di defaults()
+            // (mis. tmdb_api_token) — hanya kunci default publik yang direset.
+            self::setMany($defaults, $blogId);
+            return;
+        }
+        $subset = [];
+        foreach ($keys as $key) {
+            if (in_array($key, self::RESET_PROTECTED, true)) {
+                continue;
+            }
+            if (array_key_exists($key, $defaults)) {
+                $subset[$key] = $defaults[$key];
+            }
+        }
+        if ($subset !== []) {
+            self::setMany($subset, $blogId);
+        }
+    }
+
     public static function flush(): void
     {
         self::$cache = [];

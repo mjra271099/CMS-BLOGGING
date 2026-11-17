@@ -103,7 +103,8 @@ final class Seo
             $xml .= '<url><loc>' . e(url()) . '</loc><changefreq>daily</changefreq><priority>1.0</priority></url>';
             $posts = Database::fetchAll(
                 "SELECT slug, published_at, updated_at, thumbnail, title FROM posts
-                 WHERE blog_id = ? AND status = 'published' AND published_at <= NOW() AND robots IS NULL
+                 WHERE blog_id = ? AND status = 'published' AND published_at <= NOW()
+                   AND (robots IS NULL OR robots NOT LIKE '%noindex%')
                  ORDER BY published_at DESC LIMIT 2000",
                 [Context::blogId()]
             );
@@ -113,7 +114,10 @@ final class Seo
                     . '<changefreq>weekly</changefreq><priority>0.8</priority></url>';
             }
             $pages = Database::fetchAll(
-                "SELECT slug, updated_at FROM pages WHERE blog_id = ? AND status = 'published' AND published_at <= NOW()",
+                "SELECT slug, updated_at FROM pages
+                 WHERE blog_id = ? AND status = 'published' AND published_at <= NOW()
+                   AND visibility = 'public'
+                   AND (robots IS NULL OR robots NOT LIKE '%noindex%')",
                 [Context::blogId()]
             );
             foreach ($pages as $page) {
