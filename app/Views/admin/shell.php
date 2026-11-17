@@ -67,7 +67,7 @@ foreach ($nav as $group => $items) {
 $isEditor = in_array($view, ['post-edit', 'page-edit'], true);
 ?>
 <!doctype html>
-<html lang="id" data-theme="light">
+<html lang="<?= e(\App\Core\Lang::htmlLocale()) ?>" data-theme="light">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -99,10 +99,10 @@ $isEditor = in_array($view, ['post-edit', 'page-edit'], true);
 <script>
 try { if (localStorage.getItem('cms-sidebar') === 'collapsed') document.body.classList.add('sidebar-collapsed'); } catch (e) {}
 </script>
-<a class="skip-link" href="#main-content">Lompat ke konten</a>
+<a class="skip-link" href="#main-content"><?= e(__('admin_skip_to_content')) ?></a>
 
 <div class="admin-shell" id="admin-shell">
-    <aside class="sidebar" id="admin-sidebar" aria-label="Navigasi utama">
+    <aside class="sidebar" id="admin-sidebar" aria-label="<?= e(__('admin_main_nav')) ?>">
         <div class="sidebar-brand">
             <a class="brand-link" href="<?= e($adminBase . '?view=dashboard') ?>">
                 <?php if ($brandLogo !== ''): ?>
@@ -112,18 +112,18 @@ try { if (localStorage.getItem('cms-sidebar') === 'collapsed') document.body.cla
                 <?php endif; ?>
                 <span class="brand-text">
                     <strong><?= e($activeBlogName) ?></strong>
-                    <small>Panel Admin</small>
+                    <small><?= e(__('admin_panel')) ?></small>
                 </span>
             </a>
-            <button type="button" class="sidebar-collapse" data-sidebar-collapse aria-label="Ringkas sidebar" title="Ringkas sidebar">
+            <button type="button" class="sidebar-collapse" data-sidebar-collapse aria-label="<?= e(__('admin_collapse_sidebar')) ?>" title="<?= e(__('admin_collapse_sidebar')) ?>">
                 <?= AdminUi::icon('panel-left', 16) ?>
             </button>
-            <button type="button" class="icon-btn sidebar-close" data-sidebar-close aria-label="Tutup navigasi">
+            <button type="button" class="icon-btn sidebar-close" data-sidebar-close aria-label="<?= e(__('admin_close_nav')) ?>">
                 <?= AdminUi::icon('x', 18) ?>
             </button>
         </div>
 
-        <nav class="sidebar-nav" aria-label="Navigasi admin">
+        <nav class="sidebar-nav" aria-label="<?= e(__('admin_nav')) ?>">
             <?php foreach ($nav as $group => $items): ?>
                 <div class="nav-section"><?= e($group) ?></div>
                 <?php foreach ((array)$items as $key => $item): ?>
@@ -148,17 +148,17 @@ try { if (localStorage.getItem('cms-sidebar') === 'collapsed') document.body.cla
                 <span class="avatar" aria-hidden="true"><?= e($userInitials) ?></span>
                 <span class="user-meta">
                     <strong><?= e($userName) ?></strong>
-                    <small><?= e($userRole !== '' ? $userRole : 'Profil saya') ?></small>
+                    <small><?= e($userRole !== '' ? $userRole : __('admin_profile')) ?></small>
                 </span>
             </a>
         </div>
     </aside>
 
-    <button type="button" class="sidebar-scrim" data-sidebar-close aria-label="Tutup navigasi" hidden></button>
+    <button type="button" class="sidebar-scrim" data-sidebar-close aria-label="<?= e(__('admin_close_nav')) ?>" hidden></button>
 
     <div class="admin-main">
         <header class="top">
-            <button type="button" class="icon-btn sidebar-toggle" data-sidebar-toggle aria-label="Buka navigasi" aria-controls="admin-sidebar" aria-expanded="false">
+            <button type="button" class="icon-btn sidebar-toggle" data-sidebar-toggle aria-label="<?= e(__('admin_open_nav')) ?>" aria-controls="admin-sidebar" aria-expanded="false">
                 <?= AdminUi::icon('panel-left', 19) ?>
             </button>
 
@@ -166,7 +166,7 @@ try { if (localStorage.getItem('cms-sidebar') === 'collapsed') document.body.cla
                 <input type="hidden" name="view" value="posts">
                 <span class="icon" aria-hidden="true"><?= AdminUi::icon('search', 16) ?></span>
                 <input type="search" name="q" value="<?= e((string)($_GET['q'] ?? '')) ?>"
-                       placeholder="Cari artikel…" aria-label="Cari artikel" autocomplete="off">
+                       placeholder="<?= e(__('admin_search_articles')) ?>" aria-label="<?= e(__('admin_search_articles_label')) ?>" autocomplete="off">
             </form>
 
             <div class="top-actions">

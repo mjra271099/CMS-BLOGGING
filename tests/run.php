@@ -605,6 +605,21 @@ try {
     check('SalesOrder validates name and email', $badOrder);
     Database::delete('orders', 'id = ?', [$orderId]);
 
+    section('i18n');
+    $prevLocale = Settings::get('language', 'id');
+    \App\Core\Lang::reset();
+    check('Admin chrome keys exist in both catalogs', array_key_exists('admin_panel', \App\Core\Lang::catalog('id')) && array_key_exists('admin_panel', \App\Core\Lang::catalog('en')));
+    $idCatalog = \App\Core\Lang::catalog('id');
+    $enCatalog = \App\Core\Lang::catalog('en');
+    check('ID and EN catalogs cover the same keys', array_keys($idCatalog) === array_keys($enCatalog));
+    check('Admin nav group translates in ID', $idCatalog['admin_group_content'] === 'Konten');
+    check('Admin nav group translates in EN', $enCatalog['admin_group_content'] === 'Content');
+    Settings::set('language', 'en');
+    \App\Core\Lang::reset();
+    check('Admin nav group follows the blog language', isset(App\Http\AdminController::navigation()['Content']));
+    Settings::set('language', $prevLocale);
+    \App\Core\Lang::reset();
+
     section('Security');
     check('Guest cannot publish posts', !Auth::can('post.publish'));
     check('No user is authenticated in CLI', !Auth::check());

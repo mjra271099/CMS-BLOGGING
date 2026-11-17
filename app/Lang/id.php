@@ -121,4 +121,21 @@ return [
     'carousel_next' => 'Geser ke kanan',
     'featured_more' => 'More',
     'featured_more_label' => 'More in :category',
+
+    // Admin chrome
+    'admin_panel' => 'Panel Admin',
+    'admin_nav' => 'Navigasi admin',
+    'admin_main_nav' => 'Navigasi utama',
+    'admin_skip_to_content' => 'Lompat ke konten',
+    'admin_collapse_sidebar' => 'Ringkas sidebar',
+    'admin_close_nav' => 'Tutup navigasi',
+    'admin_open_nav' => 'Buka navigasi',
+    'admin_search_articles' => 'Cari artikel…',
+    'admin_search_articles_label' => 'Cari artikel',
+    'admin_profile' => 'Profil saya',
+    'admin_my_profile' => 'Profil Saya',
+    'admin_group_content' => 'Konten',
+    'admin_group_appearance' => 'Tampilan',
+    'admin_group_growth' => 'Pertumbuhan',
+    'admin_group_system' => 'Sistem',
 ];

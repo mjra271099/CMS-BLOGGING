@@ -67,7 +67,7 @@ final class AdminController
     public static function navigation(): array
     {
         return [
-            'Konten' => [
+            __('admin_group_content') => [
                 'dashboard' => ['Ringkasan', 'grid'],
                 'posts' => ['Postingan', 'file'],
                 'pages' => ['Halaman', 'layers'],
@@ -76,7 +76,7 @@ final class AdminController
                 'categories' => ['Kategori', 'tag'],
                 'tags' => ['Tag', 'hash'],
             ],
-            'Tampilan' => [
+            __('admin_group_appearance') => [
                 'themes' => ['Tema', 'palette'],
                 'customize' => ['Kustomisasi', 'sliders'],
                 'layout' => ['Tata Letak', 'columns'],
@@ -85,7 +85,7 @@ final class AdminController
                 // Modul mandiri (admin/tools.php): CV Maker, QR, landing penjualan.
                 'tools' => ['Tools & Landing', 'download'],
             ],
-            'Pertumbuhan' => [
+            __('admin_group_growth') => [
                 'seo' => ['SEO & Audit', 'search'],
                 'redirects' => ['Redirect', 'arrow'],
                 'newsletter' => ['Newsletter', 'mail'],
@@ -93,7 +93,7 @@ final class AdminController
                 // own URL, so opening it must not require a matching admin view.
                 'tmdb' => ['Generator TMDB', 'clapper'],
             ],
-            'Sistem' => [
+            __('admin_group_system') => [
                 'blogs' => ['Blog', 'globe'],
                 'users' => ['Pengguna', 'users'],
                 'settings' => ['Pengaturan', 'settings'],

@@ -120,4 +120,21 @@ return [
     'carousel_next' => 'Scroll right',
     'featured_more' => 'More',
     'featured_more_label' => 'More in :category',
+
+    // Admin chrome
+    'admin_panel' => 'Admin Panel',
+    'admin_nav' => 'Admin navigation',
+    'admin_main_nav' => 'Main navigation',
+    'admin_skip_to_content' => 'Skip to content',
+    'admin_collapse_sidebar' => 'Collapse sidebar',
+    'admin_close_nav' => 'Close navigation',
+    'admin_open_nav' => 'Open navigation',
+    'admin_search_articles' => 'Search articles…',
+    'admin_search_articles_label' => 'Search articles',
+    'admin_profile' => 'My profile',
+    'admin_my_profile' => 'My Profile',
+    'admin_group_content' => 'Content',
+    'admin_group_appearance' => 'Appearance',
+    'admin_group_growth' => 'Growth',
+    'admin_group_system' => 'System',
 ];
