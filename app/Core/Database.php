@@ -16,6 +16,19 @@ final class Database
     private static ?PDO $pdo = null;
     private static int $transactionDepth = 0;
 
+    /** Jumlah query (untuk diagnostik bila CMS_PROFILE didefinisikan). */
+    private static int $queryCount = 0;
+
+    public static function queryCount(): int
+    {
+        return self::$queryCount;
+    }
+
+    public static function resetQueryCount(): void
+    {
+        self::$queryCount = 0;
+    }
+
     public static function pdo(): PDO
     {
         if (self::$pdo instanceof PDO) {
@@ -60,6 +73,7 @@ final class Database
             $stmt->bindValue($key, $value, $type);
         }
         $stmt->execute();
+        self::$queryCount++;
         return $stmt;
     }
 
