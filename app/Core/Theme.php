@@ -347,6 +347,29 @@ final class Theme
     }
 
     /**
+     * Turunkan varian lebih gelap dari sebuah warna hex (#rgb atau #rrggbb).
+     * Dipakai untuk `primary_dark` agar admin tidak perlu memilih dua warna.
+     */
+    public static function darkenHex(string $hex, float $amount = 0.22): ?string
+    {
+        $hex = trim($hex);
+        if (!preg_match('/^#([0-9a-f]{3}|[0-9a-f]{6})$/i', $hex, $m)) {
+            return null;
+        }
+        $body = $m[1];
+        if (strlen($body) === 3) {
+            $body = $body[0] . $body[0] . $body[1] . $body[1] . $body[2] . $body[2];
+        }
+        $parts = [];
+        foreach ([0, 2, 4] as $i) {
+            $channel = (int)hexdec(substr($body, $i, 2));
+            $channel = (int)round($channel * (1 - max(0.0, min(1.0, $amount))));
+            $parts[] = str_pad(dechex(max(0, min(255, $channel))), 2, '0', STR_PAD_LEFT);
+        }
+        return '#' . implode('', $parts);
+    }
+
+    /**
      * CSS variables from customizer settings, emitted in the page head.
      */
     public function customizerCss(): string
@@ -383,6 +406,12 @@ final class Theme
                 if ($derived !== '') {
                     $value = $derived;
                 }
+            }
+            // `primary_dark` is a shade of the brand color. Kalau admin tidak
+            // memilihnya sendiri, hitung otomatis dari `primary_color` supaya
+            // pemula cukup memilih satu warna. Nilai eksplisit tetap menang.
+            if ($key === 'primary_dark' && trim($value) === '') {
+                $value = self::darkenHex($this->setting('primary_color')) ?? '';
             }
             if ($value === '') {
                 continue;

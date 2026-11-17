@@ -49,14 +49,17 @@
             "label": "Warna utama",
             "type": "color",
             "default": "#2563eb",
-            "group": "Warna"
+            "group": "Warna",
+            "description": "Warna merek utama: tombol, tautan, dan aksen situs."
         },
         {
             "key": "primary_dark",
-            "label": "Warna utama gelap",
+            "label": "Warna utama (gelap otomatis)",
             "type": "color",
-            "default": "#1d4ed8",
-            "group": "Warna"
+            "default": "",
+            "group": "Warna",
+            "description": "Dihitung otomatis dari warna utama. Ubah hanya bila perlu.",
+            "optional": true
         },
         {
             "key": "accent_color",

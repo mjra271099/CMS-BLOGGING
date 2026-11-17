@@ -443,6 +443,28 @@
     $$('[data-live-setting]').forEach((field) => {
       field.addEventListener('input', debounce(applyPreview, 120));
     });
+    // Optional color fields (e.g. primary_dark) can be reset to "automatic".
+    // The browser color input cannot be blank, so we mark the field disabled
+    // and clear the paired hex echo; the disabled input is not submitted, which
+    // makes the backend fall back to the derived value.
+    $$('[data-clear-setting]').forEach((link) => {
+      link.addEventListener('click', (event) => {
+        event.preventDefault();
+        const key = link.dataset.clearSetting;
+        const color = document.querySelector(`input[type="color"][name="settings[${key}]"]`);
+        const echo = document.querySelector(`[data-color-echo][aria-label]`);
+        if (color) {
+          color.value = '#000000';
+          color.disabled = true;
+          color.dispatchEvent(new Event('input', { bubbles: true }));
+        }
+        document.querySelectorAll('[data-color-echo]').forEach((el) => {
+          if (color && el.previousElementSibling === color) el.value = '';
+        });
+        link.textContent = 'Otomatis aktif';
+        link.classList.add('muted');
+      });
+    });
     $$('[data-preview-width]').forEach((button) => {
       button.addEventListener('click', () => {
         previewFrame.style.width = button.dataset.previewWidth + (button.dataset.previewWidth === '100%' ? '' : 'px');

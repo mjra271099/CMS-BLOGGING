@@ -427,6 +427,23 @@ try {
     check('Theme::resetSettings restores defaults', Theme::make('amp-theme')->setting('primary_color') !== '#ff0000');
     Theme::make('amp-theme')->saveSettings(['font_pair' => $prevPair]);
     Theme::reset();
+    // primary_dark is derived from primary_color unless set explicitly.
+    Database::run(
+        'DELETE FROM theme_settings WHERE blog_id = ? AND theme = ? AND setting_key = ?',
+        [Context::blogId(), 'amp-theme', 'primary_dark']
+    );
+    Theme::reset();
+    check('primary_dark is derived from the brand colour', str_contains(Theme::instance()->customizerCss(), '--t-primary-dark:#1d4db7'));
+    check('Theme::darkenHex darkens valid hex', Theme::darkenHex('#ffffff') === '#c7c7c7');
+    check('Theme::darkenHex rejects invalid input', Theme::darkenHex('not-a-colour') === null);
+    Theme::make('amp-theme')->saveSettings(['primary_dark' => '#111111']);
+    Theme::reset();
+    check('Explicit primary_dark wins over the derived shade', str_contains(Theme::instance()->customizerCss(), '--t-primary-dark:#111111'));
+    Database::run(
+        'DELETE FROM theme_settings WHERE blog_id = ? AND theme = ? AND setting_key = ?',
+        [Context::blogId(), 'amp-theme', 'primary_dark']
+    );
+    Theme::reset();
 
     /*
      * Structured Data: the theme decides how far the JSON-LD graph goes. A

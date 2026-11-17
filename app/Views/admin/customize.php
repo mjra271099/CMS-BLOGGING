@@ -102,6 +102,14 @@ $dirty = $themeSlug !== $activeSlug;
                                    data-live-setting="<?= e($key) ?>">
                             <input type="text" value="<?= e($value) ?>" data-color-echo aria-label="<?= e($label) ?> hex">
                         </div>
+                        <?php if (!empty($field['optional'])): ?>
+                            <p class="help">
+                                Kosongkan untuk memakai nilai otomatis.
+                                <a href="#" data-clear-setting="<?= e($key) ?>">Pakai otomatis</a>
+                            </p>
+                        <?php elseif (!empty($field['description'])): ?>
+                            <p class="help"><?= e((string)$field['description']) ?></p>
+                        <?php endif; ?>
                     <?php elseif ($type === 'textarea'): ?>
                         <label for="<?= e($inputId) ?>"><?= e($label) ?></label>
                         <textarea id="<?= e($inputId) ?>" name="settings[<?= e($key) ?>]" rows="6"
