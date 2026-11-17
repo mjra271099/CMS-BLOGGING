@@ -436,8 +436,18 @@
       spacing: '--t-space'
     };
     const pxKeys = ['font_size', 'radius', 'content_width', 'spacing'];
-    // Cermin dari App\Core\Theme::fontStackFor(): ubah URL Google Fonts menjadi
-    // nama keluarga font agar pratinjau memakai font yang dipilih.
+    // Katalog font (kategori, catatan, peran teks/judul) dikirim server lewat
+    // data-font-meta supaya pratinjau memakai sumber yang sama dengan backend.
+    let fontMetaCache = {};
+    const pairSelect = $('[data-font-pair]');
+    if (pairSelect?.dataset.fontMeta) {
+      try { fontMetaCache = JSON.parse(pairSelect.dataset.fontMeta); } catch (error) { fontMetaCache = {}; }
+    }
+    const fontFallback = (category) => {
+      if (category === 'serif') return 'Georgia, "Times New Roman", Times, serif';
+      if (category === 'mono') return '"SFMono-Regular", Consolas, "Liberation Mono", monospace';
+      return 'system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif';
+    };
     const familiesFromPair = (url) => {
       const families = [];
       const re = /family=([^&:]+)/gi;
@@ -448,6 +458,32 @@
       }
       return families;
     };
+    // Cermin dari App\\Core\\Theme::fontFamilies()/fontStackFor().
+    const fontStack = (url, key, meta) => {
+      const fallback = fontFallback(meta?.c || 'sans');
+      let declared = Array.isArray(meta?.f) && meta.f.length ? meta.f.slice() : familiesFromPair(url);
+      if (!declared.length) return fallback;
+      const prefer = key === 'font_heading' ? meta?.h : meta?.b;
+      const primary = prefer && declared.includes(prefer) ? prefer : declared[0];
+      const stack = [`"${primary}"`];
+      const seen = new Set([primary.toLowerCase()]);
+      declared.forEach((family) => {
+        const lower = family.toLowerCase();
+        if (!seen.has(lower)) { seen.add(lower); stack.push(`"${family}"`); }
+      });
+      fallback.split(',').forEach((part) => {
+        const family = part.trim();
+        const lower = family.replace(/["']/g, '').toLowerCase();
+        if (family && !seen.has(lower)) { seen.add(lower); stack.push(family); }
+      });
+      return stack.join(', ');
+    };
+    const pairNote = $('[data-font-pair-note]');
+    if (pairSelect && pairNote) {
+      pairSelect.addEventListener('change', () => {
+        pairNote.textContent = fontMetaCache[pairSelect.value]?.n || 'Pilih pasangan font di atas.';
+      });
+    }
     const darken = (hex, amount = 0.22) => {
       const match = /^#([0-9a-f]{3}|[0-9a-f]{6})$/i.exec((hex || '').trim());
       if (!match) return '';
@@ -483,12 +519,9 @@
       // Tipografi berasal dari pasangan font, bukan field terpisah.
       const pairField = fieldFor('font_pair');
       if (pairField) {
-        const families = familiesFromPair(pairField.value);
-        const fallback = '"Inter", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif';
-        if (families.length) {
-          root.style.setProperty('--t-font', '"' + families[0] + '", ' + fallback);
-          root.style.setProperty('--t-font-head', '"' + (families[1] || families[0]) + '", ' + fallback);
-        }
+        const pairMeta = fontMetaCache[pairField.value] || null;
+        root.style.setProperty('--t-font', fontStack(pairField.value, 'font_family', pairMeta));
+        root.style.setProperty('--t-font-head', fontStack(pairField.value, 'font_heading', pairMeta));
       }
     };
     previewFrame.addEventListener('load', applyPreview);
@@ -753,16 +786,68 @@
       return (fields[blockType] || ['text']);
     };
 
+    // Skema blok dari server: dipakai untuk merender editor baris (repeater)
+    // pada blok yang baru ditambahkan, sehingga tidak ada lagi textarea JSON.
+    let blockSchemas = {};
+    try { blockSchemas = JSON.parse(builderForm.dataset.blockSchemas || '{}'); } catch (error) { blockSchemas = {}; }
+    const escapeHtml = (value) => String(value ?? '')
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+
+    /**
+     * Bangun editor baris untuk daftar item (fitur/FAQ/testimoni/galeri).
+     * @param {string} field  nama field ('items' atau 'images')
+     * @param {object} schema definisi blok dari data-block-schemas
+     * @param {Array} items   nilai awal
+     */
+    const repeaterMarkup = (field, schema, items) => {
+      const itemFields = (schema && schema.itemFields) || {};
+      if (!Object.keys(itemFields).length) return '';
+      const itemLabel = (schema && schema.itemLabel) || 'item';
+      const rows = (Array.isArray(items) ? items : []).map((rawItem) => {
+        const item = rawItem && typeof rawItem === 'object' ? rawItem : { src: String(rawItem ?? '') };
+        const inputs = Object.entries(itemFields).map(([key, def]) => {
+          const label = `<label class="repeater-label">${escapeHtml(def.label || key)}</label>`;
+          const value = escapeHtml(String(item[key] ?? ''));
+          if (def.type === 'textarea') {
+            return label + `<textarea rows="2" data-repeater-input="${key}">${value}</textarea>`;
+          }
+          return label + `<input type="text" data-repeater-input="${key}" value="${value}" placeholder="${escapeHtml(def.placeholder || '')}">`;
+        }).join('');
+        return `<div class="repeater-row" data-repeater-row>
+          <span class="repeater-grip" title="Urutkan dengan tombol ↑ ↓">⋮⋮</span>
+          <div class="repeater-inputs">${inputs}</div>
+          <div class="repeater-tools">
+            <button type="button" class="secondary small" data-repeater-up title="Naik">↑</button>
+            <button type="button" class="secondary small" data-repeater-down title="Turun">↓</button>
+            <button type="button" class="danger small" data-repeater-remove>Hapus</button>
+          </div>
+        </div>`;
+      }).join('');
+      return `<label>${escapeHtml(field.charAt(0).toUpperCase() + field.slice(1))}</label>
+        <div class="repeater" data-repeater="${field}"
+             data-repeater-fields="${escapeHtml(JSON.stringify(itemFields))}"
+             data-repeater-label="${escapeHtml(itemLabel)}">
+          <input type="hidden" data-repeater-json data-block-setting="${field}" data-block-setting-json="1"
+                 value="${escapeHtml(JSON.stringify(Array.isArray(items) ? items : []))}">
+          <div class="repeater-rows" data-repeater-rows>${rows}</div>
+          <button type="button" class="secondary small" data-repeater-add>+ Tambah ${escapeHtml(itemLabel)}</button>
+          <p class="help">Cukup isi kolom di atas — tidak perlu menulis kode.</p>
+        </div>`;
+    };
+
     const appendBlock = (sectionNode, type) => {
       const blockNode = document.createElement('div');
       blockNode.className = 'builder-block-edit';
       blockNode.dataset.blockType = type;
       blockNode.dataset.blockId = Math.random().toString(16).slice(2, 10);
       const fields = fieldTemplate(type, {});
+      const schema = blockSchemas[type] || {};
       const inputs = fields.map((field) => {
         const label = `<label>${field.replace(/_/g, ' ')}</label>`;
         if (field === 'items' || field === 'images') {
-          return label + `<textarea data-block-setting="${field}" data-block-setting-json="1" rows="4" spellcheck="false">[]</textarea>`;
+          // Pakai editor baris, bukan textarea JSON.
+          return repeaterMarkup(field, schema, []);
         }
         if (field === 'text' || field === 'subtitle' || field === 'html') {
           return label + `<textarea data-block-setting="${field}" rows="3"></textarea>`;
@@ -888,6 +973,206 @@
       if (event.target.closest('[data-builder-refresh]')) {
         refreshPreview();
       }
+    });
+
+    // ---------------------------------------------------------------
+    // Visual repeater for item lists (features, FAQ, testimonials, gallery)
+    // Replaces hand-written JSON textareas: rows are edited with plain
+    // inputs and serialised back into the hidden JSON field.
+    // ---------------------------------------------------------------
+    const serializeRepeater = (repeater) => {
+      const jsonField = $('[data-repeater-json]', repeater);
+      if (!jsonField) return;
+      const rows = [];
+      $$('[data-repeater-row]', repeater).forEach((row) => {
+        const item = {};
+        $$('[data-repeater-input]', row).forEach((input) => {
+          item[input.dataset.repeaterInput] = input.value;
+        });
+        rows.push(item);
+      });
+      jsonField.value = JSON.stringify(rows);
+    };
+    const repeaters = $$('[data-repeater]', builderForm);
+    const bindRepeater = (repeater) => {
+      if (!repeater || repeater.dataset.repeaterBound === '1') return;
+      repeater.dataset.repeaterBound = '1';
+      const rows = $('[data-repeater-rows]', repeater);
+      if (!rows) return;
+      const templateFor = () => {
+        let fields = {};
+        try { fields = JSON.parse(repeater.dataset.repeaterFields || '{}'); } catch (error) { fields = {}; }
+        const row = document.createElement('div');
+        row.className = 'repeater-row';
+        row.dataset.repeaterRow = '';
+        const grip = document.createElement('span');
+        grip.className = 'repeater-grip';
+        grip.title = 'Urutkan dengan tombol ↑ ↓';
+        grip.textContent = '⋮⋮';
+        const inputs = document.createElement('div');
+        inputs.className = 'repeater-inputs';
+        Object.entries(fields).forEach(([key, def]) => {
+          const fieldLabel = document.createElement('label');
+          fieldLabel.className = 'repeater-label';
+          fieldLabel.textContent = def.label || key;
+          inputs.appendChild(fieldLabel);
+          let control;
+          if (def.type === 'textarea') {
+            control = document.createElement('textarea');
+            control.rows = 2;
+          } else {
+            control = document.createElement('input');
+            control.type = 'text';
+            control.placeholder = def.placeholder || '';
+          }
+          control.dataset.repeaterInput = key;
+          inputs.appendChild(control);
+        });
+        const tools = document.createElement('div');
+        tools.className = 'repeater-tools';
+        tools.innerHTML = '<button type="button" class="secondary small" data-repeater-up title="Naik">↑</button>'
+          + '<button type="button" class="secondary small" data-repeater-down title="Turun">↓</button>'
+          + '<button type="button" class="danger small" data-repeater-remove>Hapus</button>';
+        row.append(grip, inputs, tools);
+        return row;
+      };
+      repeater.addEventListener('input', () => serializeRepeater(repeater));
+      repeater.addEventListener('change', () => serializeRepeater(repeater));
+      repeater.addEventListener('click', (event) => {
+        if (event.target.closest('[data-repeater-add]')) {
+          rows.appendChild(templateFor());
+          serializeRepeater(repeater);
+          collectFromDom();
+          return;
+        }
+        const row = event.target.closest('[data-repeater-row]');
+        if (!row) return;
+        if (event.target.closest('[data-repeater-remove]')) {
+          row.remove();
+        } else if (event.target.closest('[data-repeater-up]') && row.previousElementSibling) {
+          rows.insertBefore(row, row.previousElementSibling);
+        } else if (event.target.closest('[data-repeater-down]') && row.nextElementSibling) {
+          rows.insertBefore(row.nextElementSibling, row);
+        } else {
+          return;
+        }
+        serializeRepeater(repeater);
+        collectFromDom();
+      });
+    };
+    repeaters.forEach(bindRepeater);
+    // Blok baru membawa repeater-nya sendiri; pasang setelah ditambahkan.
+    builderForm.addEventListener('click', () => {
+      $$('[data-repeater]', builderForm).forEach(bindRepeater);
+    });
+    builderForm.dataset.repeaterReady = '1';
+
+    // ---------------------------------------------------------------
+    // Drag & drop ordering (native HTML5 DnD, no library).
+    // Works for repeater rows and for builder blocks, so users can drag
+    // instead of hunting for the arrow buttons. Keyboard/button moves stay.
+    // ---------------------------------------------------------------
+    let dragPayload = null;
+
+    const dropIndexFrom = (container, event, selector) => {
+      const items = $$(selector, container).filter((node) => node !== dragPayload?.node);
+      const after = items.find((node) => {
+        const box = node.getBoundingClientRect();
+        return event.clientY < box.top + box.height / 2;
+      });
+      return after || null;
+    };
+
+    const makeDraggableRows = (repeater) => {
+      $$('[data-repeater-row]', repeater).forEach((row) => {
+        if (row.dataset.dragReady === '1') return;
+        row.dataset.dragReady = '1';
+        const grip = $('.repeater-grip', row);
+        // Only the grip starts a drag so text selection inside inputs still works.
+        if (grip) grip.draggable = true;
+        row.addEventListener('dragstart', (event) => {
+          if (!grip || !(event.target === grip)) return;
+          dragPayload = { kind: 'repeater-row', node: row, parent: row.parentElement };
+          row.classList.add('dragging');
+          event.dataTransfer.effectAllowed = 'move';
+          try { event.dataTransfer.setData('text/plain', ''); } catch (error) { /* ignore */ }
+        });
+        row.addEventListener('dragend', () => {
+          row.classList.remove('dragging');
+          row.classList.remove('drag-over');
+          dragPayload = null;
+          $$('.repeater-row.drag-over', repeater).forEach((n) => n.classList.remove('drag-over'));
+        });
+        row.addEventListener('dragover', (event) => {
+          if (dragPayload?.kind !== 'repeater-row' || dragPayload.parent !== row.parentElement) return;
+          event.preventDefault();
+          event.dataTransfer.dropEffect = 'move';
+          row.classList.add('drag-over');
+        });
+        row.addEventListener('dragleave', () => row.classList.remove('drag-over'));
+        row.addEventListener('drop', (event) => {
+          if (dragPayload?.kind !== 'repeater-row' || dragPayload.parent !== row.parentElement) return;
+          event.preventDefault();
+          row.classList.remove('drag-over');
+          const source = dragPayload.node;
+          if (source === row) return;
+          const before = dropIndexFrom(row.parentElement, event, '[data-repeater-row]');
+          row.parentElement.insertBefore(source, before);
+          serializeRepeater(repeater);
+          collectFromDom();
+        });
+      });
+    };
+
+    const bindBlockDrag = () => {
+      $$('.builder-block-edit', builderForm).forEach((block) => {
+        if (block.dataset.dragReady === '1') return;
+        block.dataset.dragReady = '1';
+        // Whole header is the handle: pills/buttons inside keep working.
+        const handle = $('.block-head', block);
+        if (handle) {
+          handle.draggable = true;
+          handle.style.cursor = 'grab';
+          handle.title = handle.title || 'Tarik untuk mengurutkan blok';
+        }
+        block.addEventListener('dragstart', (event) => {
+          if (!handle || !handle.contains(event.target) || event.target.closest('button')) return;
+          dragPayload = { kind: 'builder-block', node: block, parent: block.parentElement };
+          block.classList.add('dragging');
+          event.dataTransfer.effectAllowed = 'move';
+          try { event.dataTransfer.setData('text/plain', ''); } catch (error) { /* ignore */ }
+        });
+        block.addEventListener('dragend', () => {
+          block.classList.remove('dragging');
+          block.classList.remove('drag-over');
+          dragPayload = null;
+          $$('.builder-block-edit.drag-over', builderForm).forEach((n) => n.classList.remove('drag-over'));
+        });
+        block.addEventListener('dragover', (event) => {
+          if (dragPayload?.kind !== 'builder-block' || dragPayload.parent !== block.parentElement) return;
+          event.preventDefault();
+          event.dataTransfer.dropEffect = 'move';
+          block.classList.add('drag-over');
+        });
+        block.addEventListener('dragleave', () => block.classList.remove('drag-over'));
+        block.addEventListener('drop', (event) => {
+          if (dragPayload?.kind !== 'builder-block' || dragPayload.parent !== block.parentElement) return;
+          event.preventDefault();
+          block.classList.remove('drag-over');
+          const source = dragPayload.node;
+          if (source === block) return;
+          const before = dropIndexFrom(block.parentElement, event, '.builder-block-edit');
+          block.parentElement.insertBefore(source, before);
+          collectFromDom();
+        });
+      });
+    };
+
+    $$('[data-repeater]', builderForm).forEach(makeDraggableRows);
+    bindBlockDrag();
+    builderForm.addEventListener('click', () => {
+      $$('[data-repeater]', builderForm).forEach(makeDraggableRows);
+      bindBlockDrag();
     });
 
     // The page title feeds the preview header while a new page is being built.

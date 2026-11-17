@@ -44,7 +44,8 @@ $sections = (array)($document['sections'] ?? []);
 </div>
 
 <form method="post" action="<?= e($adminBase . '?view=builder' . ($page ? '&page=' . (int)$page['id'] : '')) ?>" id="builder-form"
-      data-builder-theme="<?= e(\App\Core\Theme::instance()->slug()) ?>">
+      data-builder-theme="<?= e(\App\Core\Theme::instance()->slug()) ?>"
+      data-block-schemas="<?= e(json_encode($blockTypes, JSON_UNESCAPED_UNICODE | JSON_HEX_QUOT)) ?>">
     <input type="hidden" name="action" value="builder.save">
     <input type="hidden" name="page_id" value="<?= (int)($page['id'] ?? 0) ?>">
     <?= \App\Core\Csrf::field() ?>
@@ -137,19 +138,63 @@ $sections = (array)($document['sections'] ?? []);
                                         <?php foreach ((array)($blockTypes[(string)($block['type'] ?? '')]['fields'] ?? []) as $field): ?>
                                             <?php $settings = (array)($block['settings'] ?? []); ?>
                                             <?php $rawValue = $settings[$field] ?? ''; ?>
-                                            <?php $isJsonField = is_array($rawValue) || in_array($field, ['items', 'images'], true); ?>
-                                            <?php if ($isJsonField): ?>
-                                                <?php $rawValue = is_array($rawValue) ? json_encode($rawValue, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) : (string)$rawValue; ?>
-                                            <?php endif; ?>
+                                            <?php $blockDef = (array)($blockTypes[(string)($block['type'] ?? '')] ?? []); ?>
+                                            <?php $itemFields = (array)($blockDef['itemFields'] ?? []); ?>
+                                            <?php $isItemField = in_array($field, ['items', 'images'], true) && $itemFields !== []; ?>
+                                            <?php if ($isItemField): ?>
+                                                <?php
+                                                // Daftar item (fitur, FAQ, testimoni, galeri) diedit sebagai
+                                                // baris visual supaya pengguna tidak perlu menulis JSON.
+                                                if (!is_array($rawValue)) {
+                                                    $decodedItems = json_decode((string)$rawValue, true);
+                                                    $rawValue = is_array($decodedItems) ? $decodedItems : [];
+                                                }
+                                                $itemLabel = (string)($blockDef['itemLabel'] ?? 'item');
+                                                ?>
+                                                <label><?= e(ucfirst((string)$field)) ?></label>
+                                                <div class="repeater" data-repeater="<?= e((string)$field) ?>"
+                                                     data-repeater-fields="<?= e(json_encode($itemFields, JSON_UNESCAPED_UNICODE | JSON_HEX_QUOT)) ?>"
+                                                     data-repeater-label="<?= e($itemLabel) ?>">
+                                                    <input type="hidden" data-repeater-json data-block-setting="<?= e((string)$field) ?>" data-block-setting-json="1"
+                                                           value="<?= e(json_encode($rawValue, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES)) ?>">
+                                                    <div class="repeater-rows" data-repeater-rows>
+                                                        <?php foreach ((array)$rawValue as $item): ?>
+                                                            <?php $item = is_array($item) ? $item : ['src' => (string)$item]; ?>
+                                                            <div class="repeater-row" data-repeater-row>
+                                                                <span class="repeater-grip" title="Urutkan dengan tombol ↑ ↓">⋮⋮</span>
+                                                                <div class="repeater-inputs">
+                                                                    <?php foreach ($itemFields as $subKey => $subField): ?>
+                                                                        <label class="repeater-label"><?= e((string)$subField['label']) ?></label>
+                                                                        <?php if (($subField['type'] ?? 'text') === 'textarea'): ?>
+                                                                            <textarea rows="2" data-repeater-input="<?= e((string)$subKey) ?>"><?= e((string)($item[$subKey] ?? '')) ?></textarea>
+                                                                        <?php else: ?>
+                                                                            <input type="text" data-repeater-input="<?= e((string)$subKey) ?>"
+                                                                                   value="<?= e((string)($item[$subKey] ?? '')) ?>"
+                                                                                   placeholder="<?= e((string)($subField['placeholder'] ?? '')) ?>">
+                                                                        <?php endif; ?>
+                                                                    <?php endforeach; ?>
+                                                                </div>
+                                                                <div class="repeater-tools">
+                                                                    <button type="button" class="secondary small" data-repeater-up title="Naik">↑</button>
+                                                                    <button type="button" class="secondary small" data-repeater-down title="Turun">↓</button>
+                                                                    <button type="button" class="danger small" data-repeater-remove>Hapus</button>
+                                                                </div>
+                                                            </div>
+                                                        <?php endforeach; ?>
+                                                    </div>
+                                                    <button type="button" class="secondary small" data-repeater-add>+ Tambah <?= e($itemLabel) ?></button>
+                                                    <p class="help">Cukup isi kolom di atas — tidak perlu menulis kode.</p>
+                                                </div>
+                                            <?php else: ?>
+                                            <?php if (is_array($rawValue)) { $rawValue = json_encode($rawValue, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES); } ?>
                                             <label><?= e(ucfirst((string)$field)) ?></label>
-                                            <?php if ($isJsonField): ?>
-                                                <textarea data-block-setting="<?= e((string)$field) ?>" data-block-setting-json="1" rows="4" spellcheck="false" placeholder='[{"title":"…"}]'><?= e((string)$rawValue) ?></textarea>
-                                            <?php elseif (in_array($field, ['text', 'subtitle', 'content', 'html', 'caption'], true)): ?>
+                                            <?php if (in_array($field, ['text', 'subtitle', 'content', 'html', 'caption'], true)): ?>
                                                 <textarea data-block-setting="<?= e((string)$field) ?>" rows="3"><?= e((string)$rawValue) ?></textarea>
                                             <?php elseif (in_array($field, ['overlay', 'height', 'columns', 'level', 'gap', 'limit'], true)): ?>
                                                 <input type="number" data-block-setting="<?= e((string)$field) ?>" value="<?= e((string)($settings[$field] ?? '')) ?>">
                                             <?php else: ?>
-                                                <input type="text" data-block-setting="<?= e((string)$field) ?>" value="<?= e((string)($settings[$field] ?? '')) ?>">
+                                                <input type="text" data-block-setting="<?= e((string)$field) ?>" value="<?= e((string)$rawValue) ?>">
+                                            <?php endif; ?>
                                             <?php endif; ?>
                                         <?php endforeach; ?>
                                     </div>

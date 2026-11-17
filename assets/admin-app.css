@@ -661,6 +661,31 @@ input.slug-input { min-height: 34px; padding: 5px 9px; font-size: 12px; }
 .block-fields label { margin: 4px 0 3px; font-size: 10.5px; text-transform: uppercase; letter-spacing: .4px; color: var(--admin-text-muted); }
 .block-fields input, .block-fields textarea, .block-fields select { min-height: 33px; font-size: 11.5px; }
 .block-fields textarea { grid-column: 1 / -1; }
+
+/* Visual repeater: list items edited as plain rows, never as JSON. */
+.repeater { grid-column: 1 / -1; display: grid; gap: 8px; }
+.repeater-rows { display: grid; gap: 8px; }
+.repeater-row {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    gap: 10px;
+    align-items: start;
+    padding: 10px;
+    background: var(--admin-surface);
+    border: 1px solid var(--admin-border);
+    border-radius: var(--admin-radius-sm);
+}
+.repeater-grip { color: #94a3b8; font-size: 14px; letter-spacing: -2px; user-select: none; padding-top: 6px; cursor: grab; }
+.repeater-row.dragging, .builder-block-edit.dragging { opacity: .5; }
+.repeater-row.drag-over { border-color: var(--admin-primary, #2563eb); border-style: dashed; }
+.builder-block-edit.drag-over { outline: 2px dashed var(--admin-primary, #2563eb); outline-offset: 2px; }
+.repeater-inputs { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 4px 10px; }
+.repeater-inputs textarea { grid-column: 1 / -1; }
+.repeater-label { margin: 0; font-size: 10.5px; text-transform: uppercase; letter-spacing: .4px; color: var(--admin-text-muted); }
+.repeater-inputs input, .repeater-inputs textarea { min-height: 31px; font-size: 11.5px; }
+.repeater-tools { display: flex; flex-wrap: wrap; gap: 4px; }
+.repeater-tools button { min-height: 27px; padding: 3px 8px; font-size: 10.5px; }
+.repeater > .help { margin: 0; }
 .builder-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; padding: 13px 16px; background: var(--admin-surface); border: 1px solid var(--admin-border); border-radius: var(--admin-radius); }
 .builder-preview {
     padding: 14px;
