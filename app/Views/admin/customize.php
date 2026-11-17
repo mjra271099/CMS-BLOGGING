@@ -51,6 +51,9 @@ $dirty = $themeSlug !== $activeSlug;
 <?php endif; ?>
 
 <div class="customizer-shell">
+    <?php // Kolom kiri: form simpan + form reset. Dibungkus satu elemen agar grid
+          // 2 kolom menempatkan pratinjau dengan benar di samping, bukan di bawah. ?>
+    <div class="customizer-column">
     <form method="post" action="<?= e($adminBase . '?view=customize&theme=' . rawurlencode($themeSlug)) ?>" class="customizer-form" id="customizer-form">
         <input type="hidden" name="action" value="theme.customize">
         <input type="hidden" name="theme" value="<?= e($themeSlug) ?>">
@@ -148,7 +151,7 @@ $dirty = $themeSlug !== $activeSlug;
         </div>
     </form>
 
-    <form method="post" action="<?= e($adminBase . '?view=customize&theme=' . rawurlencode($themeSlug)) ?>" style="margin-top:12px"
+    <form method="post" action="<?= e($adminBase . '?view=customize&theme=' . rawurlencode($themeSlug)) ?>" class="customizer-reset"
           onsubmit="return confirm('Kembalikan seluruh kustomisasi tema ini ke nilai bawaan?');">
         <input type="hidden" name="action" value="theme.reset">
         <input type="hidden" name="theme" value="<?= e($themeSlug) ?>">
@@ -156,6 +159,7 @@ $dirty = $themeSlug !== $activeSlug;
         <button type="submit" class="btn secondary small">Kembalikan ke bawaan</button>
         <span class="muted">Mengembalikan warna, font, dan tata letak ke pengaturan awal tema.</span>
     </form>
+    </div>
 
     <div class="customizer-preview">
         <div class="preview-bar">
