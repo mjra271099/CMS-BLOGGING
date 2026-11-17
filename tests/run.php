@@ -256,6 +256,25 @@ try {
     check('Ad widget omits empty slot', trim($adEmpty) === '');
     $adFilled = Widget::render(['type' => 'Ad', 'title' => '', 'content' => '<span>ads</span>', 'config' => ['label' => 'leaderboard']], []);
     check('Ad widget renders filled slot', str_contains($adFilled, 'class="ad-slot"') && str_contains($adFilled, 'data-slot="leaderboard"') && str_contains($adFilled, '<span>ads</span>'));
+    // Layout zones: every widget area must belong to a known zone and carry a
+    // user-facing position hint, so the layout screen never shows a bare ID.
+    $zoneKeys = array_keys(Widget::zones());
+    $meta = Widget::sectionMeta();
+    $unmapped = array_diff(array_keys(Widget::sections()), array_keys($meta));
+    check('Every widget area has layout metadata', $unmapped === []);
+    $badZone = false;
+    $missingHint = false;
+    foreach ($meta as $def) {
+        if (!in_array((string)($def['zone'] ?? ''), $zoneKeys, true)) {
+            $badZone = true;
+        }
+        if (trim((string)($def['hint'] ?? '')) === '') {
+            $missingHint = true;
+        }
+    }
+    check('Layout zones are known', !$badZone);
+    check('Every area has a position hint', !$missingHint);
+    check('Supported sections come from bundled themes', in_array('sidebar', Widget::supportedSections(), true));
 
     section('Builder');
     $document = Builder::normalize((string)json_encode([

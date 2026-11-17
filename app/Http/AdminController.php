@@ -809,20 +809,59 @@ final class AdminController
     private function layoutData(): array
     {
         $widgets = Widget::all();
+        $active = Theme::instance();
+        $themeAreas = (array)$active->areas();
+        $supported = Widget::supportedSections();
+        $meta = Widget::sectionMeta();
         $sections = [];
         foreach (Widget::sections() as $id => $label) {
-            $sections[$id] = ['label' => $label, 'widgets' => []];
+            $itemMeta = $meta[$id] ?? [];
+            $sections[$id] = [
+                'label' => $label,
+                'widgets' => [],
+                // Zona + keterangan posisi membantu admin mengenali bagian
+                // situs yang sedang diatur tanpa memahami nama teknis area.
+                'order' => (int)($itemMeta['order'] ?? 500),
+                'zone' => (string)($itemMeta['zone'] ?? 'lainnya'),
+                'hint' => (string)($itemMeta['hint'] ?? ''),
+                'description' => (string)($itemMeta['description'] ?? ''),
+                // Area yang tidak dirender tema aktif tetap ditampilkan (data
+                // lama tidak hilang) tetapi diberi label pembeda.
+                'reachable' => $themeAreas === [] || in_array($id, $themeAreas, true),
+                'supported' => in_array($id, $supported, true),
+            ];
         }
         foreach ($widgets as $widget) {
             $sid = (string)$widget['section_id'];
             // Toleransi data lama: area yang tidak lagi terdaftar tetap
             // ditampilkan sebagai area kustom agar widget tidak "hilang".
             if (!isset($sections[$sid])) {
-                $sections[$sid] = ['label' => Widget::sectionLabel($sid), 'widgets' => []];
+                $sections[$sid] = [
+                    'label' => Widget::sectionLabel($sid),
+                    'widgets' => [],
+                    'order' => (int)($meta[$sid]['order'] ?? 500),
+                    'zone' => (string)($meta[$sid]['zone'] ?? 'lainnya'),
+                    'hint' => (string)($meta[$sid]['hint'] ?? ''),
+                    'description' => 'Area tambahan dari data lama.',
+                    'reachable' => true,
+                    'supported' => false,
+                ];
             }
             $sections[$sid]['widgets'][] = $widget;
         }
-        $active = Theme::instance();
+        // Urutkan area mengikuti zona lalu posisi di halaman (atas → konten →
+        // samping → bawah) agar halaman terbaca mengalir seperti halaman situs.
+        $zoneOrder = array_flip(array_keys(Widget::zones()));
+        uksort($sections, static function ($a, $b) use ($sections, $zoneOrder) {
+            $za = $zoneOrder[$sections[$a]['zone']] ?? 99;
+            $zb = $zoneOrder[$sections[$b]['zone']] ?? 99;
+            if ($za !== $zb) {
+                return $za <=> $zb;
+            }
+            $oa = (int)$sections[$a]['order'];
+            $ob = (int)$sections[$b]['order'];
+            return $oa === $ob ? strcmp((string)$a, (string)$b) : $oa <=> $ob;
+        });
 
         // Sample routes admins can preview so widget visibility rules
         // (beranda/artikel/halaman/arsip) can be checked without leaving admin.
@@ -843,6 +882,7 @@ final class AdminController
         return [
             'title' => 'Tata Letak',
             'sections' => $sections,
+            'zones' => Widget::zones(),
             'types' => Widget::types(),
             'categories' => Taxonomy::categories(),
             'themeAreas' => $active->areas(),

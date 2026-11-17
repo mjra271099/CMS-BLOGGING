@@ -294,6 +294,76 @@ final class Widget
         return self::sections()[$id] ?? $id;
     }
 
+    /**
+     * Zona tata letak: mengelompokkan area widget berdasarkan letaknya di
+     * halaman sehingga admin langsung tahu bagian situs mana yang sedang diatur
+     * (atas → konten → samping → bawah). Urutan kunci = urutan tampil.
+     *
+     * @return array<string,string> zone => label
+     */
+    public static function zones(): array
+    {
+        return [
+            'atas' => 'Bagian Atas Halaman',
+            'konten' => 'Area Konten',
+            'samping' => 'Sidebar & Iklan',
+            'bawah' => 'Bagian Bawah & Footer',
+            'lainnya' => 'Area Lain',
+        ];
+    }
+
+    /**
+     * Metadata per area widget: urutan tampil di halaman (page order), zona,
+     * keterangan posisi singkat, dan status apakah area dirender tema bawaan.
+     *
+     * @return array<string,array{order:int,zone:string,hint:string,description:string}>
+     */
+    public static function sectionMeta(): array
+    {
+        return [
+            'announcement' => ['order' => 10, 'zone' => 'atas', 'hint' => 'Bar paling atas di seluruh halaman', 'description' => 'Cocok untuk pengumuman singkat.'],
+            'header' => ['order' => 20, 'zone' => 'atas', 'hint' => 'Di bawah logo, sebelum konten', 'description' => ''],
+            'menu' => ['order' => 30, 'zone' => 'atas', 'hint' => 'Navigasi utama di bawah header', 'description' => 'Menu biasanya diatur dari halaman Menu.'],
+            'search' => ['order' => 35, 'zone' => 'atas', 'hint' => 'Kotak pencarian di area header', 'description' => 'Area ini belum dipakai tema bawaan.'],
+            'top-banner' => ['order' => 40, 'zone' => 'atas', 'hint' => 'Banner lebar tepat di bawah header', 'description' => 'Tampil paling atas sebelum daftar artikel.'],
+            'featured' => ['order' => 50, 'zone' => 'konten', 'hint' => 'Area unggulan di bagian atas beranda', 'description' => 'Tempat artikel pilihan menonjol.'],
+            'before-content' => ['order' => 60, 'zone' => 'konten', 'hint' => 'Tepat sebelum daftar artikel', 'description' => ''],
+            'main' => ['order' => 70, 'zone' => 'konten', 'hint' => 'Menyatu dengan daftar artikel utama', 'description' => 'Widget di sini tampil di dalam alur konten.'],
+            'middle-content' => ['order' => 80, 'zone' => 'konten', 'hint' => 'Di tengah-tengah daftar artikel', 'description' => 'Berguna untuk menyisipkan iklan atau promosi.'],
+            'after-content' => ['order' => 90, 'zone' => 'konten', 'hint' => 'Tepat setelah daftar artikel', 'description' => ''],
+            'sidebar' => ['order' => 100, 'zone' => 'samping', 'hint' => 'Kolom samping di halaman artikel', 'description' => 'Paling sering dipakai: terbaru, kategori, iklan.'],
+            'sidebar-left' => ['order' => 105, 'zone' => 'samping', 'hint' => 'Kolom samping kiri', 'description' => 'Area ini belum dipakai tema bawaan.'],
+            'ad-top' => ['order' => 110, 'zone' => 'samping', 'hint' => 'Slot iklan di atas sidebar', 'description' => ''],
+            'ad-bottom' => ['order' => 120, 'zone' => 'samping', 'hint' => 'Slot iklan di bawah sidebar', 'description' => ''],
+            'footer-about' => ['order' => 200, 'zone' => 'bawah', 'hint' => 'Kolom footer: tentang situs', 'description' => ''],
+            'footer-links' => ['order' => 210, 'zone' => 'bawah', 'hint' => 'Kolom footer: tautan penting', 'description' => ''],
+            'footer-social' => ['order' => 220, 'zone' => 'bawah', 'hint' => 'Kolom footer: media sosial', 'description' => ''],
+            'footer-1' => ['order' => 230, 'zone' => 'bawah', 'hint' => 'Footer kolom 1', 'description' => ''],
+            'footer-2' => ['order' => 240, 'zone' => 'bawah', 'hint' => 'Footer kolom 2', 'description' => ''],
+            'footer-3' => ['order' => 250, 'zone' => 'bawah', 'hint' => 'Footer kolom 3', 'description' => ''],
+            'footer-bottom' => ['order' => 260, 'zone' => 'bawah', 'hint' => 'Baris paling bawah footer', 'description' => 'Biasanya untuk hak cipta.'],
+            'custom' => ['order' => 900, 'zone' => 'lainnya', 'hint' => 'Area tambahan dari plugin/tema lain', 'description' => 'Isi area ini mengikuti aturan tema.'],
+        ];
+    }
+
+    /**
+     * Area yang benar-benar dirender oleh salah satu tema bawaan. Dipakai admin
+     * untuk menandai area "belum tersedia di tema ini" alih-alih menampilkan
+     * semua area seolah-olah sama pentingnya.
+     *
+     * @return array<int,string>
+     */
+    public static function supportedSections(): array
+    {
+        $supported = [];
+        foreach (Theme::bundledSlugs() as $slug) {
+            foreach ((array)(Theme::meta($slug)['areas'] ?? []) as $area) {
+                $supported[(string)$area] = true;
+            }
+        }
+        return array_keys($supported);
+    }
+
     public static function config(array $widget): array
     {
         $raw = $widget['config_json'] ?? '';

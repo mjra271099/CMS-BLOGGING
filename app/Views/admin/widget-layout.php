@@ -5,6 +5,7 @@ declare(strict_types=1);
  * Layout & widgets: per-area widget lists with reorder, toggle, edit forms.
  *
  * @var array $sections
+ * @var array $zones
  * @var array $types
  * @var array $categories
  * @var array $themeAreas
@@ -15,6 +16,7 @@ use App\Core\Widget;
 use App\Http\AdminUi;
 
 $sections = $sections ?? [];
+$zones = $zones ?? Widget::zones();
 $types = $types ?? Widget::types();
 $categories = $categories ?? [];
 $themeAreas = $themeAreas ?? [];
@@ -26,16 +28,37 @@ $editingWidget = $editId > 0 ? Widget::find($editId) : null;
 $editingType = $editingWidget ? (string)$editingWidget['type'] : 'Text';
 $editingConfig = $editingWidget ? Widget::config($editingWidget) : [];
 $editingFields = (array)($types[$editingType]['fields'] ?? []);
+
+// Pisahkan area yang sudah berisi widget (selalu tampil) dari area kosong
+// (dilipat) supaya halaman tidak terasa penuh untuk pengguna pemula.
+$zoneBuckets = [];
+foreach ((array)$zones as $zoneKey => $zoneLabel) {
+    $zoneBuckets[$zoneKey] = ['label' => $zoneLabel, 'filled' => [], 'empty' => []];
+}
+foreach ($sections as $sectionId => $section) {
+    $zone = (string)($section['zone'] ?? 'lainnya');
+    if (!isset($zoneBuckets[$zone])) {
+        $zoneBuckets['lainnya'] ??= ['label' => (string)($zones['lainnya'] ?? 'Area Lain'), 'filled' => [], 'empty' => []];
+        $zone = 'lainnya';
+    }
+    $bucket = $section['widgets'] ? 'filled' : 'empty';
+    $zoneBuckets[$zone][$bucket][$sectionId] = $section;
+}
+$filledCount = 0;
+foreach ($zoneBuckets as $bucket) {
+    $filledCount += count($bucket['filled']);
+}
 ?>
 <div class="toolbar">
     <h1>Tata Letak</h1>
-    <span class="muted"><?= count($sections) ?> area widget · tema <?= e(\App\Core\Theme::instance()->name()) ?></span>
+    <span class="muted"><?= (int)$filledCount ?> area berisi widget dari <?= count($sections) ?> area · tema <?= e(\App\Core\Theme::instance()->name()) ?></span>
 </div>
 
 <?= \App\Core\View::render('admin/_appearance-tabs', ['appearanceActive' => 'layout']) ?>
 
 <div class="notice">
     Seret kartu widget untuk mengubah urutan. Perubahan urutan disimpan otomatis.
+    Area yang belum berisi widget dilipat agar halaman tetap ringkas.
 </div>
 
 <details class="layout-preview" open>
@@ -72,21 +95,38 @@ $editingFields = (array)($types[$editingType]['fields'] ?? []);
 
 <div class="layout-shell">
     <div class="layout-areas" id="widget-areas">
-        <?php foreach ($sections as $sectionId => $section): ?>
-            <section class="card area-card" data-area="<?= e((string)$sectionId) ?>">
+        <?php
+        /**
+         * Render satu kartu area widget. Dipakai untuk area berisi widget
+         * maupun area kosong (yang dilipat pada bagian "area kosong").
+         */
+        $renderArea = static function (string $sectionId, array $section) use ($adminBase, $types, $themeAreas): void {
+            ?>
+            <section class="card area-card" data-area="<?= e($sectionId) ?>">
                 <div class="area-head">
                     <div>
                         <h2 style="margin:0"><?= e((string)$section['label']) ?></h2>
-                        <span class="muted"><?= e((string)$sectionId) ?> · <?= count($section['widgets']) ?> widget</span>
+                        <?php if (($section['hint'] ?? '') !== ''): ?>
+                            <span class="muted area-hint"><?= e((string)$section['hint']) ?></span>
+                        <?php endif; ?>
+                        <span class="muted area-meta">
+                            <?= count($section['widgets']) ?> widget
+                            <?php if (empty($section['reachable'])): ?>
+                                · <span class="badge-muted">tidak dipakai tema ini</span>
+                            <?php endif; ?>
+                        </span>
+                        <?php if (($section['description'] ?? '') !== ''): ?>
+                            <p class="help" style="margin:6px 0 0"><?= e((string)$section['description']) ?></p>
+                        <?php endif; ?>
                     </div>
                     <?php if (in_array($sectionId, (array)$themeAreas, true) || $themeAreas === []): ?>
-                        <a class="btn secondary small" href="<?= e($adminBase . '?view=layout&edit=0&section=' . rawurlencode((string)$sectionId)) ?>">
+                        <a class="btn secondary small" href="<?= e($adminBase . '?view=layout&edit=0&section=' . rawurlencode($sectionId)) ?>">
                             <?= AdminUi::icon('plus', 14) ?> Tambah
                         </a>
                     <?php endif; ?>
                 </div>
 
-                <ul class="widget-sortable" data-section="<?= e((string)$sectionId) ?>">
+                <ul class="widget-sortable" data-section="<?= e($sectionId) ?>">
                     <?php if (!$section['widgets']): ?>
                         <li class="widget-empty">Belum ada widget di area ini.</li>
                     <?php endif; ?>
@@ -122,6 +162,35 @@ $editingFields = (array)($types[$editingType]['fields'] ?? []);
                     <?php endforeach; ?>
                 </ul>
             </section>
+            <?php
+        };
+        ?>
+
+        <?php foreach ($zoneBuckets as $zoneKey => $bucket): ?>
+            <?php if (!$bucket['filled'] && !$bucket['empty']): ?>
+                <?php continue; ?>
+            <?php endif; ?>
+            <div class="layout-zone" data-zone="<?= e((string)$zoneKey) ?>">
+                <h2 class="layout-zone-title"><?= e((string)$bucket['label']) ?></h2>
+
+                <?php foreach ($bucket['filled'] as $sectionId => $section): ?>
+                    <?php $renderArea((string)$sectionId, $section); ?>
+                <?php endforeach; ?>
+
+                <?php if ($bucket['empty']): ?>
+                    <details class="layout-empty-zone" <?= $zoneKey === 'samping' && !$bucket['filled'] ? 'open' : '' ?>>
+                        <summary>
+                            <span><?= count($bucket['empty']) ?> area kosong di bagian ini</span>
+                            <span class="muted">Klik untuk menambahkan widget</span>
+                        </summary>
+                        <div class="layout-empty-list">
+                            <?php foreach ($bucket['empty'] as $sectionId => $section): ?>
+                                <?php $renderArea((string)$sectionId, $section); ?>
+                            <?php endforeach; ?>
+                        </div>
+                    </details>
+                <?php endif; ?>
+            </div>
         <?php endforeach; ?>
     </div>
 
