@@ -314,6 +314,8 @@ try {
     $noKwHtml = (new \App\Theme\Ui(Theme::instance(), ['meta' => Seo::meta([]), 'route' => 'home']))->head();
     check('Head omits empty keywords', !str_contains($noKwHtml, 'name="keywords"'));
     Settings::set('seo_keywords', $prevKeywords);
+    // default_role drives new-user role; it must be a valid global role.
+    check('default_role is a valid global role', in_array(Settings::get('default_role', 'author'), Auth::ROLES, true));
     check('Seo::clamp limits length', mb_strlen(Seo::clamp(str_repeat('kata ', 80), 160)) <= 163);
     check('Sitemap includes a <urlset>', str_contains(Seo::sitemap(), '<urlset'));
     check('Sitemap includes a published post', str_contains(Seo::sitemap(), (string)$published['slug']));

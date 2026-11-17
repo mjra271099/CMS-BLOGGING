@@ -249,6 +249,13 @@ $tabUrl = static fn(string $tab): string => $adminBase . '?view=settings&tab=' .
     <div class="card">
         <h2>Lanjutan</h2>
         <label class="checkbox"><input type="checkbox" name="maintenance_mode" value="1"<?= $value('maintenance_mode') === '1' ? ' checked' : '' ?>> Mode perawatan (situs tertutup untuk pengunjung)</label>
+        <label for="default_role">Peran bawaan untuk pengguna baru</label>
+        <select id="default_role" name="default_role">
+            <?php foreach (['admin' => 'Admin', 'editor' => 'Editor', 'author' => 'Author', 'contributor' => 'Contributor'] as $code => $label): ?>
+                <option value="<?= e($code) ?>"<?= $value('default_role') === $code ? ' selected' : '' ?>><?= e($label) ?></option>
+            <?php endforeach; ?>
+        </select>
+        <p class="help">Dipakai saat membuat pengguna baru dari menu Pengguna.</p>
         <label for="analytics_code">Kode analytics (dalam &lt;head&gt;)</label>
         <textarea id="analytics_code" name="analytics_code" rows="3"><?= e($value('analytics_code')) ?></textarea>
         <label for="header_code">HTML tambahan di &lt;head&gt;</label>

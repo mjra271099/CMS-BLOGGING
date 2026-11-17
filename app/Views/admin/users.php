@@ -16,6 +16,7 @@ $users = $users ?? [];
 $current = $current ?? [];
 $members = $members ?? [];
 $roles = $roles ?? [];
+$defaultRole = $defaultRole ?? ($roles[0] ?? 'author');
 $adminBase = url('admin/index.php');
 ?>
 <div class="toolbar">
@@ -108,7 +109,7 @@ $adminBase = url('admin/index.php');
                 <label for="role">Peran global</label>
                 <select id="role" name="role">
                     <?php foreach ($roles as $role): ?>
-                        <option value="<?= e($role) ?>"<?= $role === 'author' ? ' selected' : '' ?>><?= e($role) ?></option>
+                        <option value="<?= e($role) ?>"<?= $role === $defaultRole ? ' selected' : '' ?>><?= e($role) ?></option>
                     <?php endforeach; ?>
                 </select>
             </div>
@@ -116,7 +117,7 @@ $adminBase = url('admin/index.php');
                 <label for="blog_role">Peran di blog ini</label>
                 <select id="blog_role" name="blog_role">
                     <?php foreach (['author', 'editor', 'admin', 'contributor', 'owner'] as $role): ?>
-                        <option value="<?= e($role) ?>"<?= $role === 'author' ? ' selected' : '' ?>><?= e($role) ?></option>
+                        <option value="<?= e($role) ?>"<?= $role === $defaultRole ? ' selected' : '' ?>><?= e($role) ?></option>
                     <?php endforeach; ?>
                 </select>
             </div>

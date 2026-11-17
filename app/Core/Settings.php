@@ -165,7 +165,6 @@ final class Settings
             'favicon_url' => '',
             'footer_text' => '',
             'maintenance_mode' => '0',
-            'registration_enabled' => '0',
             'default_role' => 'author',
             'media_max_mb' => '5',
             'media_webp' => '1',

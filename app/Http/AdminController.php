@@ -170,7 +170,7 @@ final class AdminController
             ],
             'advanced' => [
                 'maintenance_mode' => 'Mode perawatan',
-                'registration_enabled' => 'Registrasi publik',
+                'default_role' => 'Peran bawaan pengguna baru',
                 'qr_download_direct_url' => 'Direct link iklan (QR)',
                 'analytics_code' => 'Kode analytics',
                 'header_code' => 'HTML di head',
@@ -1093,6 +1093,7 @@ final class AdminController
                 [Context::blogId()]
             ),
             'roles' => Auth::ROLES,
+            'defaultRole' => Settings::get('default_role', 'author'),
         ];
     }
 
@@ -1103,7 +1104,11 @@ final class AdminController
         $username = trim((string)($_POST['username'] ?? ''));
         $email = trim((string)($_POST['email'] ?? ''));
         $password = (string)($_POST['password'] ?? '');
-        $role = (string)($_POST['role'] ?? 'author');
+        $role = (string)($_POST['role'] ?? '');
+        if ($role === '') {
+            // Peran bawaan untuk pengguna baru (diatur di Pengaturan).
+            $role = Settings::get('default_role', 'author');
+        }
         if (!in_array($role, Auth::ROLES, true)) {
             throw new \App\Core\ValidationException('Role tidak dikenal.');
         }
@@ -1135,7 +1140,7 @@ final class AdminController
             Database::insert('blog_users', [
                 'blog_id' => Context::blogId(),
                 'user_id' => $id,
-                'role' => 'author',
+                'role' => in_array($role, ['owner', 'admin', 'editor', 'author', 'contributor'], true) ? $role : 'author',
             ]);
         }
         $blogRole = (string)($_POST['blog_role'] ?? '');
