@@ -97,7 +97,12 @@ final class Seo
      */
     public static function sitemap(): string
     {
-        return Cache::remember('sitemap.' . Context::blogId(), 900, static function (): string {
+        // TTL mengikuti pengaturan cache_ttl (default 900 untuk sitemap bila
+        // admin memakai nilai bawaan 300 yang lebih pendek — sitemap boleh
+        // lebih lama). Dibatasi agar tidak membebani server.
+        $ttl = Settings::int('cache_ttl', 300);
+        $ttl = max(60, min(86400, $ttl > 0 ? max($ttl, 900) : 900));
+        return Cache::remember('sitemap.' . Context::blogId(), $ttl, static function (): string {
             $xml = '<?xml version="1.0" encoding="UTF-8"?>' . "\n";
             $xml .= '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">';
             $xml .= '<url><loc>' . e(url()) . '</loc><changefreq>daily</changefreq><priority>1.0</priority></url>';

@@ -110,13 +110,9 @@ $tabUrl = static fn(string $tab): string => $adminBase . '?view=settings&tab=' .
                 <input id="posts_per_page" type="number" name="posts_per_page" min="1" max="60" value="<?= e($value('posts_per_page')) ?>">
             </div>
             <div>
-                <label for="permalink_format">Format permalink</label>
-                <select id="permalink_format" name="permalink_format">
-                    <?php foreach (['blogger' => 'Blogger: /YYYY/MM/slug.html', 'postname' => 'Nama: /slug/', 'date' => 'Tanggal: /YYYY/MM/DD/slug/', 'numeric' => 'Numerik: /?p=ID'] as $code => $label): ?>
-                        <option value="<?= e($code) ?>"<?= $value('permalink_format') === $code ? ' selected' : '' ?>><?= e($label) ?></option>
-                    <?php endforeach; ?>
-                </select>
-                <p class="help">Mengubah format hanya memengaruhi tautan baru. URL lama tetap berfungsi lewat redirect.</p>
+                <label>Format permalink</label>
+                <input type="text" value="/YYYY/MM/slug.html (Blogger-style, tetap)" readonly disabled>
+                <p class="help">URL artikel memakai format Blogger dan dipertahankan demi kompatibilitas tautan lama. Format ini tidak dapat diubah dari UI.</p>
             </div>
             <div>
                 <label for="homepage_mode">Beranda</label>
@@ -253,7 +249,6 @@ $tabUrl = static fn(string $tab): string => $adminBase . '?view=settings&tab=' .
     <div class="card">
         <h2>Lanjutan</h2>
         <label class="checkbox"><input type="checkbox" name="maintenance_mode" value="1"<?= $value('maintenance_mode') === '1' ? ' checked' : '' ?>> Mode perawatan (situs tertutup untuk pengunjung)</label>
-        <label class="checkbox"><input type="checkbox" name="registration_enabled" value="1"<?= $value('registration_enabled') === '1' ? ' checked' : '' ?>> Izinkan registrasi publik</label>
         <label for="analytics_code">Kode analytics (dalam &lt;head&gt;)</label>
         <textarea id="analytics_code" name="analytics_code" rows="3"><?= e($value('analytics_code')) ?></textarea>
         <label for="header_code">HTML tambahan di &lt;head&gt;</label>

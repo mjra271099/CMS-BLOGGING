@@ -1195,7 +1195,7 @@ final class AdminController
                 $values[$key] = is_array($_POST[$key]) ? implode(',', $_POST[$key]) : (string)$_POST[$key];
             }
         }
-        foreach (['maintenance_mode', 'allow_comments', 'comment_moderation', 'media_webp', 'sitemap_enabled', 'registration_enabled'] as $checkbox) {
+        foreach (['maintenance_mode', 'allow_comments', 'comment_moderation', 'media_webp', 'sitemap_enabled'] as $checkbox) {
             $values[$checkbox] = isset($_POST[$checkbox]) ? '1' : '0';
         }
         if (isset($values['site_url'])) {
