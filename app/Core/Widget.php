@@ -397,7 +397,7 @@ final class Widget
                 'HTML' => '<div class="widget-content html-widget">' . $content . '</div>',
                 'Text' => '<div class="widget-content text-widget">' . nl2br(e($content)) . '</div>',
                 'Image' => self::renderImage($config),
-                'Ad' => '<div class="ad-slot" data-slot="' . e((string)($config['label'] ?? 'ad')) . '">' . $content . '</div>',
+                'Ad' => self::renderAd($config, $content),
                 'Newsletter' => self::renderNewsletter($config),
                 'RelatedPosts' => self::renderRelated($config, $context),
                 'TableOfContents' => self::renderToc($config, $context),
@@ -717,6 +717,20 @@ final class Widget
                 . '<span class="social-icon">' . e(strtoupper(substr($name, 0, 1))) . '</span><span class="social-label">' . e($name) . '</span></a>';
         }
         return $output . '</div>';
+    }
+
+    /**
+     * Ad slot. Renders admin-provided HTML/JS verbatim (trusted content) but
+     * omits the wrapper entirely when empty so an unconfigured/disabled ad
+     * does not leave a blank gap (avoids layout shift / empty space).
+     */
+    private static function renderAd(array $config, string $content): string
+    {
+        if (trim($content) === '') {
+            return '';
+        }
+        $label = (string)($config['label'] ?? 'ad');
+        return '<div class="ad-slot" data-slot="' . e($label) . '" role="complementary" aria-label="' . e($label) . '">' . $content . '</div>';
     }
 
     private static function renderImage(array $config): string

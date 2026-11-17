@@ -241,6 +241,11 @@ try {
     $widgetRow = Database::fetch('SELECT section_id, sort_order FROM widgets WHERE id = ?', [$widgetId]);
     check('Widget::reorder moves and orders', $widgetRow !== null && (string)$widgetRow['section_id'] === 'footer-1' && (int)$widgetRow['sort_order'] === 2);
     check('Widget::renderSection returns HTML', trim(Widget::renderSection('footer-1', ['route' => 'home'])) !== '');
+    // Ad widget: empty content must not emit an empty slot; filled content must.
+    $adEmpty = Widget::render(['type' => 'Ad', 'title' => '', 'content' => '', 'config' => []], []);
+    check('Ad widget omits empty slot', trim($adEmpty) === '');
+    $adFilled = Widget::render(['type' => 'Ad', 'title' => '', 'content' => '<span>ads</span>', 'config' => ['label' => 'leaderboard']], []);
+    check('Ad widget renders filled slot', str_contains($adFilled, 'class="ad-slot"') && str_contains($adFilled, 'data-slot="leaderboard"') && str_contains($adFilled, '<span>ads</span>'));
 
     section('Builder');
     $document = Builder::normalize((string)json_encode([
