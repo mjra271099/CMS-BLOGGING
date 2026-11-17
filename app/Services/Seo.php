@@ -25,7 +25,13 @@ final class Seo
         $image = (string)($page['image'] ?? Settings::get('social_image', ''));
         $type = (string)($page['type'] ?? 'website');
         $robots = (string)($page['robots'] ?? Settings::get('robots_policy', 'index,follow'));
-        $title = (string)($page['title'] ?? $siteName);
+        // Judul SEO default dapat diatur admin; dipakai saat halaman tidak
+        // memberi judul sendiri (mis. beranda), dengan fallback ke nama situs.
+        $defaultTitle = Settings::get('seo_title', '') !== '' ? Settings::get('seo_title') : $siteName;
+        $title = (string)($page['title'] ?? $defaultTitle);
+        if (trim($title) === '') {
+            $title = $defaultTitle;
+        }
         $title = self::title($title, $siteName);
 
         $meta = [

@@ -256,7 +256,10 @@ final class FrontController
             'layout_mode' => 'standard',
             'schema' => ['items' => $this->schemaItems($posts)],
             'meta' => Seo::meta([
-                'title' => Settings::get('site_name'),
+                // Biarkan Seo::meta() memilih judul default (seo_title lalu
+                // site_name). Judul eksplisit di sini akan menonaktifkan
+                // pengaturan "Judul SEO" untuk beranda.
+                'title' => Settings::get('seo_title', ''),
                 'description' => Settings::get('site_description'),
                 'canonical' => url(),
                 'image' => Settings::get('social_image'),

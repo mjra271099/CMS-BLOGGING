@@ -292,6 +292,17 @@ try {
     section('SEO');
     $meta = Seo::meta(['title' => 'Judul SEO', 'description' => str_repeat('deskripsi ', 40)]);
     check('Seo::meta builds a title', (string)$meta['title'] !== '');
+    // The homepage passes the (possibly empty) seo_title; Seo::meta() must use
+    // it as the default title, else fall back to the site name.
+    $prevSeoTitle = Settings::get('seo_title', '');
+    $siteName = Settings::get('site_name', '');
+    Settings::set('seo_title', 'ZZ Judul SEO Default');
+    $homeMeta = Seo::meta(['title' => Settings::get('seo_title', '')]);
+    check('Seo::meta uses seo_title default', str_starts_with((string)$homeMeta['title'], 'ZZ Judul SEO Default'));
+    Settings::set('seo_title', '');
+    $homeMetaFallback = Seo::meta(['title' => Settings::get('seo_title', '')]);
+    check('Seo::meta falls back to site name', (string)$homeMetaFallback['title'] === $siteName);
+    Settings::set('seo_title', $prevSeoTitle);
     check('Seo::clamp limits length', mb_strlen(Seo::clamp(str_repeat('kata ', 80), 160)) <= 163);
     check('Sitemap includes a <urlset>', str_contains(Seo::sitemap(), '<urlset'));
     check('Sitemap includes a published post', str_contains(Seo::sitemap(), (string)$published['slug']));
