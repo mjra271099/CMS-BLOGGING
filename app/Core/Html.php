@@ -145,7 +145,13 @@ final class Html
         }
     }
 
-    public static function isSafeUrl(string $url, array $schemes = ['http', 'https', 'mailto', 'tel', 'data']): bool
+    /**
+     * URL aman untuk atribut seperti href/src. Skema `data:` hanya diizinkan
+     * untuk gambar raster (png/jpeg/gif/webp) dalam bentuk base64 — bukan
+     * `data:text/html` atau `data:image/svg+xml` yang dapat mengeksekusi
+     * script saat dibuka langsung.
+     */
+    public static function isSafeUrl(string $url, array $schemes = ['http', 'https', 'mailto', 'tel']): bool
     {
         $url = trim($url);
         if ($url === '') {
@@ -154,8 +160,12 @@ final class Html
         if (str_starts_with($url, '#')) {
             return true;
         }
-        if (preg_match('/^data:image\/(png|jpeg|gif|webp);base64,/i', $url)) {
-            return true;
+        // Hanya data-URI gambar raster base64 yang diizinkan.
+        if (stripos($url, 'data:') === 0) {
+            return (bool)preg_match(
+                '/^data:image\/(png|jpe?g|gif|webp);base64,[a-z0-9+\/=\s]+$/i',
+                $url
+            );
         }
         $scheme = strtolower((string)parse_url($url, PHP_URL_SCHEME));
         if ($scheme === '' && !str_starts_with($url, '//')) {

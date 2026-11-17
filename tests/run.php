@@ -608,6 +608,12 @@ try {
     section('Security');
     check('Guest cannot publish posts', !Auth::can('post.publish'));
     check('No user is authenticated in CLI', !Auth::check());
+    // URL sanitizer must reject script-capable data URIs but keep raster images.
+    check('isSafeUrl rejects data:text/html', !Html::isSafeUrl('data:text/html;base64,PHNjcmlwdD4='));
+    check('isSafeUrl rejects data:image/svg+xml', !Html::isSafeUrl('data:image/svg+xml,<svg onload=alert(1)>'));
+    check('isSafeUrl rejects javascript:', !Html::isSafeUrl('javascript:alert(1)'));
+    check('isSafeUrl keeps base64 png', Html::isSafeUrl('data:image/png;base64,iVBORw0KGgoAAAANSUhEUg=='));
+    check('isSafeUrl keeps https', Html::isSafeUrl('https://example.com/a.png'));
     // Failed login must not leak account existence through timing.
     $timeAttempt = static function (string $login): float {
         $start = microtime(true);
