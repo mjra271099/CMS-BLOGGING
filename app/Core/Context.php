@@ -37,7 +37,28 @@ final class Context
             $blog = self::resolveFromHost();
         }
         self::$blog = $blog;
+        self::applyTimezone($blog);
         return $blog;
+    }
+
+    /**
+     * Terapkan zona waktu blog ke proses PHP agar date(), strtotime(), dan
+     * penjadwalan artikel mengikuti pengaturan blog (bukan zona default server).
+     * Aman dipanggil berulang; diabaikan bila zona tidak valid.
+     */
+    private static function applyTimezone(array $blog): void
+    {
+        $tz = (string)($blog['timezone'] ?? '');
+        if ($tz === '') {
+            $tz = Settings::get('timezone', '');
+        }
+        if ($tz === '') {
+            return;
+        }
+        $current = date_default_timezone_get();
+        if ($tz !== $current && in_array($tz, timezone_identifiers_list(), true)) {
+            date_default_timezone_set($tz);
+        }
     }
 
     public static function blogId(): int

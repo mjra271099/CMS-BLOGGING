@@ -98,6 +98,9 @@ try {
     check('e() escapes HTML', e('<b>"x"</b>') === '&lt;b&gt;&quot;x&quot;&lt;/b&gt;');
 
     section('Settings + cache');
+    // Blog context must apply the configured timezone to the PHP process.
+    $blogTz = (string)(\App\Core\Context::blog()['timezone'] ?? '');
+    check('Blog timezone is applied to PHP', $blogTz === '' || date_default_timezone_get() === $blogTz);
     Settings::set('zztest_setting', 'nilai-uji');
     check('Settings::set/get round-trip', Settings::get('zztest_setting') === 'nilai-uji');
     Settings::forget('zztest_setting');
