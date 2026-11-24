@@ -335,8 +335,10 @@ final class Builder
             return '';
         }
         $ratio = preg_replace('/[^0-9x:]/i', '', (string)($s['ratio'] ?? '16x9'));
+        // Plain iframe, matching the AVDB player: no sandbox attribute, so the
+        // provider's own player behaves normally (some detect and block it).
         return '<div class="builder-video ratio-' . e($ratio) . '"><iframe src="' . e($url) . '" loading="lazy" allowfullscreen '
-            . 'sandbox="allow-scripts allow-same-origin allow-presentation" title="Video"></iframe></div>';
+            . 'allow="autoplay; fullscreen; encrypted-media; picture-in-picture" title="Video"></iframe></div>';
     }
 
     private static function posts(array $s): string

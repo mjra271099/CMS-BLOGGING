@@ -30,7 +30,7 @@ final class Html
     private const TAG_ATTRS = [
         'a' => ['href', 'target', 'rel', 'name', 'download'],
         'img' => ['src', 'srcset', 'sizes', 'alt', 'width', 'height', 'loading', 'decoding'],
-        'iframe' => ['src', 'width', 'height', 'frameborder', 'allowfullscreen', 'allow', 'loading', 'sandbox'],
+        'iframe' => ['src', 'width', 'height', 'frameborder', 'allowfullscreen', 'allow', 'loading'],
         'embed' => ['src', 'type', 'width', 'height'],
         'object' => ['data', 'type', 'width', 'height'],
         'video' => ['src', 'poster', 'controls', 'width', 'height', 'preload', 'playsinline', 'muted'],
