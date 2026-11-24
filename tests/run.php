@@ -41,6 +41,7 @@ use App\Services\ToolConfig;
 use App\Services\Seo;
 use App\Services\StructuredData;
 use App\Services\TmdbArticle;
+use App\Services\AvdbArticle;
 
 if (!Database::tableExists('users')) {
     fwrite(STDERR, "Database belum diinstal. Jalankan bin/console.php install.\n");
@@ -402,6 +403,65 @@ try {
     check('TMDB trailer is omitted without an official video', $trailerKey([
         $video('Clip', 'CLIP', true, 'en', '2024-01-01T00:00:00.000Z'),
     ]) === '');
+
+    section('AVDB article');
+    $avdbItem = static fn(array $overrides = []): array => array_merge([
+        'id' => 661187,
+        'type_name' => 'Uncensored Leaked',
+        'name' => '[UNCENSORED-LEAK] CAWB-044 Judul uji',
+        'origin_name' => 'Judul uji',
+        'slug' => 'cawb-044-uncensored-leak',
+        'movie_code' => 'CAWB-044-UNCENSORED-LEAK',
+        'tag' => 'Solowork, Creampie',
+        'category' => ['Solowork', 'Creampie', 'Uncensored Leaked'],
+        'poster_url' => 'https://upload18.cc/v/CAWB-044/poster.jpg',
+        'thumb_url' => 'https://upload18.cc/v/CAWB-044/thumb.jpg',
+        'actor' => ['Kiyono Saki'],
+        'director' => ['Nikuson'],
+        'country' => ['Japan'],
+        'year' => '2026',
+        'quality' => 'HD',
+        'status' => 'Release',
+        'time' => '01:59:35',
+        'description' => 'Sinopsis uji dari AVDB.',
+        'vod_pubdate' => '2026-10-01',
+        'created_at' => '2026-10-01',
+        'episodes' => [
+            'server_name' => 'VIP #1',
+            'server_data' => [
+                'Full' => ['slug' => 'full', 'link_embed' => 'https://upload18.to/play/index/cawb-044-uncensored-leak'],
+            ],
+        ],
+    ], $overrides);
+
+    $avdbArticle = AvdbArticle::build($avdbItem(), [], 'av');
+    check('AVDB builds a title, slug and meta from the record', $avdbArticle['title'] !== '' && $avdbArticle['slug'] === 'cawb-044-uncensored-leak');
+    check('AVDB excerpt comes from the description', str_contains($avdbArticle['excerpt'], 'Sinopsis uji'));
+    check('AVDB thumbnail uses the poster first', $avdbArticle['thumbnail'] === 'https://upload18.cc/v/CAWB-044/poster.jpg');
+    check('AVDB tags are deduplicated', count($avdbArticle['tags']) === count(array_unique($avdbArticle['tags'])));
+    check('AVDB tags are capped at 15', count($avdbArticle['tags']) <= 15);
+    check('AVDB tags include the provider marker', in_array('AVDB', $avdbArticle['tags'], true));
+    check('AVDB body has the info table and the watch link', str_contains($avdbArticle['body'], '<table>') && str_contains($avdbArticle['body'], 'avdb-watch'));
+    check('AVDB stream is a link, never an iframe', !str_contains($avdbArticle['body'], '<iframe') && preg_match('~rel="nofollow noopener noreferrer"~', $avdbArticle['body']) === 1);
+    check('AVDB categories drop the repeated type name', !in_array('Uncensored Leaked', AvdbArticle::categories($avdbItem()), true));
+
+    $unsafe = AvdbArticle::build($avdbItem([
+        'episodes' => ['server_data' => ['Full' => ['link_embed' => 'javascript:alert(1)']]],
+    ]), ['watch']);
+    check('AVDB drops unsafe stream URLs', !str_contains($unsafe['body'], 'javascript:') && !str_contains($unsafe['body'], 'avdb-watch'));
+
+    $posterOnly = AvdbArticle::build($avdbItem(), ['poster']);
+    check('AVDB section toggles are honoured', str_contains($posterOnly['body'], 'avdb-poster') && !str_contains($posterOnly['body'], '<table>'));
+
+    $injected = AvdbArticle::build($avdbItem([
+        'name' => '<script>alert(1)</script>Judul',
+        'description' => '<img src=x onerror=alert(1)>Deskripsi',
+    ]), ['description']);
+    check('AVDB strips markup from title/excerpt/meta', !str_contains($injected['title'], '<script') && !str_contains($injected['meta_description'], '<img'));
+    check('AVDB escapes description HTML in the body', str_contains($injected['body'], '&lt;img') && !str_contains($injected['body'], '<img src=x'));
+
+    $fallbackTitle = AvdbArticle::build($avdbItem(['name' => '', 'origin_name' => '']), ['poster']);
+    check('AVDB falls back to the code when there is no title', str_contains($fallbackTitle['title'], 'CAWB-044'));
 
     section('Themes');
     check('Bundled themes exist', count(Theme::bundledSlugs()) >= 2);

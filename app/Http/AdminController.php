@@ -42,7 +42,7 @@ final class AdminController
         'dashboard', 'posts', 'post-edit', 'pages', 'page-edit', 'media', 'comments',
         'categories', 'tags', 'themes', 'customize', 'layout', 'menus', 'builder',
         'blogs', 'users', 'seo', 'redirects', 'newsletter', 'settings', 'backup', 'logs', 'profile',
-        'tmdb',
+        'tmdb', 'avdb',
     ];
 
     /**
@@ -51,6 +51,7 @@ final class AdminController
      */
     private const EXTERNAL_VIEWS = [
         'tmdb' => 'tmdb-generator.php',
+        'avdb' => 'avdb-generator.php',
         'tools' => 'admin/tools.php',
     ];
 
@@ -92,6 +93,7 @@ final class AdminController
                 // Standalone page (see EXTERNAL_VIEWS) — the shell links to its
                 // own URL, so opening it must not require a matching admin view.
                 'tmdb' => ['Generator TMDB', 'clapper'],
+                'avdb' => ['Generator AVDB', 'film'],
             ],
             __('admin_group_system') => [
                 'blogs' => ['Blog', 'globe'],
