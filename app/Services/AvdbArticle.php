@@ -13,9 +13,8 @@ use App\Core\Str;
  *
  * The output is plain semantic HTML (headings, lists, tables, figure) so it
  * inherits the active theme's typography. Only <img> tags point at the
- * provider's CDN; the player is embedded in a sandboxed, lazy-loaded iframe so
- * any script it ships is confined to its own origin and cannot reach the blog
- * document.
+ * provider's CDN; the player is embedded in a standard iframe so the provider's
+ * own player runs with its usual behaviour.
  */
 final class AvdbArticle
 {
@@ -339,12 +338,11 @@ final class AvdbArticle
     }
 
     /**
-     * The provider's player endpoint, embedded in a sandboxed iframe.
+     * The provider's player endpoint, embedded in a standard iframe.
      *
-     * The sandbox keeps the third-party player inside its own origin: it can
-     * script itself (players need JS) but cannot navigate the blog, open
-     * arbitrary popups or flip the top-level page. `loading="lazy"` means the
-     * player is only fetched when a reader scrolls to it.
+     * `loading="lazy"` delays the fetch until a reader scrolls to it, and
+     * `allowfullscreen` lets the player expand; no sandbox is applied so the
+     * provider's own player behaves exactly as it does on their site.
      */
     private static function watchBlock(array $item, string $title): string
     {
@@ -358,10 +356,8 @@ final class AvdbArticle
             . ' title="' . self::esc($label) . '"'
             . ' loading="lazy" allowfullscreen'
             . ' allow="autoplay; fullscreen; encrypted-media; picture-in-picture"'
-            . ' referrerpolicy="no-referrer"'
-            . ' sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-presentation"'
             . '></iframe></div>'
-            . '<p><small>Pemutar disediakan oleh penyedia data AVDB dan dimuat dalam iframe ber-sandbox. Konten berada di luar situs ini.</small></p>';
+            . '<p><small>Pemutar disediakan oleh penyedia data AVDB. Konten berada di luar situs ini.</small></p>';
     }
 
     private static function attributionBlock(): string

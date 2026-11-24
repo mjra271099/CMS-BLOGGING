@@ -281,7 +281,7 @@ final class Avdb
     /**
      * Read the embed/stream link out of the `episodes` object. Views can hold
      * several server entries; the first usable one wins. The result is embedded
-     * in a sandboxed iframe by {@see AvdbArticle}.
+     * in an iframe by {@see AvdbArticle}.
      */
     public static function streamUrl(array $item): string
     {

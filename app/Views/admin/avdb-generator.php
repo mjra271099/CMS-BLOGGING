@@ -953,7 +953,7 @@ $carry = ['mode' => $mode, 'type' => $type, 'field' => $field, 'q' => $query,
             <p class="avdb-attribution">
                 <?= AdminUi::icon('info', 14) ?> Metadata &amp; gambar bersumber dari
                 <a href="https://avdbapi.com/" target="_blank" rel="noopener noreferrer">AVDBAPI</a>.
-                Judul panjang dipotong dengan "..." dan pemutar dimuat dalam iframe ber-sandbox.
+                Judul panjang dipotong dengan "..." dan pemutar dimuat dalam iframe.
             </p>
         </div>
     <?php endif; ?>

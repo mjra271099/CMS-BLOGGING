@@ -443,12 +443,11 @@ try {
     check('AVDB tags include the provider marker', in_array('AVDB', $avdbArticle['tags'], true));
     check('AVDB body has the info table and the player', str_contains($avdbArticle['body'], '<table>') && str_contains($avdbArticle['body'], 'avdb-player') && str_contains($avdbArticle['body'], '<iframe'));
     check(
-        'AVDB player iframe is sandboxed, lazy and points at the stream',
+        'AVDB player iframe is a plain, lazy, fullscreen-capable iframe',
         preg_match('~<iframe[^>]+src="https://upload18\.to/play/index/cawb-044-uncensored-leak"~', $avdbArticle['body']) === 1
-        && str_contains($avdbArticle['body'], 'sandbox="')
         && str_contains($avdbArticle['body'], 'loading="lazy"')
-        && str_contains($avdbArticle['body'], 'referrerpolicy="no-referrer"')
         && str_contains($avdbArticle['body'], 'allowfullscreen')
+        && !str_contains($avdbArticle['body'], 'sandbox=')
     );
     check('AVDB categories drop the repeated type name', !in_array('Uncensored Leaked', AvdbArticle::categories($avdbItem()), true));
 

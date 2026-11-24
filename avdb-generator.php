@@ -24,7 +24,7 @@ declare(strict_types=1);
  *    - Every POST is CSRF-checked.
  *    - Generated HTML only contains entities we build; image and stream URLs
  *      are validated before being rendered, and the player is embedded in a
- *      sandboxed iframe so third-party scripts stay inside their own origin.
+ *      standard iframe.
  * ========================================================================== */
 
 use App\Core\Auth;
