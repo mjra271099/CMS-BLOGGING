@@ -524,6 +524,18 @@ $carry = ['mode' => $mode, 'type' => $type, 'field' => $field, 'q' => $query,
 .avdb-preview td, .avdb-preview th { padding: 6px 12px 6px 0; vertical-align: top; }
 .avdb-preview ul { margin: 8px 0 12px; padding-left: 20px; }
 .avdb-preview li { margin: 3px 0; }
+/* Embedded player: same 16:9 box the front-end theme gives iframes. */
+.avdb-preview .avdb-player { margin: 10px 0; }
+.avdb-preview .avdb-player iframe,
+.avdb-preview iframe {
+    display: block;
+    width: 100%;
+    max-width: 640px;
+    aspect-ratio: 16 / 9;
+    border: 0;
+    border-radius: 5px;
+    background: #000;
+}
 
 /* --- Responsive --------------------------------------------------------- */
 @media (max-width: 860px) {
@@ -559,8 +571,9 @@ $carry = ['mode' => $mode, 'type' => $type, 'field' => $field, 'q' => $query,
     <div class="card">
         <h2><?= AdminUi::icon('settings', 16) ?> Pengaturan AVDB</h2>
         <p class="help">
-            AVDB API gratis dan tidak memerlukan kunci. Pilih bahasa keluaran metadata di bawah —
-            pratinjau dan artikel yang dibuat mengikuti bahasa ini.
+            AVDB API gratis dan tidak memerlukan kunci. Bahasa bawaan adalah <strong>English</strong>
+            (metadata paling lengkap); pilih bahasa lain bila perlu. Pratinjau dan artikel yang dibuat
+            mengikuti bahasa ini.
         </p>
         <form method="post" action="<?= e($self) ?>">
             <input type="hidden" name="action" value="avdb.settings">
@@ -704,6 +717,9 @@ $carry = ['mode' => $mode, 'type' => $type, 'field' => $field, 'q' => $query,
                         <?php
                         $itemId = (int)($item['id'] ?? 0);
                         $itemTitle = AvdbArticle::title($item);
+                        // Cards show a shortened title; the full name stays in
+                        // the tooltip, the alt text and the detail preview.
+                        $itemShort = AvdbArticle::displayTitle($item, 60);
                         $itemCode = AvdbArticle::code($item);
                         $itemYear = AvdbArticle::year($item);
                         $poster = Avdb::image((string)($item['poster_url'] ?? ''));
@@ -718,13 +734,13 @@ $carry = ['mode' => $mode, 'type' => $type, 'field' => $field, 'q' => $query,
                             <span class="avdb-result__check">
                                 <input type="checkbox" name="ids[]" value="<?= $itemId ?>" data-avdb-check aria-label="Pilih <?= e($itemTitle) ?> untuk posting massal">
                             </span>
-                            <a class="avdb-result__link" href="<?= e($selectUrl) ?>">
+                            <a class="avdb-result__link" href="<?= e($selectUrl) ?>" title="<?= e($itemTitle) ?>">
                                 <?php if ($poster !== ''): ?>
                                     <img class="avdb-result__poster" src="<?= e($poster) ?>" alt="Poster <?= e($itemTitle) ?>" loading="lazy" decoding="async">
                                 <?php else: ?>
                                     <span class="avdb-result__poster avdb-result__poster--empty" aria-hidden="true"></span>
                                 <?php endif; ?>
-                                <span class="avdb-result__title"><?= e($itemTitle) ?></span>
+                                <span class="avdb-result__title" title="<?= e($itemTitle) ?>"><?= e($itemShort) ?></span>
                                 <span class="avdb-result__meta"><?= e($itemCode !== '' ? $itemCode : 'Tanpa kode') ?><?= $itemYear !== '' ? ' · ' . e($itemYear) : '' ?></span>
                                 <?php if ($postedPostId !== null): ?>
                                     <span class="avdb-status avdb-status--done"><?= AdminUi::icon('check', 11) ?> Sudah diposting</span>
@@ -827,11 +843,11 @@ $carry = ['mode' => $mode, 'type' => $type, 'field' => $field, 'q' => $query,
             <div class="avdb-detail">
                 <div>
                     <?php if ((string)$preview['poster'] !== ''): ?>
-                        <img class="avdb-detail__poster" src="<?= e((string)$preview['poster']) ?>" alt="Poster <?= e((string)$preview['title']) ?>" loading="lazy">
+                        <img class="avdb-detail__poster" src="<?= e((string)$preview['poster']) ?>" alt="Poster <?= e((string)$preview['full_title']) ?>" loading="lazy">
                     <?php endif; ?>
                 </div>
                 <div>
-                    <h3 class="avdb-detail__title"><?= e((string)$preview['title']) ?>
+                    <h3 class="avdb-detail__title" title="<?= e((string)$preview['full_title']) ?>"><?= e((string)$preview['title']) ?>
                         <?php if ((string)$preview['year'] !== ''): ?><span class="muted">(<?= e((string)$preview['year']) ?>)</span><?php endif; ?>
                     </h3>
                     <div class="avdb-badges">
@@ -921,7 +937,7 @@ $carry = ['mode' => $mode, 'type' => $type, 'field' => $field, 'q' => $query,
         <div class="card">
             <h2><?= AdminUi::icon('eye', 16) ?> Pratinjau Artikel</h2>
             <p class="help">
-                Struktur HTML yang akan disimpan. Judul: <strong><?= e((string)$generated['seo_title']) ?></strong> ·
+                Struktur HTML yang akan disimpan. Judul: <strong><?= e((string)$generated['title']) ?></strong> ·
                 Meta: <?= e((string)$generated['meta_description']) ?>
             </p>
             <?php if (($generated['tags'] ?? []) !== []): ?>
@@ -937,7 +953,7 @@ $carry = ['mode' => $mode, 'type' => $type, 'field' => $field, 'q' => $query,
             <p class="avdb-attribution">
                 <?= AdminUi::icon('info', 14) ?> Metadata &amp; gambar bersumber dari
                 <a href="https://avdbapi.com/" target="_blank" rel="noopener noreferrer">AVDBAPI</a>.
-                Tautan pemutar dibuka di tab baru dan tidak disematkan (tidak ada iframe).
+                Judul panjang dipotong dengan "..." dan pemutar dimuat dalam iframe ber-sandbox.
             </p>
         </div>
     <?php endif; ?>

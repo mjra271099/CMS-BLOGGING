@@ -35,10 +35,14 @@ final class Avdb
      */
     public const MAX_PAGE = 1000;
 
-    /** Language prefixes documented by the API (en is served without prefix). */
+    /**
+     * Language prefixes documented by the API. English is the default and is
+     * served without a prefix; it also carries the most complete metadata,
+     * because some localised records arrive without a description.
+     */
     public const LANGUAGES = [
-        'id' => 'Bahasa Indonesia',
         'en' => 'English',
+        'id' => 'Bahasa Indonesia',
         'ms' => 'Bahasa Melayu',
         'th' => 'ไทย',
         'vi' => 'Tiếng Việt',
@@ -101,12 +105,12 @@ final class Avdb
 
     public static function storedLanguage(): string
     {
-        $stored = strtolower(trim((string)Settings::get(self::LANGUAGE_KEY, 'id')));
+        $stored = strtolower(trim((string)Settings::get(self::LANGUAGE_KEY, 'en')));
         if (isset(self::LANGUAGES[$stored])) {
             return $stored;
         }
         $env = strtolower(trim((string)(getenv('AVDB_LANGUAGE') ?: '')));
-        return isset(self::LANGUAGES[$env]) ? $env : 'id';
+        return isset(self::LANGUAGES[$env]) ? $env : 'en';
     }
 
     public static function saveLanguage(string $language): void
@@ -276,7 +280,8 @@ final class Avdb
 
     /**
      * Read the embed/stream link out of the `episodes` object. Views can hold
-     * several server entries; the first usable one wins.
+     * several server entries; the first usable one wins. The result is embedded
+     * in a sandboxed iframe by {@see AvdbArticle}.
      */
     public static function streamUrl(array $item): string
     {

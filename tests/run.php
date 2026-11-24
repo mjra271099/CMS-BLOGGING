@@ -441,14 +441,31 @@ try {
     check('AVDB tags are deduplicated', count($avdbArticle['tags']) === count(array_unique($avdbArticle['tags'])));
     check('AVDB tags are capped at 15', count($avdbArticle['tags']) <= 15);
     check('AVDB tags include the provider marker', in_array('AVDB', $avdbArticle['tags'], true));
-    check('AVDB body has the info table and the watch link', str_contains($avdbArticle['body'], '<table>') && str_contains($avdbArticle['body'], 'avdb-watch'));
-    check('AVDB stream is a link, never an iframe', !str_contains($avdbArticle['body'], '<iframe') && preg_match('~rel="nofollow noopener noreferrer"~', $avdbArticle['body']) === 1);
+    check('AVDB body has the info table and the player', str_contains($avdbArticle['body'], '<table>') && str_contains($avdbArticle['body'], 'avdb-player') && str_contains($avdbArticle['body'], '<iframe'));
+    check(
+        'AVDB player iframe is sandboxed, lazy and points at the stream',
+        preg_match('~<iframe[^>]+src="https://upload18\.to/play/index/cawb-044-uncensored-leak"~', $avdbArticle['body']) === 1
+        && str_contains($avdbArticle['body'], 'sandbox="')
+        && str_contains($avdbArticle['body'], 'loading="lazy"')
+        && str_contains($avdbArticle['body'], 'referrerpolicy="no-referrer"')
+        && str_contains($avdbArticle['body'], 'allowfullscreen')
+    );
     check('AVDB categories drop the repeated type name', !in_array('Uncensored Leaked', AvdbArticle::categories($avdbItem()), true));
 
     $unsafe = AvdbArticle::build($avdbItem([
         'episodes' => ['server_data' => ['Full' => ['link_embed' => 'javascript:alert(1)']]],
     ]), ['watch']);
-    check('AVDB drops unsafe stream URLs', !str_contains($unsafe['body'], 'javascript:') && !str_contains($unsafe['body'], 'avdb-watch'));
+    check('AVDB drops unsafe stream URLs', !str_contains($unsafe['body'], 'javascript:') && !str_contains($unsafe['body'], '<iframe'));
+
+    // Long provider names are cut with an explicit ellipsis instead of a silent
+    // mid-word chop, and the full name stays available for previews/tooltips.
+    $longName = trim(str_repeat('Kata panjang ', 30));
+    $short = AvdbArticle::truncate($longName, 40);
+    check('AVDB truncate hides the tail with ...', mb_strlen($short) <= 40 && str_ends_with($short, '...'));
+    check('AVDB truncate keeps short text untouched', AvdbArticle::truncate('Judul pendek', 40) === 'Judul pendek');
+    $longArticle = AvdbArticle::build($avdbItem(['name' => $longName]), ['poster']);
+    check('AVDB long titles are shortened to the title limit', mb_strlen($longArticle['title']) <= AvdbArticle::TITLE_LIMIT && str_ends_with($longArticle['title'], '...'));
+    check('AVDB preview keeps the full title for tooltips', AvdbArticle::preview($avdbItem(['name' => $longName]))['full_title'] === $longName);
 
     $posterOnly = AvdbArticle::build($avdbItem(), ['poster']);
     check('AVDB section toggles are honoured', str_contains($posterOnly['body'], 'avdb-poster') && !str_contains($posterOnly['body'], '<table>'));

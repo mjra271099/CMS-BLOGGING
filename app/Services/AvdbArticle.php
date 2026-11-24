@@ -13,13 +13,22 @@ use App\Core\Str;
  *
  * The output is plain semantic HTML (headings, lists, tables, figure) so it
  * inherits the active theme's typography. Only <img> tags point at the
- * provider's CDN; the stream link is rendered as a normal anchor (never an
- * iframe), so a third-party player cannot script the page.
+ * provider's CDN; the player is embedded in a sandboxed, lazy-loaded iframe so
+ * any script it ships is confined to its own origin and cannot reach the blog
+ * document.
  */
 final class AvdbArticle
 {
     /** Default category every generated article is filed under. */
     public const DEFAULT_CATEGORY = 'av';
+
+    /**
+     * Longest title stored on a generated post. Provider names routinely run
+     * past 150 characters; keeping the meaningful start keeps the post title
+     * readable (and under the 255-char column) without losing the full name,
+     * which stays in the preview and the description.
+     */
+    public const TITLE_LIMIT = 100;
 
     /** Sections the editor can toggle, in the order they appear in the body. */
     public const SECTIONS = [
@@ -29,7 +38,7 @@ final class AvdbArticle
         'categories' => 'Kategori',
         'cast' => 'Pemain',
         'crew' => 'Sutradara',
-        'watch' => 'Tautan tonton',
+        'watch' => 'Pemutar video (embed)',
         'attribution' => 'Atribusi AVDB (disarankan)',
     ];
 
@@ -44,7 +53,8 @@ final class AvdbArticle
     {
         $sections = $sections ?: array_keys(self::SECTIONS);
         $code = self::code($item);
-        $title = self::title($item);
+        $fullTitle = self::title($item);
+        $title = self::truncate($fullTitle, self::TITLE_LIMIT);
         $description = self::description($item);
         $categories = self::categories($item);
         $poster = Avdb::image((string)($item['poster_url'] ?? ''));
@@ -69,10 +79,10 @@ final class AvdbArticle
         }
 
         $body = implode("\n", $pieces);
-        $seoTitle = $code !== '' ? $code . ' — ' . Str::limit($title, 48) : Str::limit($title, 60);
-        $seoTitle = self::clean($seoTitle, 60);
+        $seoSource = $code !== '' ? $code . ' — ' . $fullTitle : $fullTitle;
+        $seoTitle = self::clean(self::truncate($seoSource, 60), 60);
         $excerpt = $description !== ''
-            ? Str::limit($description, 180)
+            ? self::truncate($description, 180)
             : self::fallback($title, $code, $categories);
 
         return [
@@ -82,7 +92,7 @@ final class AvdbArticle
             // the preview identical to what will be stored.
             'slug' => Slug::make((string)($item['slug'] ?? '') ?: ($code !== '' ? $code : $title)),
             'excerpt' => self::clean($excerpt, 500),
-            'meta_description' => self::clean(Str::limit($excerpt, 158), 320),
+            'meta_description' => self::clean(self::truncate($excerpt, 158), 320),
             'body' => $body,
             'thumbnail' => $poster !== '' ? $poster : $thumb,
             'og_image' => $thumb !== '' ? $thumb : $poster,
@@ -102,7 +112,8 @@ final class AvdbArticle
         return [
             'id' => (int)($item['id'] ?? 0),
             'code' => self::code($item),
-            'title' => self::title($item),
+            'title' => self::displayTitle($item),
+            'full_title' => self::title($item),
             'type_name' => trim((string)($item['type_name'] ?? '')),
             'year' => self::year($item),
             'poster' => Avdb::image((string)($item['poster_url'] ?? '')),
@@ -149,6 +160,37 @@ final class AvdbArticle
             return $year;
         }
         return substr(trim((string)($item['created_at'] ?? '')), 0, 4);
+    }
+
+    /**
+     * Word-safe shortening. Provider names can run past 150 characters, so the
+     * tail is hidden behind an explicit "..." instead of being cut silently
+     * mid-word. The limit counts the ellipsis, and a word boundary is preferred
+     * when one exists near the end of the budget.
+     */
+    public static function truncate(string $text, int $max): string
+    {
+        $text = trim((string)preg_replace('/\s+/u', ' ', $text));
+        if ($max <= 3 || mb_strlen($text) <= $max) {
+            return $text;
+        }
+        $budget = $max - 3;
+        $cut = mb_substr($text, 0, $budget);
+        $space = mb_strrpos($cut, ' ');
+        if ($space !== false && $space >= (int)($budget * 0.55)) {
+            $cut = mb_substr($cut, 0, $space);
+        }
+        $cut = rtrim($cut, " \t\n\r\0\x0B.,;:-–—");
+        if ($cut === '') {
+            $cut = mb_substr($text, 0, $budget);
+        }
+        return $cut . '...';
+    }
+
+    /** Short title for cards and previews; the full name stays in `full_title`. */
+    public static function displayTitle(array $item, int $max = self::TITLE_LIMIT): string
+    {
+        return self::truncate(self::title($item), $max);
     }
 
     public static function description(array $item): string
@@ -297,8 +339,12 @@ final class AvdbArticle
     }
 
     /**
-     * The provider's player endpoint. Rendered as a link with nofollow so a
-     * third-party page is never embedded in the article itself.
+     * The provider's player endpoint, embedded in a sandboxed iframe.
+     *
+     * The sandbox keeps the third-party player inside its own origin: it can
+     * script itself (players need JS) but cannot navigate the blog, open
+     * arbitrary popups or flip the top-level page. `loading="lazy"` means the
+     * player is only fetched when a reader scrolls to it.
      */
     private static function watchBlock(array $item, string $title): string
     {
@@ -306,10 +352,16 @@ final class AvdbArticle
         if ($url === '' || !valid_asset_url($url)) {
             return '';
         }
-        return '<h2 class="avdb-watch-heading">Tonton</h2>'
-            . '<p class="avdb-watch"><a href="' . self::esc($url) . '" rel="nofollow noopener noreferrer" target="_blank">'
-            . self::esc('Buka pemutar — ' . Str::limit($title, 70)) . '</a></p>'
-            . '<p><small>Tautan pemutar disediakan oleh penyedia data AVDB. Konten berada di luar situs ini.</small></p>';
+        $label = 'Pemutar ' . self::truncate($title, 70);
+        return '<h2 class="avdb-watch-heading">Pemutar</h2>'
+            . '<div class="avdb-player"><iframe src="' . self::esc($url) . '"'
+            . ' title="' . self::esc($label) . '"'
+            . ' loading="lazy" allowfullscreen'
+            . ' allow="autoplay; fullscreen; encrypted-media; picture-in-picture"'
+            . ' referrerpolicy="no-referrer"'
+            . ' sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-presentation"'
+            . '></iframe></div>'
+            . '<p><small>Pemutar disediakan oleh penyedia data AVDB dan dimuat dalam iframe ber-sandbox. Konten berada di luar situs ini.</small></p>';
     }
 
     private static function attributionBlock(): string
